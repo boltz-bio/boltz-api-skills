@@ -1,0 +1,54 @@
+{
+  "name": "boltz-compute-python",
+  "version": "0.1.0",
+  "description": "Codex plugin for Boltz Compute that gives agents six Python SDK-backed workflows for structure prediction, protein and small-molecule screening, de novo protein and small-molecule design, and recovery of job status and downloadable results.",
+  "author": {
+    "name": "[TODO: developer or company name]",
+    "email": "[TODO: developer or support email]",
+    "url": "[TODO: company or developer URL]"
+  },
+  "homepage": "[TODO: product or docs URL]",
+  "repository": "[TODO: source repository URL]",
+  "license": "[TODO: license identifier]",
+  "keywords": [
+    "boltz",
+    "boltz-compute",
+    "computational-biology",
+    "protein-design",
+    "protein-screening",
+    "small-molecule-design",
+    "virtual-screening",
+    "structure-prediction",
+    "molecular-modeling",
+    "drug-discovery",
+    "biotech",
+    "python-sdk"
+  ],
+  "skills": "./skills",
+  "interface": {
+    "displayName": "Boltz Compute Python",
+    "shortDescription": "Use the Boltz Compute Python SDK for structure prediction, screening, design, and job recovery workflows.",
+    "longDescription": "Provides six Codex skills built on the official Boltz Compute Python SDK: structure and binding prediction, small-molecule library screening, small-molecule design, protein library screening, protein binder design, and job-status recovery. Each skill handles asynchronous polling, cost-estimation flow, and local result downloads so agents can run Boltz workflows end to end instead of stitching API calls together manually.",
+    "developerName": "Boltz",
+    "category": "Science",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "[TODO: marketing or docs URL]",
+    "privacyPolicyURL": "[TODO: privacy policy URL]",
+    "termsOfServiceURL": "[TODO: terms of service URL]",
+    "brandColor": "[TODO: brand hex color]",
+    "composerIcon": "[TODO: ./assets/icon.png]",
+    "logo": "[TODO: ./assets/logo.png]",
+    "screenshots": [
+      "[TODO: ./assets/screenshot-1.png]",
+      "[TODO: ./assets/screenshot-2.png]"
+    ],
+    "defaultPrompt": [
+      "Screen this compound library against my target protein and rank the hits.",
+      "Design peptide, nanobody, or antibody binders for this target epitope.",
+      "Check my Boltz jobs, tell me what finished, and download the results."
+    ]
+  }
+}
