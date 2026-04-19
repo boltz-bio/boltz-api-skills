@@ -1,0 +1,4 @@
+interface:
+  display_name: "Boltz Setup"
+  short_description: "Validate SDK install, auth, and output-dir setup"
+  default_prompt: "Use $boltz-setup to verify whether this Codex environment is ready for Boltz Compute jobs."

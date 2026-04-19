@@ -1,52 +1,31 @@
 # Boltz Compute Skills
 
-A collection of agent skills for running Boltz protein structure predictions through AI coding assistants.
-
-## Contents
+This repo contains two parallel agent integrations for Boltz Compute:
 
 | Folder | Description |
 |--------|-------------|
 | `skills-python/` | Claude Code skills |
-| `codex-plugin-python/` | OpenAI Codex plugin |
+| `codex-plugin-python/` | Codex plugin with manifest, marketplace support, and Codex-specific metadata |
 
----
+## Codex plugin
 
-## Claude Code Skills (`skills-python/`)
+The Codex plugin lives in `codex-plugin-python/`.
 
-### Installation
+- The repo now includes a workspace-local marketplace file at `.agents/plugins/marketplace.json`.
+- If you open this repo in Codex and start a fresh session, the plugin can be discovered from this workspace without any extra scaffolding.
+- Detailed install, setup, validation, and smoke-test instructions live in `codex-plugin-python/README.md`.
 
-1. Clone the repo
-2. Tell Claude Code to install the skills at the local path — it will add them to `.claude.json`
-3. Start a fresh session and start querying Claude
+## Claude Code skills
 
----
+The Claude Code variant in `skills-python/` keeps the same core workflows but omits Codex-specific packaging.
 
-## Codex Plugin (`codex-plugin-python/`)
+## Shared behavior
 
-### Installation
+Both implementations follow the same operating model:
 
-1. Clone the repo
-2. Tell Codex to add this plugin from the local path
-3. Start a fresh session — you should see the plugin listed under `/plugins`
+1. Normalize the biological or chemistry input into the API payload shape expected by Boltz Compute.
+2. Estimate cost first and require explicit approval before spend.
+3. Submit the job through the Python SDK wrapper.
+4. Poll until completion and download local artifacts when the job succeeds.
 
----
-
-## Differences
-
-The two implementations are mostly identical, with a few exceptions:
-
-- The Codex plugin includes extra plugin metadata (`plugin.json`) — this should be edited before use
-- Codex recommended trimming `skill.md` and moving extra information into a separate `api.md` (suggested by the skill-creator skill in Codex)
-
----
-
-## Expected Behavior
-
-When you ask your agent to perform a Boltz-relevant task (e.g. *"fold a protein"*), it will:
-
-1. Read the appropriate `skill.md`
-2. Estimate the compute cost (enforced via `skill.md`)
-3. Ask for confirmation before proceeding
-4. Run the job, poll for completion, and download the output structure and metadata
-
-> Note: It would be nice to surface the confirmation step in the native Claude Code / Codex permissions UI, but there's no known way to do this currently.
+This keeps agents out of the business of hand-rolling raw API calls, async polling loops, and result-download plumbing.

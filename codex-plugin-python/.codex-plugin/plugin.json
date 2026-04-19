@@ -1,18 +1,18 @@
 {
   "name": "boltz-compute-python",
-  "version": "0.1.0",
-  "description": "Codex plugin for Boltz Compute that gives agents six Python SDK-backed workflows for structure prediction, protein and small-molecule screening, de novo protein and small-molecule design, and recovery of job status and downloadable results.",
+  "version": "0.2.0",
+  "description": "Codex plugin for Boltz Compute with Python SDK-backed workflows for setup validation, structure prediction, screening, design, and job recovery.",
   "author": {
-    "name": "[TODO: developer or company name]",
-    "email": "[TODO: developer or support email]",
-    "url": "[TODO: company or developer URL]"
+    "name": "Boltz Bio",
+    "url": "https://boltz.bio/"
   },
-  "homepage": "[TODO: product or docs URL]",
-  "repository": "[TODO: source repository URL]",
-  "license": "[TODO: license identifier]",
+  "homepage": "https://github.com/boltz-bio/boltz-compute-skills",
+  "repository": "https://github.com/boltz-bio/boltz-compute-skills",
+  "license": "Proprietary",
   "keywords": [
     "boltz",
     "boltz-compute",
+    "codex-plugin",
     "computational-biology",
     "protein-design",
     "protein-screening",
@@ -24,31 +24,24 @@
     "biotech",
     "python-sdk"
   ],
-  "skills": "./skills",
+  "skills": "./skills/",
   "interface": {
-    "displayName": "Boltz Compute Python",
-    "shortDescription": "Use the Boltz Compute Python SDK for structure prediction, screening, design, and job recovery workflows.",
-    "longDescription": "Provides six Codex skills built on the official Boltz Compute Python SDK: structure and binding prediction, small-molecule library screening, small-molecule design, protein library screening, protein binder design, and job-status recovery. Each skill handles asynchronous polling, cost-estimation flow, and local result downloads so agents can run Boltz workflows end to end instead of stitching API calls together manually.",
-    "developerName": "Boltz",
+    "displayName": "Boltz Compute",
+    "shortDescription": "Run Boltz Compute workflows from Codex for setup, prediction, screening, design, and job recovery.",
+    "longDescription": "Provides Codex skills backed by the official Boltz Compute Python SDK for environment validation, structure-and-binding prediction, small-molecule screening, small-molecule design, protein screening, protein design, and job-status recovery. The wrappers standardize cost estimation, approval-before-spend, async polling, paginated result retrieval, and local artifact downloads so agents can run Boltz workflows end to end instead of stitching API calls together manually.",
+    "developerName": "Boltz Bio",
     "category": "Science",
     "capabilities": [
       "Interactive",
+      "Read",
       "Write"
     ],
-    "websiteURL": "[TODO: marketing or docs URL]",
-    "privacyPolicyURL": "[TODO: privacy policy URL]",
-    "termsOfServiceURL": "[TODO: terms of service URL]",
-    "brandColor": "[TODO: brand hex color]",
-    "composerIcon": "[TODO: ./assets/icon.png]",
-    "logo": "[TODO: ./assets/logo.png]",
-    "screenshots": [
-      "[TODO: ./assets/screenshot-1.png]",
-      "[TODO: ./assets/screenshot-2.png]"
-    ],
+    "websiteURL": "https://github.com/boltz-bio/boltz-compute-skills",
+    "brandColor": "#0F766E",
     "defaultPrompt": [
-      "Screen this compound library against my target protein and rank the hits.",
-      "Design peptide, nanobody, or antibody binders for this target epitope.",
-      "Check my Boltz jobs, tell me what finished, and download the results."
+      "Fold this complex with Boltz Compute and summarize the confidence metrics.",
+      "Screen this compound library against my target and rank the best hits.",
+      "Check my Boltz jobs, download the finished outputs, and explain the results."
     ]
   }
 }

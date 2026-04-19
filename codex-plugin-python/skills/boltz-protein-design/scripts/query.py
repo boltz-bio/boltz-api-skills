@@ -309,7 +309,6 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     api_key = _resolve_api_key()
-    output_dir = _resolve_output_dir(args.output_dir)
     if not api_key and not args.dry_run:
         sys.stderr.write("ERROR: set BOLTZ_API_KEY or BOLTZ_COMPUTE_API_KEY\n")
         return 2
@@ -333,6 +332,7 @@ def main() -> int:
     sys.stderr.write(f"[boltz] submitted job_id={job_id}\n")
     sys.stderr.flush()
     final = poll_until_done(client, job_id, args.workspace_id)
+    output_dir = _resolve_output_dir(args.output_dir)
     out_dir = Path(output_dir) / job_id
     sys.stderr.write("[boltz] paginating results\n")
     results = list(iterate_results(client, job_id, args.workspace_id))

@@ -1,0 +1,20 @@
+{
+  "name": "boltz-local",
+  "interface": {
+    "displayName": "Boltz Plugins"
+  },
+  "plugins": [
+    {
+      "name": "boltz-compute-python",
+      "source": {
+        "source": "local",
+        "path": "./codex-plugin-python"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Science"
+    }
+  ]
+}
