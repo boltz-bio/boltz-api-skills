@@ -48,33 +48,10 @@ jobs:
           path: dist/bin/${{ matrix.goos }}-${{ matrix.goarch }}/**
           if-no-files-found: error
 
-  assemble-darwin-universal:
-    name: Assemble darwin universal binary
-    needs: build-mcp-server
-    runs-on: macos-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: mcp-darwin-*
-          path: dist/bin
-      - name: lipo create universal
-        run: |
-          mkdir -p dist/bin/darwin-universal
-          lipo -create \
-            dist/bin/mcp-darwin-arm64/boltz-compute-mcp \
-            dist/bin/mcp-darwin-amd64/boltz-compute-mcp \
-            -output dist/bin/darwin-universal/boltz-compute-mcp
-          chmod +x dist/bin/darwin-universal/boltz-compute-mcp
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mcp-darwin-universal
-          path: dist/bin/darwin-universal/**
-          if-no-files-found: error
-
   package-mcpb:
     name: Package MCPB bundle
-    needs: [assemble-darwin-universal, build-mcp-server]
-    runs-on: ubuntu-latest
+    needs: build-mcp-server
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -84,20 +61,18 @@ jobs:
         run: npm install -g @anthropic-ai/mcpb
       - uses: actions/download-artifact@v4
         with:
-          pattern: mcp-*
-          path: dist/bin-raw
-      - name: Stage binaries into MCPB server/
-        run: |
-          mkdir -p surfaces/claude-desktop-mcpb/server
-          cp dist/bin-raw/mcp-darwin-universal/boltz-compute-mcp surfaces/claude-desktop-mcpb/server/boltz-compute-mcp
-          cp dist/bin-raw/mcp-windows-amd64/boltz-compute-mcp.exe surfaces/claude-desktop-mcpb/server/boltz-compute-mcp.exe
-          chmod +x surfaces/claude-desktop-mcpb/server/boltz-compute-mcp
-          # TODO: fetch boltz-api per platform from the CLI release pipeline and stage it here.
+          name: mcp-darwin-arm64
+          path: dist/bin/darwin-arm64
+      - uses: actions/download-artifact@v4
+        with:
+          name: mcp-darwin-amd64
+          path: dist/bin/darwin-amd64
+      - uses: actions/download-artifact@v4
+        with:
+          name: mcp-windows-amd64
+          path: dist/bin/windows-amd64
       - name: Pack MCPB
-        run: |
-          VERSION=$(jq -r .version surfaces/claude-desktop-mcpb/manifest.json)
-          mkdir -p dist
-          (cd surfaces/claude-desktop-mcpb && mcpb pack . "$GITHUB_WORKSPACE/dist/boltz-compute-${VERSION}.mcpb")
+        run: scripts/package-mcpb.sh
       - uses: actions/upload-artifact@v4
         with:
           name: boltz-compute-mcpb
@@ -106,27 +81,28 @@ jobs:
 
   package-plugins:
     name: Package plugin surfaces
-    needs: [assemble-darwin-universal, build-mcp-server]
+    needs: build-mcp-server
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          pattern: mcp-*
-          path: dist/bin-raw
-      - name: Stage MCP binary into claude-code-mcp and codex-mcp
-        run: |
-          # For Claude Code MCP and Codex MCP we want one binary per platform. For
-          # v0.1 we ship the darwin-universal build into the plugin zip so macOS
-          # users can install straight away; CI can later produce per-platform zips.
-          for surface in claude-code-mcp codex-mcp; do
-            mkdir -p "surfaces/$surface/bin"
-            cp dist/bin-raw/mcp-darwin-universal/boltz-compute-mcp "surfaces/$surface/bin/boltz-compute-mcp"
-            chmod +x "surfaces/$surface/bin/boltz-compute-mcp"
-          done
+          name: mcp-darwin-arm64
+          path: dist/bin/darwin-arm64
+      - uses: actions/download-artifact@v4
+        with:
+          name: mcp-darwin-amd64
+          path: dist/bin/darwin-amd64
+      - uses: actions/download-artifact@v4
+        with:
+          name: mcp-linux-amd64
+          path: dist/bin/linux-amd64
+      - uses: actions/download-artifact@v4
+        with:
+          name: mcp-windows-amd64
+          path: dist/bin/windows-amd64
       - name: Pack each surface
-        run: |
-          scripts/package-plugins.sh
+        run: scripts/package-plugins.sh
       - uses: actions/upload-artifact@v4
         with:
           name: plugin-zips

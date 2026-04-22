@@ -19,7 +19,7 @@ The MCP server's tools (`boltz_estimate_run`, `boltz_submit_run`, `boltz_list_jo
 
 ## Skills are NOT bundled here
 
-MCPB extensions don't support skills — skills are a separate Claude Desktop distribution slot. The workflow prose lives in `core/skills/mcp/` and is consumed by the Claude Code MCP plugin. For Desktop users, progressive disclosure happens via MCP Resources served by the bundled Go server (payload schemas from `core/references/`).
+MCPB extensions don't support skills — skills are a separate Claude Desktop distribution slot. The workflow prose lives in `core/skills/mcp/` and is consumed by the Claude Code MCP plugin.
 
 ## Prerequisites for end users
 
@@ -32,24 +32,27 @@ MCPB extensions don't support skills — skills are a separate Claude Desktop di
 
 ```bash
 # From repo root
-scripts/build-mcpb.sh          # produces dist/boltz-compute-<version>.mcpb
+scripts/build-mcp-release.sh   # produces dist/bin/<platform>/*
+scripts/package-mcpb.sh        # produces dist/boltz-compute-<version>.mcpb
 ```
 
 The build script:
 1. Cross-compiles the Go MCP server for darwin-arm64, darwin-amd64, win-amd64.
-2. `lipo`-merges the two darwin builds into a universal binary.
-3. Fetches `boltz-api` per platform (TODO: source URL from CLI release pipeline).
-4. Places artifacts in `server/`.
-5. Runs `mcpb pack` to produce the final `.mcpb`.
+2. `lipo`-merges the two darwin MCP server builds into a universal binary.
+3. Downloads the pinned `boltz-api` release assets from `boltz-bio/boltz-compute-api-cli`.
+4. `lipo`-merges the macOS CLI binaries into a universal `server/boltz-api`.
+5. Places artifacts in `server/`.
+6. Runs `mcpb pack` to produce the final `.mcpb`.
 
 ## Local development
 
 ```bash
-# Build just the host-platform MCP server binary into server/
+# Fast inner loop: build the host-platform MCP server into server/
 scripts/build-mcp-local.sh
 
-# Then test-install into Claude Desktop by dragging the resulting .mcpb
-# or pointing Claude Desktop at this directory via Settings > Extensions.
+# Distributable bundle (macOS only; requires lipo + mcpb)
+scripts/build-mcp-release.sh
+scripts/package-mcpb.sh
 ```
 
 ## Distribution

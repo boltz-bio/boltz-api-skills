@@ -69,3 +69,46 @@ jobs:
             done
           done
           echo "All 4 surfaces × 6 skills × 2 files = 48 symlinks resolved."
+
+  package-plugins:
+    name: Package plugin zips
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: core/mcp-server/go.sum
+      - name: Build release binaries
+        run: scripts/build-mcp-release.sh
+      - name: Package plugin zips
+        run: scripts/package-plugins.sh
+      - name: Verify packaged skills are self-contained
+        run: |
+          set -euo pipefail
+          TMPDIR_CHECK="$(mktemp -d)"
+          unzip -q "dist/claude-code-cli-"*.zip -d "$TMPDIR_CHECK/claude-code-cli"
+          test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
+          test ! -L "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
+          test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/references/api.md"
+          unzip -p "dist/claude-code-mcp-"*-windows-amd64.zip .mcp.json \
+            | jq -e '.mcpServers.boltzComputeLocal.command | endswith(".exe")' >/dev/null
+
+  package-mcpb:
+    name: Package MCPB bundle
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: core/mcp-server/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install mcpb
+        run: npm install -g @anthropic-ai/mcpb
+      - name: Build release binaries
+        run: scripts/build-mcp-release.sh
+      - name: Package MCPB
+        run: scripts/package-mcpb.sh

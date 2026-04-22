@@ -10,7 +10,7 @@ Identical trigger names and descriptions to `claude-code-cli`. The skill bodies 
 
 ## Prerequisites
 
-- `boltz-api` on `PATH`. The MCP server shells out to it internally. Install from the [CLI repository](https://github.com/boltz-bio/boltz-api).
+- `boltz-api` on `PATH`. The MCP server shells out to it internally. Install from the [CLI repository](https://github.com/boltz-bio/boltz-compute-api-cli).
 - `BOLTZ_COMPUTE_API_KEY` exported in your shell environment.
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` (defaults to `./boltz-experiments`).
 - A pre-built MCP server binary in `./bin/boltz-compute-mcp`. Build it with:
@@ -40,7 +40,7 @@ claude --plugin-dir <path-to-this-directory>
 
 - `.claude-plugin/plugin.json` — manifest.
 - `.mcp.json` — launches the bundled Go MCP server at `${CLAUDE_PLUGIN_ROOT}/bin/boltz-compute-mcp`.
-- `bin/` — built binaries (gitignored; populated by `scripts/build-mcp-local.sh` or CI).
+- `bin/` — built binaries (gitignored locally; release zips bundle one binary per target platform).
 - `skills/` — symlinked from `core/skills/mcp/` and `core/references/` at the repo root.
 
 ## Shared components

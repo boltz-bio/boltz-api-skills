@@ -17,7 +17,7 @@ Both surfaces expose the same six skills with identical trigger descriptions, di
 
 ## Prerequisites
 
-- `boltz-api` on `PATH`. Install from the [CLI repository](https://github.com/boltz-bio/boltz-api).
+- `boltz-api` on `PATH`. Install from the [CLI repository](https://github.com/boltz-bio/boltz-compute-api-cli).
 - `BOLTZ_COMPUTE_API_KEY` exported in your shell environment.
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` (defaults to `./boltz-experiments`).
 

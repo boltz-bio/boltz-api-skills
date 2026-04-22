@@ -65,7 +65,7 @@ Before running this plugin, build the binary into `bin/`:
 scripts/build-mcp-local.sh
 ```
 
-That populates `surfaces/codex-mcp/bin/boltz-compute-mcp` (and the Claude Code + Desktop surfaces in the same run). CI builds per-platform binaries and attaches them to tagged releases.
+That populates `surfaces/codex-mcp/bin/boltz-compute-mcp` (and the Claude Code + Desktop surfaces in the same run). Tagged releases publish per-platform MCP plugin zips (`darwin-arm64`, `darwin-amd64`, `linux-amd64`, `windows-amd64`) so each archive contains the correct embedded binary.
 
 ## Notes on output paths
 
