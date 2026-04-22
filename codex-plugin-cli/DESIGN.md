@@ -10,9 +10,11 @@ A Codex plugin that ships six workflow skills for the Boltz Compute API. Each sk
 
 Two prior plugins exist in this repo: `skills-python/` (Claude Code) and `codex-plugin-python/` (Codex). Both used the `boltz-compute` Python SDK and each shipped a ~350-line `scripts/query.py` wrapper per skill (2,149 LOC across six skills) that handled input parsing, payload assembly, polling, and download.
 
-The `boltz-api` Go CLI (v0.5.4, Stainless-generated from the same OpenAPI spec as the Python SDK) now exposes all that machinery natively:
+The `boltz-api` Go CLI (v0.7.0, Stainless-generated from the same OpenAPI spec as the Python SDK) now exposes all that machinery natively:
 - unified `--id` across retrieve / list-results / stop / delete-data
+- merged top-level `--input` payloads for design / screen `estimate-cost` and `start`
 - `download-results` with internal poll loop, artifact download, and `.boltz-run.json`-cursor-based resume
+- `download-status` for reading the local checkpoint without an API call
 - `estimate-cost` on every resource
 - `@json://` / `@yaml://` / `@data://` input patterns
 - idempotency via `--idempotency-key`
@@ -70,9 +72,9 @@ Alternative considered: use the server-assigned job ID as `--name`. Rejected bec
 
 ### 7. Background `download-results`, never agent-side polling
 
-**Chose:** after `start` returns synchronously, agent kicks off `download-results` with `run_in_background: true`. Progress reporting happens by peeking at the background shell's `--verbose` stderr — no new API calls.
+**Chose:** after `start` returns synchronously, agent kicks off `download-results` with `run_in_background: true`. Progress reporting happens by peeking at the background shell's default JSONL stderr or by reading `download-status` — no new API calls.
 
-**Trade:** depends on the agent host having non-blocking bash (both Claude Code and Codex do). If a session dies, the background shell dies with it, but the server-side job continues and the `boltz-check-status` skill handles recovery. **Gain:** no agent-loop polling (cheap, and avoids burning tokens on "still running" responses). One long-running tool call per job, not N. User can ask "how's it going?" anytime.
+**Trade:** depends on the agent host having non-blocking bash (both Claude Code and Codex do). If a session dies, the background shell dies with it, but the server-side job continues and the `boltz-check-status` skill handles recovery. **Gain:** no agent-loop polling (cheap, and avoids burning tokens on "still running" responses). One long-running tool call per job, not N. The CLI now emits JSONL progress on stderr by default and exposes `download-status` for local checkpoint reads, so progress can be inspected without a fresh API round-trip.
 
 ### 8. No preflight for install or auth
 

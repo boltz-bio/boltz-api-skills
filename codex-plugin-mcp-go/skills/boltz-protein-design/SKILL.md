@@ -14,31 +14,34 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
 3. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein`.
 4. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
 5. Add `rules` only on request (`excluded_amino_acids`, `excluded_sequence_motifs` with `X` wildcards, `max_hydrophobic_fraction`).
-6. Author the payload YAML, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Design cost is `(num_proteins + 1) * $0.025`** — the extra unit is the scheduler iteration.
-7. `start` to submit. Capture the ID.
-8. Launch `download-results` with Codex's background/non-blocking command facility. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
+6. Author the payload object, call `boltz_estimate_run` with `resource="protein:design"`, show the USD cost, and wait for explicit confirmation. **Design cost is `(num_proteins + 1) * $0.025`** — the extra unit is the scheduler iteration.
+7. Call `boltz_submit_run` to submit. It starts detached `download-results` polling internally and returns the job ID, run name, and output directory.
+8. After `boltz_submit_run` returns, report the job ID, run name, and output directory, then end the turn immediately. Do not run shell background commands yourself unless you're debugging the MCP server.
 9. Rank by `optimization_score` (fallback `binding_confidence`). Report top 5–10 designs with sequence, key metrics, and structure path.
 
-## Command Pattern
+## MCP Tool Pattern
 
-```bash
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
-IDEM="protein-design-<modality>-<target>-v1"
+```text
+ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}
+RUN_NAME = "protein-design-<modality>-<target>-v1"
 
-boltz-api protein:design estimate-cost \
-  --input @yaml://payload.yaml
+1. Estimate
+   boltz_estimate_run(
+     resource="protein:design",
+     payload=<request body object>
+   )
 
-ID=$(boltz-api protein:design start \
-       --idempotency-key "$IDEM" \
-       --input @yaml://payload.yaml \
-       --raw-output --transform id)
+2. Confirm with user, then submit
+   boltz_submit_run(
+     resource="protein:design",
+     run_name=RUN_NAME,
+     output_dir=ROOT,
+     poll_interval_seconds=60,
+     payload=<same request body object>
+   )
 
-# Start this command in Codex background/non-blocking mode.
-# Do not wait on the returned background session.
-boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
-  --root-dir "$ROOT" \
-  --poll-interval-seconds 60
+`boltz_submit_run` submits synchronously, then starts detached `download-results`
+internally and returns `{id, run_name, output_dir, log_path, download_pid}`.
 ```
 
 Payload keys are `num_proteins`, `target`, `binder_specification` — API body field names.
@@ -50,10 +53,12 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
-- Prefer one merged top-level payload via `--input @yaml://payload.yaml` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
-- Direct object flags still work as overrides, such as `--target @yaml://target.yaml` or `--binder-specification @json://binder.json`. Piped YAML / JSON on stdin also works, but it must use API body field names such as `num_proteins`, `target`, and `binder_specification`. Use the same slug for both `--idempotency-key` and `--name`.
-- Prefer Codex's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. Design jobs can take 30 min to several hours — `--poll-interval-seconds 60` is a sensible default. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that Codex should notify when the background command completes.
-- If Codex background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
+- Keep the payload field names exactly as the API body names shown in `references/api.md`.
+- If you drop to raw CLI for debugging, prefer one merged top-level `--input @yaml://payload.yaml` (or `@json://...`) and keep `--idempotency-key` / `--workspace-id` top-level. Direct object flags such as `--target @yaml://target.yaml` or `--binder-specification @json://binder.json` still work as overrides. Piped YAML / JSON on stdin also works, but it must use API body field names.
+- Use the same descriptive slug as `run_name`; the MCP server reuses it as both `--idempotency-key` and `--name`.
+- `boltz_submit_run` already starts detached `download-results`. Do not run `boltz-api download-results` yourself from the skill flow.
+- Only check status when the user asks. Use `boltz_get_job` for server-side status and `boltz_get_local_run` for local log / `.boltz-run.json` state.
+- If detached download needs to be restarted, use `boltz_resume_download` with the same `run_name`.
 - Only add `rules` on explicit user request.
 
 ## Escape Hatch
@@ -66,7 +71,7 @@ Read [references/api.md](references/api.md) for both `binder_specification` vari
 
 ## Outputs
 
-Under `$ROOT/$IDEM/`:
+Under `$ROOT/$RUN_NAME/`:
 
 - `.boltz-run.json`
 - `results/<pres_*>/archive.tar.gz` — one dir per generated design

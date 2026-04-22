@@ -35,8 +35,7 @@ ID=$(boltz-api small-molecule:design start \
 boltz-api download-results \
   --id "$ID" --name "$IDEM" \
   --root-dir "$ROOT" \
-  --poll-interval-seconds 60 \
-  --verbose
+  --poll-interval-seconds 60
 # → $ROOT/$IDEM/results/<pres_*>/...
 ```
 
@@ -47,9 +46,10 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 - Enforce `num_molecules >= 10` before calling `estimate-cost`. The server rejects smaller batches.
 - Cost formula: `(num_molecules + 1) * $0.025`. A batch of 10 costs $0.275, not $0.250. Quote the exact number from `estimate-cost`.
 - Treat pocket residue indices as 0-based.
-- Use `--input @yaml://` for object bodies; never `@file://`.
+- Prefer one merged top-level payload via `--input @yaml://payload.yaml` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
+- Direct object flags still work as overrides: for example `--target @yaml://target.yaml` or `--molecule-filters @json://filters.json`. Piped YAML / JSON on stdin also works, but it must use API body field names such as `num_molecules`, `target`, `chemical_space`, and `molecule_filters`. Never use `@file://`.
 - Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results`.
-- Prefer Codex's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. Design jobs can run 30 min to a few hours — `--poll-interval-seconds 60` is a sensible default. Report the job ID, run name, output directory, and that Codex should notify when the background command completes.
+- Prefer Codex's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. Design jobs can run 30 min to a few hours — `--poll-interval-seconds 60` is a sensible default. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that Codex should notify when the background command completes.
 - If Codex background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
 - Do not invent filters; only add `molecule_filters` on user request.
 

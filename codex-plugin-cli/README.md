@@ -4,7 +4,7 @@ Six Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-referen
 
 ## Prerequisites
 
-- `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.5.4`)
+- `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.7.0`)
 - `BOLTZ_COMPUTE_API_KEY` exported in the environment
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land (default: `./boltz-experiments/`)
 
@@ -38,9 +38,9 @@ Each `start`-family skill follows the same flow:
 1. Agent normalizes your inputs and authors a YAML payload.
 2. `boltz-api <resource> estimate-cost` — shows you the USD cost.
 3. You confirm.
-4. `boltz-api <resource> start --idempotency-key $IDEM --input @yaml://payload.yaml` — submits (synchronous, &lt;1s).
-5. `boltz-api download-results --id $ID --name $IDEM --root-dir $ROOT ... --verbose` — runs in the background; polls + downloads.
-6. Agent peeks at the background shell's stderr to answer "how's it going?" without burning more API calls.
+4. Submit with `boltz-api <resource> start --input @yaml://payload.yaml ...`. For the four design/screen endpoints, prefer one merged `--input` payload and keep `--idempotency-key` / `--workspace-id` top-level. Piping YAML / JSON on stdin still works, but the body must use API field names such as `molecules`, `proteins`, `target`, or `binder_specification`.
+5. `boltz-api download-results --id $ID --name $IDEM --root-dir $ROOT ...` — runs in the background; polls + downloads. It now emits machine-readable JSONL progress events on stderr by default and checkpoints local state in `.boltz-run.json`.
+6. Agent answers "how's it going?" either by peeking those JSONL progress events or by calling `boltz-api --format json download-status --name $IDEM --root-dir $ROOT` for a local-only checkpoint snapshot.
 
 Results land in `$ROOT/$IDEM/` where `$ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}` and `$IDEM` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
 
