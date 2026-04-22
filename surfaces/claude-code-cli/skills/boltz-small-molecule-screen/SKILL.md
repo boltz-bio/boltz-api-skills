@@ -1,0 +1,1 @@
+../../../../core/skills/cli/boltz-small-molecule-screen/SKILL.md

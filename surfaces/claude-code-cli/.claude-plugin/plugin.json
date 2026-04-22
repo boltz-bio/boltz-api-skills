@@ -1,0 +1,25 @@
+{
+  "name": "boltz-compute-cli",
+  "version": "0.1.0",
+  "description": "Run Boltz Compute structure prediction, screening, and de novo design workflows from Claude Code by shelling out to the boltz-api CLI. CLI-direct variant for benchmarking against the MCP variant.",
+  "author": {
+    "name": "Boltz",
+    "email": "support@boltz.bio",
+    "url": "https://boltz.bio"
+  },
+  "homepage": "https://docs.boltz.bio",
+  "repository": "https://github.com/boltz-bio/boltz-compute-skills",
+  "license": "MIT",
+  "keywords": [
+    "boltz",
+    "boltz-compute",
+    "computational-biology",
+    "protein-design",
+    "protein-screening",
+    "small-molecule-design",
+    "virtual-screening",
+    "structure-prediction",
+    "molecular-modeling",
+    "drug-discovery"
+  ]
+}

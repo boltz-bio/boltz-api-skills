@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "boltzComputeLocal": {
+      "type": "stdio",
+      "command": "./bin/boltz-compute-mcp",
+      "args": [],
+      "cwd": "."
+    }
+  }
+}

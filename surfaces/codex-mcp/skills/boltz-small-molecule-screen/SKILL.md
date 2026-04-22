@@ -1,0 +1,1 @@
+../../../../core/skills/mcp/boltz-small-molecule-screen/SKILL.md

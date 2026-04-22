@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go-build-and-test:
+    name: Go MCP server build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: core/mcp-server/go.sum
+      - name: Build
+        working-directory: core/mcp-server
+        run: go build ./cmd/boltz-compute-mcp
+      - name: Test
+        working-directory: core/mcp-server
+        run: go test ./cmd/boltz-compute-mcp
+
+  validate-manifests:
+    name: Validate plugin/MCPB manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install mcpb
+        run: npm install -g @anthropic-ai/mcpb
+      - name: Validate MCPB manifest
+        run: mcpb validate surfaces/claude-desktop-mcpb
+      - name: JSON syntax for Claude plugins
+        run: |
+          jq empty surfaces/claude-code-cli/.claude-plugin/plugin.json
+          jq empty surfaces/claude-code-mcp/.claude-plugin/plugin.json
+          jq empty surfaces/claude-code-mcp/.mcp.json
+      - name: JSON syntax for Codex plugins
+        run: |
+          jq empty surfaces/codex-cli/.codex-plugin/plugin.json
+          jq empty surfaces/codex-mcp/.codex-plugin/plugin.json
+          jq empty surfaces/codex-mcp/.mcp.json
+
+  verify-symlinks:
+    name: Verify skill symlinks resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check every surface's skill symlinks
+        run: |
+          set -euo pipefail
+          for surface in claude-code-cli claude-code-mcp codex-cli codex-mcp; do
+            for skill in boltz-structure-and-binding boltz-small-molecule-screen \
+                         boltz-small-molecule-design boltz-protein-screen \
+                         boltz-protein-design boltz-check-status; do
+              [[ -f "surfaces/$surface/skills/$skill/SKILL.md" ]] || {
+                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/SKILL.md"
+                exit 1
+              }
+              [[ -f "surfaces/$surface/skills/$skill/references/api.md" ]] || {
+                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/references/api.md"
+                exit 1
+              }
+            done
+          done
+          echo "All 4 surfaces × 6 skills × 2 files = 48 symlinks resolved."
