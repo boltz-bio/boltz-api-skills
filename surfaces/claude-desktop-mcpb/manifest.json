@@ -27,7 +27,6 @@
     "structure-prediction",
     "drug-discovery"
   ],
-  "icon": "icon.png",
   "server": {
     "type": "binary",
     "entry_point": "server/boltz-compute-mcp",

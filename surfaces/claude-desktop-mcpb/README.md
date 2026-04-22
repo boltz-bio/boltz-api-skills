@@ -7,11 +7,13 @@ Local MCP server + bundled `boltz-api` CLI, packaged as a Claude Desktop `.mcpb`
 ```
 boltz-compute-<version>.mcpb        (ZIP archive)
 ├── manifest.json
-├── icon.png
+├── icon.png                        # TODO: 512×512 PNG; add to manifest.json once available
 └── server/
     ├── boltz-compute-mcp           # Go MCP server (darwin universal or win .exe)
     └── boltz-api                   # Bundled Boltz CLI
 ```
+
+> **Icon**: the manifest intentionally does not reference an icon yet. `mcpb validate` fails if the manifest references a file that doesn't exist on disk. When the 512×512 PNG is ready, drop `icon.png` in this directory and add `"icon": "icon.png"` back to `manifest.json`.
 
 The MCP server's tools (`boltz_estimate_run`, `boltz_submit_run`, `boltz_list_jobs`, `boltz_get_job`, `boltz_resume_download`, `boltz_get_local_run`) are auto-discovered by Claude Desktop (`tools_generated: true` in the manifest).
 
