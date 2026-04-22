@@ -1,0 +1,1 @@
+../../../../core/skills/cli/boltz-check-status/SKILL.md

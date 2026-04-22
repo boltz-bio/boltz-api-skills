@@ -1,0 +1,1 @@
+../../../../core/skills/cli/boltz-protein-screen/SKILL.md

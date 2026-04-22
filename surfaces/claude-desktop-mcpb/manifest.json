@@ -1,0 +1,63 @@
+{
+  "manifest_version": "0.3",
+  "name": "boltz-compute",
+  "display_name": "Boltz Compute",
+  "version": "0.1.0",
+  "description": "Run Boltz Compute structure prediction, molecular screening, and de novo design workflows locally from Claude Desktop.",
+  "long_description": "Exposes the Boltz Compute platform as six MCP tools: estimate and submit prediction/screen/design runs, list and inspect jobs, resume downloads after interruption, and read local run state. Results are written to your local disk so large screen and design runs stay under your control. Bundles the Go MCP server and the boltz-api CLI; no external installation required.",
+  "author": {
+    "name": "Boltz",
+    "email": "support@boltz.bio",
+    "url": "https://boltz.bio"
+  },
+  "homepage": "https://docs.boltz.bio",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boltz-bio/boltz-compute-skills"
+  },
+  "documentation": "https://docs.boltz.bio",
+  "support": "https://github.com/boltz-bio/boltz-compute-skills/issues",
+  "license": "MIT",
+  "keywords": [
+    "boltz",
+    "boltz-compute",
+    "computational-biology",
+    "protein-design",
+    "virtual-screening",
+    "structure-prediction",
+    "drug-discovery"
+  ],
+  "server": {
+    "type": "binary",
+    "entry_point": "server/boltz-compute-mcp",
+    "mcp_config": {
+      "command": "${__dirname}/server/boltz-compute-mcp",
+      "args": [],
+      "env": {
+        "BOLTZ_COMPUTE_API_KEY": "${user_config.api_key}",
+        "BOLTZ_COMPUTE_OUTPUT_DIR": "${user_config.output_dir}",
+        "PATH": "${__dirname}/server:${PATH}"
+      }
+    }
+  },
+  "tools_generated": true,
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "Boltz Compute API Key",
+      "description": "API key for the Boltz Compute service. Get one at https://boltz.bio.",
+      "sensitive": true,
+      "required": true
+    },
+    "output_dir": {
+      "type": "directory",
+      "title": "Output Directory",
+      "description": "Where to write prediction results. Defaults to ./boltz-experiments in your working directory.",
+      "required": false,
+      "default": "./boltz-experiments"
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32"]
+  }
+}

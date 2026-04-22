@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "boltzComputeLocal": {
+      "type": "stdio",
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/boltz-compute-mcp",
+      "args": []
+    }
+  }
+}

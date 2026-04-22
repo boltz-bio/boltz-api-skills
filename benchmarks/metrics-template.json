@@ -1,0 +1,24 @@
+{
+  "variant": "claude-code-cli | claude-code-mcp",
+  "scenario_id": 1,
+  "run_number": 1,
+  "timestamp_iso": "2026-04-22T14:30:00Z",
+  "approvals": {
+    "bash": 0,
+    "mcp_tool": 0,
+    "file_write": 0,
+    "total": 0
+  },
+  "wall_clock_seconds": 0,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "total": 0
+  },
+  "success": true,
+  "errors_encountered": [],
+  "recovery_attempted": false,
+  "recovery_succeeded": null,
+  "artifact_paths": [],
+  "notes": ""
+}

@@ -1,0 +1,47 @@
+{
+  "name": "boltz-compute-cli",
+  "version": "0.1.0",
+  "description": "Codex plugin for Boltz Compute that gives agents six CLI-backed workflows for structure prediction, protein and small-molecule screening, de novo protein and small-molecule design, and recovery of job status and downloadable results. All skills invoke the boltz-api Go CLI directly; no Python runtime or SDK install is required.",
+  "author": {
+    "name": "Boltz",
+    "email": "support@boltz.bio",
+    "url": "https://boltz.bio"
+  },
+  "homepage": "https://docs.boltz.bio",
+  "repository": "https://github.com/boltz-bio/boltz-compute-skills",
+  "license": "MIT",
+  "keywords": [
+    "boltz",
+    "boltz-compute",
+    "boltz-api",
+    "go-cli",
+    "computational-biology",
+    "protein-design",
+    "protein-screening",
+    "small-molecule-design",
+    "virtual-screening",
+    "structure-prediction",
+    "molecular-modeling",
+    "drug-discovery",
+    "biotech"
+  ],
+  "skills": "./skills",
+  "interface": {
+    "displayName": "Boltz Compute",
+    "shortDescription": "Run Boltz Compute structure prediction, screening, design, and job-recovery workflows via the boltz-api CLI.",
+    "longDescription": "Provides six Codex skills that drive the boltz-api Go CLI: structure and binding prediction, small-molecule library screening, small-molecule design, protein library screening, protein binder design, and job-status recovery. Each skill authors a YAML request body, runs estimate-cost and then start, and backgrounds download-results so polling and artifact download happen in one idempotent resumable step. Results land under ./boltz-experiments/<run-name>/ by default (override via BOLTZ_COMPUTE_OUTPUT_DIR).",
+    "developerName": "Boltz",
+    "category": "Science",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://docs.boltz.bio",
+    "privacyPolicyURL": "https://boltz.bio/privacy",
+    "defaultPrompt": [
+      "Screen this compound library against my target protein and rank the hits.",
+      "Design peptide, nanobody, or antibody binders for this target epitope.",
+      "Check my Boltz jobs, tell me what finished, and download the results."
+    ]
+  }
+}
