@@ -22,7 +22,13 @@ Use this skill to recover state across sessions and to inspect or download resul
 
 ## Input Normalization
 
-- Treat a provided ID as an opaque Boltz job ID. Do not infer the endpoint from the prefix; the wrapper probes all supported resources.
+- Use the Boltz ID prefix to infer the resource type when present:
+  - `pred_*` → `prediction`
+  - `prot_des_*` → `protein_design_ppi`
+  - `prot_scr_*` → `protein_library_screen_ppi`
+  - `sm_des_*` → `boltz_sm_design`
+  - `sm_scr_*` → `boltz_sm_screen`
+- If the prefix is unfamiliar, the wrapper falls back to probing all supported resources.
 - Use `--workspace-id` only when the user explicitly needs a non-default workspace and has the right key scope.
 - Use `--json` only when structured machine-readable output is more useful than the default text table.
 

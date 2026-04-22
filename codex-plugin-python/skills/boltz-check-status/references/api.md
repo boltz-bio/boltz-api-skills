@@ -15,7 +15,7 @@ The wrapper uses:
 - `list()` to enumerate recent jobs
 - `retrieve()` to inspect a specific job
 - `list_results()` for screen and design jobs
-- `NotFoundError` handling to probe unknown job IDs across resource types
+- job ID prefixes to route to the expected resource type, with `NotFoundError` fallback only for unknown prefixes
 
 ## Authentication
 
@@ -29,9 +29,18 @@ Default mode calls each `list()` endpoint, merges the rows, sorts by `created_at
 
 - `id`
 - `resource_type`
+- `resource_prefix`
 - `status`
 - `created_at`
 - `completed_at`
+
+ID prefix map:
+
+- `pred_*` → `prediction`
+- `prot_des_*` → `protein_design_ppi`
+- `prot_scr_*` → `protein_library_screen_ppi`
+- `sm_des_*` → `boltz_sm_design`
+- `sm_scr_*` → `boltz_sm_screen`
 
 Parameters:
 
@@ -48,7 +57,7 @@ Relevant progress fields by resource:
 
 ## Inspect Mode
 
-`--id JOB_ID` probes each `retrieve()` method in turn until one succeeds.
+`--id JOB_ID` uses the prefix to pick the expected `retrieve()` method first. If the prefix is unknown, the wrapper probes the supported resource types in turn until one succeeds.
 
 Use inspect mode when:
 

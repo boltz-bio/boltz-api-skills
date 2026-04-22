@@ -10,47 +10,47 @@ Use this skill for one defined complex, not a library workflow.
 1. Normalize the inputs into `entities`: proteins, RNA, DNA, ligand SMILES, or ligand CCD codes. Chain IDs go in entity order (`A`, `B`, `C`, …) unless the user specifies otherwise.
 2. If the user wants binding metrics, add a `binding` block and pick the right variant (`ligand_protein_binding` for a single ligand binder chain, otherwise `protein_protein_binding`).
 3. Only add `constraints` / `bonds` / `modifications` / `model_options` if the user asks.
-4. Author the payload YAML, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
-5. `start` to submit (synchronous). Capture the ID.
-6. Launch `download-results` with Codex's background/non-blocking command facility so polling + download continue without blocking the Codex session. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
+4. Author the payload object, call `boltz_estimate_run` with `resource="predictions:structure-and-binding"` and `model="boltz-2.1"`, show the USD cost, and wait for explicit confirmation.
+5. Call `boltz_submit_run` to submit. It starts detached `download-results` polling internally and returns the job ID, run name, and output directory.
+6. After `boltz_submit_run` returns, report the job ID, run name, and output directory, then end the turn immediately. Do not run shell background commands yourself unless you're debugging the MCP server.
 
-## Command Pattern
+## MCP Tool Pattern
 
-```bash
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
-IDEM="sab-<target>-<ligand>-v1"    # short descriptive slug
+```text
+ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}
+RUN_NAME = "sab-<target>-<ligand>-v1"   # short descriptive slug
 
-# 1. estimate
-boltz-api predictions:structure-and-binding estimate-cost \
-  --model boltz-2.1 \
-  --input @yaml://payload.yaml
+1. Estimate
+   boltz_estimate_run(
+     resource="predictions:structure-and-binding",
+     model="boltz-2.1",
+     payload=<request body object>
+   )
 
-# 2. confirm with user, then submit
-ID=$(boltz-api predictions:structure-and-binding start \
-       --model boltz-2.1 \
-       --idempotency-key "$IDEM" \
-       --input @yaml://payload.yaml \
-       --raw-output --transform id)
+2. Confirm with user, then submit
+   boltz_submit_run(
+     resource="predictions:structure-and-binding",
+     model="boltz-2.1",
+     run_name=RUN_NAME,
+     output_dir=ROOT,
+     poll_interval_seconds=10,
+     payload=<same request body object>
+   )
 
-# 3. Start this command in Codex background/non-blocking mode.
-# Do not wait on the returned background session.
-boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
-  --root-dir "$ROOT" \
-  --poll-interval-seconds 10
-# → $ROOT/$IDEM/outputs/archive.tar.gz, .boltz-run.json
+`boltz_submit_run` submits synchronously, then starts detached `download-results`
+internally and returns `{id, run_name, output_dir, log_path, download_pid}`.
 ```
 
 ## Always Do This
 
-- Use `--input @yaml://payload.yaml` or `@json://payload.json`. Never `@./payload.yaml` or `@file://` — those error opaquely on object-typed flags.
+- Keep the payload field names exactly as the API body names shown in `references/api.md`.
 - Residue indices are 0-based wherever the payload asks for residue positions (constraints, modifications, contact tokens).
 - For CIF/PDB bytes embedded in `--target` / `structure.data`, use `@data:///absolute/path/file.cif` — it sniffs binary and base64-encodes. Don't use bare `@path` for binary data.
-- Use the same slug as both `--idempotency-key` at submit time and `--name` at download time so re-runs are idempotent and resume from `.boltz-run.json`.
-- Prefer Codex's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that Codex should notify when the background command completes.
-- If Codex background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
-- Only check progress when the user asks. Use the background session notification/output if available, or read `download-results.log` for detached fallback runs. Do not loop `retrieve` yourself.
-- Poll interval: keep `--poll-interval-seconds 10` for SAB — predictions usually finish in under a few minutes.
+- Use the same descriptive slug as `run_name`; the MCP server reuses it as both `--idempotency-key` and `--name`.
+- `boltz_submit_run` already starts detached `download-results`. Do not run `boltz-api download-results` yourself from the skill flow.
+- Only check progress when the user asks. Use `boltz_get_job` for server-side status and `boltz_get_local_run` for local log / `.boltz-run.json` state.
+- If detached download needs to be restarted, use `boltz_resume_download` with the same `run_name`.
+- Poll interval: keep `poll_interval_seconds=10` for SAB — predictions usually finish in under a few minutes.
 
 ## Escape Hatch
 
@@ -64,7 +64,7 @@ Read [references/api.md](references/api.md) for entity shapes, binding variants,
 
 ## Outputs
 
-Under `$ROOT/$IDEM/`:
+Under `$ROOT/$RUN_NAME/`:
 
 - `.boltz-run.json` — run metadata, cursor, idempotency key
 - `outputs/archive.tar.gz` — unpacks to `prediction/{metrics.json, sample_*_predicted_structure.cif, sample_*_pae.npz}`

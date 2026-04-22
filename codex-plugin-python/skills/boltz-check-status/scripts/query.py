@@ -5,8 +5,9 @@ Default: paginates each of {predictions.structure_and_binding,
 small_molecule.{design,library_screen}, protein.{design,library_screen}}, merges,
 sorts by created_at desc, prints a table to stdout.
 
---id <job_id>: probes each retrieve() endpoint until one succeeds (catching
-NotFoundError); prints the full record (and paginated results when applicable).
+--id <job_id>: routes from the standard job ID prefix when available
+(`pred_`, `prot_des_`, `prot_scr_`, `sm_des_`, `sm_scr_`). Unknown prefixes
+fall back to probing each retrieve() endpoint until one succeeds.
 
 --id <job_id> --download: re-downloads artifacts into $BOLTZ_OUTPUT_DIR/<id>/
 unless --output-dir is provided.
@@ -104,6 +105,46 @@ RESOURCES = [
     ("protein.library_screen", lambda c: c.protein.library_screen),
 ]
 
+RESOURCE_TYPE_BY_LABEL = {
+    "structure_and_binding": "prediction",
+    "small_molecule.design": "boltz_sm_design",
+    "small_molecule.library_screen": "boltz_sm_screen",
+    "protein.design": "protein_design_ppi",
+    "protein.library_screen": "protein_library_screen_ppi",
+}
+
+RESOURCE_PREFIX_BY_TYPE = {
+    "prediction": "pred",
+    "protein_design_ppi": "prot_des",
+    "protein_library_screen_ppi": "prot_scr",
+    "boltz_sm_design": "sm_des",
+    "boltz_sm_screen": "sm_scr",
+}
+
+RESOURCE_LABEL_BY_PREFIX = [
+    ("prot_des", "protein.design"),
+    ("prot_scr", "protein.library_screen"),
+    ("sm_des", "small_molecule.design"),
+    ("sm_scr", "small_molecule.library_screen"),
+    ("pred", "structure_and_binding"),
+]
+
+
+def resource_type_for_label(label: str) -> str:
+    return RESOURCE_TYPE_BY_LABEL.get(label, label)
+
+
+def resource_prefix_for_label(label: str) -> str:
+    return RESOURCE_PREFIX_BY_TYPE.get(resource_type_for_label(label), "")
+
+
+def infer_label_from_job_id(job_id: str) -> str | None:
+    job_id = job_id.strip()
+    for prefix, label in RESOURCE_LABEL_BY_PREFIX:
+        if job_id == prefix or job_id.startswith(prefix + "_"):
+            return label
+    return None
+
 
 def list_all(client: Any, workspace_id: str | None, limit: int) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
@@ -116,9 +157,11 @@ def list_all(client: Any, workspace_id: str | None, limit: int) -> list[dict[str
             page = res.list(**kw)
             count = 0
             for item in page:
+                resource_type = resource_type_for_label(label)
                 rows.append({
                     "id": _get(item, "id") or "",
-                    "resource_type": label,
+                    "resource_type": resource_type,
+                    "resource_prefix": resource_prefix_for_label(label),
                     "status": _get(item, "status") or "",
                     "created_at": _get(item, "created_at") or "",
                     "completed_at": _get(item, "completed_at") or "",
@@ -149,7 +192,11 @@ def probe_id(client: Any, job_id: str, workspace_id: str | None) -> tuple[str, A
     kw: dict[str, Any] = {}
     if workspace_id:
         kw["workspace_id"] = workspace_id
-    for label, retrieve_fn, _has_results in RETRIEVE_TARGETS:
+    routed_label = infer_label_from_job_id(job_id)
+    targets = RETRIEVE_TARGETS
+    if routed_label is not None:
+        targets = [target for target in RETRIEVE_TARGETS if target[0] == routed_label]
+    for label, retrieve_fn, _has_results in targets:
         try:
             rec = retrieve_fn(client, job_id, kw)
             if rec is not None:
@@ -255,7 +302,7 @@ def print_table(rows: list[dict[str, Any]]) -> None:
     if not rows:
         sys.stdout.write("(no jobs found)\n")
         return
-    cols = ["id", "resource_type", "status", "created_at", "completed_at"]
+    cols = ["id", "resource_type", "resource_prefix", "status", "created_at", "completed_at"]
     widths = {c: max(len(c), max((len(str(r.get(c, ""))) for r in rows), default=0)) for c in cols}
     header = "  ".join(c.ljust(widths[c]) for c in cols)
     sys.stdout.write(header + "\n")
@@ -269,7 +316,7 @@ def print_table(rows: list[dict[str, Any]]) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="List or inspect Boltz Compute jobs (Python SDK).")
-    p.add_argument("--id", help="Probe each retrieve endpoint for this job ID and dump full record (and paginated results, where applicable).")
+    p.add_argument("--id", help="Route from the job ID prefix when possible, otherwise probe the retrieve endpoints, then dump the full record.")
     p.add_argument("--limit", type=int, default=100, help="Per-resource list limit (default 100).")
     p.add_argument("--workspace-id", help="Optional workspace ID (admin keys only).")
     p.add_argument("--download", action="store_true", help="With --id: re-download artifacts into $BOLTZ_OUTPUT_DIR/<id>/ unless --output-dir is provided.")
@@ -289,7 +336,17 @@ def main() -> int:
 
     if args.dry_run:
         if args.id:
-            print(json.dumps({"action": "probe_retrieve", "id": args.id, "endpoints": [r[0] for r in RETRIEVE_TARGETS], "download": args.download}, indent=2))
+            routed_label = infer_label_from_job_id(args.id)
+            targets = RETRIEVE_TARGETS if routed_label is None else [r for r in RETRIEVE_TARGETS if r[0] == routed_label]
+            print(json.dumps({
+                "action": "probe_retrieve",
+                "id": args.id,
+                "resource_type": resource_type_for_label(routed_label) if routed_label else None,
+                "resource_prefix": resource_prefix_for_label(routed_label) if routed_label else None,
+                "prefix_routed": routed_label is not None,
+                "endpoints": [r[0] for r in targets],
+                "download": args.download,
+            }, indent=2))
         else:
             print(json.dumps({"action": "list_all", "endpoints": [r[0] for r in RESOURCES], "limit": args.limit, "workspace_id": args.workspace_id}, indent=2))
         return 0
@@ -297,13 +354,20 @@ def main() -> int:
     client = _client(api_key)
 
     if args.id:
-        sys.stderr.write(f"[boltz] probing {args.id} across all resources\n")
+        routed_label = infer_label_from_job_id(args.id)
+        if routed_label is not None:
+            sys.stderr.write(
+                f"[boltz] routing {args.id} via prefix {resource_prefix_for_label(routed_label)} -> {resource_type_for_label(routed_label)}\n"
+            )
+        else:
+            sys.stderr.write(f"[boltz] unknown prefix for {args.id}; probing all resources\n")
         match = probe_id(client, args.id, args.workspace_id)
         if match is None:
             sys.stderr.write(f"[boltz] no resource returned id={args.id}\n")
             print(json.dumps({"id": args.id, "found": False}, indent=2))
             return 1
         label, record = match
+        resource_type = resource_type_for_label(label)
         results: list[Any] | None = None
         if label != "structure_and_binding":
             try:
@@ -326,7 +390,13 @@ def main() -> int:
             download_artifacts(label, record, results, out_dir)
             (out_dir / "results.json").write_text(json.dumps(rec_dict, indent=2, default=str))
             sys.stderr.write(f"[boltz] wrote {out_dir/'results.json'}\n")
-        print(json.dumps({"id": args.id, "found": True, "resource_type": label, "record": rec_dict}, indent=2, default=str))
+        print(json.dumps({
+            "id": args.id,
+            "found": True,
+            "resource_type": resource_type,
+            "resource_prefix": resource_prefix_for_label(label),
+            "record": rec_dict,
+        }, indent=2, default=str))
         return 0
 
     rows = list_all(client, args.workspace_id, args.limit)

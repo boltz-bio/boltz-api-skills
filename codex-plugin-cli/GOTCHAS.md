@@ -23,11 +23,11 @@ If any of this breaks, the SKILL.md command pattern is wrong and every other ski
 
 - Submit a job, launch `download-results` in the background, `kill -9` the process mid-download.
 - Re-run the exact same `download-results --id --name --root-dir` command.
-- Verify it reads `.boltz-run.json`, advances from `cursor_after_id`, downloads only new results. CLI_USAGE §4.3 claims this works — we haven't personally triggered it on v0.5.4.
+- Verify it reads `.boltz-run.json`, advances from `cursor_after_id`, downloads only new results. Also verify `download-status --name $IDEM --root-dir ... --format json` reflects the interrupted and resumed state cleanly. We haven't personally triggered this on v0.7.0 yet.
 
 ### - [ ] `modifications` is actually optional (CLI_USAGE §3)
 
-We removed the `modifications: []` gotcha from the plan and docs based on CLI_USAGE.md's claim that it's fixed in v0.5.4. Smoke test:
+We removed the `modifications: []` gotcha from the plan and docs based on the CLI changelog line that omitted polymer modifications are fixed. Smoke test:
 
 ```yaml
 entities:
@@ -86,11 +86,11 @@ If any route wrong, tune the `description` frontmatter. The Python plugin's desc
 
 ### - [ ] Background-shell peek works in Codex
 
-We designed the "submit → background download → peek at stderr for progress" flow around Claude Code's `run_in_background: true` bash tool. Codex has non-blocking bash too, but we haven't verified that (a) the stderr from `download-results --verbose` is peekable from the agent side, (b) the agent can read it without killing the shell, (c) the shell persists across user turns. If Codex differs, we either need a skill-level workaround (e.g. `nohup boltz-api ... > /tmp/$IDEM.log 2>&1 &`) or a different default flow for Codex.
+We designed the "submit → background download → inspect local progress" flow around Claude Code's `run_in_background: true` bash tool. Codex has non-blocking bash too, but we haven't verified that (a) the JSONL stderr from `download-results` is peekable from the agent side, (b) the agent can read it without killing the shell, (c) the shell persists across user turns. If Codex differs, the new `download-status` command is the first fallback, and a detached `nohup boltz-api ... > /tmp/$IDEM.log 2>&1 &` pattern is the second.
 
 ### - [ ] CLI version floor
 
-SKILL.md and `plugin.json` assume v0.5.4's unified `--id` flag. If a user has `<0.5.0` installed, retrieve/list-results/stop/delete-data all take `--screen-id` / `--run-id` instead and every skill's command pattern will fail. Options: (a) bump README to say "boltz-api >= 0.5.0 required"; (b) add a one-line version check in each SKILL.md; (c) live with it since we're not preflighting anyway. Pick.
+SKILL.md and `plugin.json` now assume the current v0.7.0 surface: unified `--id`, merged `--input` on design/screen commands, and `download-status`. If a user has `<0.7.0` installed, some commands and help text will differ enough that the skill instructions can mislead them. Options: (a) bump README to say "boltz-api >= 0.7.0 required"; (b) add a one-line version check in each SKILL.md; (c) live with it since we're not preflighting anyway. Pick.
 
 ---
 

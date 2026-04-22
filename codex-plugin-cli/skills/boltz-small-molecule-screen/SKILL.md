@@ -34,20 +34,20 @@ ID=$(boltz-api small-molecule:library-screen start \
 boltz-api download-results \
   --id "$ID" --name "$IDEM" \
   --root-dir "$ROOT" \
-  --poll-interval-seconds 30 \
-  --verbose
+  --poll-interval-seconds 30
 # → $ROOT/$IDEM/results/<pres_*>/...
 ```
 
-Payload keys in `payload.yaml` are `molecules`, `target`, `molecule_filters` — the API body field names, not the CLI flag names `--molecule` / `--target` / `--molecule-filters`.
+Payload keys in `payload.yaml` are `molecules`, `target`, `molecule_filters` — the API body field names, not the direct CLI flag names `--molecule` / `--target` / `--molecule-filters`.
 
 ## Always Do This
 
-- Use `--input @yaml://` for object bodies; never `@file://` or `@./` (errors opaquely).
+- Prefer one merged top-level payload via `--input @yaml://payload.yaml` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
+- Direct object flags still work as overrides, such as `--target @yaml://target.yaml`, `--molecule-filters @json://filters.json`, or repeated `--molecule @json://mol-1.json` entries. Piped YAML / JSON on stdin also works, but it must use API body field names such as `molecules`, `target`, and `molecule_filters`. Never use `@file://` or `@./`.
 - Treat pocket residue indices as 0-based.
 - Do not invent medicinal-chemistry filters. Only add `molecule_filters` if the user asks; mention the catalog as an option.
 - Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results` so re-runs resume via `.boltz-run.json`.
-- Prefer Codex's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. Report the job ID, run name, output directory, and that Codex should notify when the background command completes.
+- Prefer Codex's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that Codex should notify when the background command completes.
 - If Codex background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
 - Only check status when the user asks. Use the background session notification/output if available, or read `download-results.log` for detached fallback runs. Never run a manual poll loop.
 - Cost is $0.025 per molecule — quote the exact number from `estimate-cost` before submitting.
