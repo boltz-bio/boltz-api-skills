@@ -1,3 +1,7 @@
+# NEW codex-plugin-cli
+
+To test it, just tell your agent to install it for you in your codex session, then start a new codex session. You need to have an API key in the env var BOLTZ_COMPUTE_API_KEY and also already cli installed. Otherwise it should just work
+
 # Boltz Compute Skills
 
 A collection of agent skills for running Boltz protein structure predictions through AI coding assistants.
@@ -26,7 +30,7 @@ A collection of agent skills for running Boltz protein structure predictions thr
 ### Installation
 
 1. Clone the repo
-2. Tell Codex to add this plugin from the local path
+2. Tell Codex to add this plugin from the local path `boltz-compute-skills/codex-plugin-python`
 3. Start a fresh session — you should see the plugin listed under `/plugins`
 
 ---

@@ -1,0 +1,72 @@
+---
+name: boltz-small-molecule-design
+description: Generate novel small-molecule binders for a protein target with the Boltz Compute API and return ranked candidate SMILES with predicted complex structures. TRIGGER when the user wants to design, generate, or propose new ligands or hits for a target and does not already have a compound library. Not for screening user-supplied molecules.
+---
+
+## Workflow
+
+Use this skill when the user wants de novo small-molecule binders (no existing library).
+
+1. Normalize the target: one or more protein sequences into `target.entities`, plus optional `pocket_residues` (0-based) and/or `reference_ligands` (known binders to seed pocket detection).
+2. Pick `num_molecules` — minimum **10**, server rejects anything lower. If the user says a smaller number, explain the floor and propose 10.
+3. Only add `chemical_space` (e.g. `"enamine_real"`) if the user explicitly wants synthesis-aware generation within that library.
+4. Only add `molecule_filters` on explicit request — the default filtering is usually fine.
+5. Author the payload YAML, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Design cost is `(num_molecules + 1) * $0.025`** — the extra unit is the scheduler iteration.
+6. `start` to submit (synchronous). Capture the ID.
+7. Launch `download-results` with Codex's background/non-blocking command facility; it polls, paginates, downloads per-hit structures, and exits when terminal. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
+8. Rank hits by `optimization_score` descending and report top 5–10 with `smiles`, `binding_confidence`, and structure path.
+
+## Command Pattern
+
+```bash
+ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
+IDEM="sm-design-<target>-<batch>-v1"
+
+boltz-api small-molecule:design estimate-cost \
+  --input @yaml://payload.yaml
+
+ID=$(boltz-api small-molecule:design start \
+       --idempotency-key "$IDEM" \
+       --input @yaml://payload.yaml \
+       --raw-output --transform id)
+
+# Start this command in Codex background/non-blocking mode.
+# Do not wait on the returned background session.
+boltz-api download-results \
+  --id "$ID" --name "$IDEM" \
+  --root-dir "$ROOT" \
+  --poll-interval-seconds 60 \
+  --verbose
+# → $ROOT/$IDEM/results/<pres_*>/...
+```
+
+Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters` — the API body field names.
+
+## Always Do This
+
+- Enforce `num_molecules >= 10` before calling `estimate-cost`. The server rejects smaller batches.
+- Cost formula: `(num_molecules + 1) * $0.025`. A batch of 10 costs $0.275, not $0.250. Quote the exact number from `estimate-cost`.
+- Treat pocket residue indices as 0-based.
+- Use `--input @yaml://` for object bodies; never `@file://`.
+- Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results`.
+- Prefer Codex's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. Design jobs can run 30 min to a few hours — `--poll-interval-seconds 60` is a sensible default. Report the job ID, run name, output directory, and that Codex should notify when the background command completes.
+- If Codex background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
+- Do not invent filters; only add `molecule_filters` on user request.
+
+## Escape Hatch
+
+- Payload reference: <https://docs.boltz.bio/api-reference/api-input-format.md>
+- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- CLI flag names: `boltz-api small-molecule:design start --help`
+
+Read [references/api.md](references/api.md) for the `target`, `chemical_space`, and `molecule_filters` shapes (filter catalog matches the screen endpoint).
+
+## Outputs
+
+Under `$ROOT/$IDEM/`:
+
+- `.boltz-run.json`
+- `results/<pres_*>/archive.tar.gz` — one dir per generated candidate
+- `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
+
+Per-result fields to rank on: `smiles`, `metrics.optimization_score` (primary), `metrics.binding_confidence`, `metrics.structure_confidence`, `metrics.complex_plddt`, `metrics.complex_iplddt`, `metrics.iptm`, `metrics.ptm`.
