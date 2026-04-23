@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -14,6 +17,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -32,6 +36,7 @@ const (
 	defaultListLimit   = 20
 	defaultTotalLimit  = 20
 	defaultStatusLines = 30
+	authEventTimeout   = 30 * time.Second
 )
 
 type resourceDescriptor struct {
@@ -121,11 +126,76 @@ type getLocalRunInput struct {
 	LogTailLines int    `json:"log_tail_lines,omitempty" jsonschema:"How many trailing log lines to return; defaults to 30"`
 }
 
+type authLoginInput struct {
+	IssuerURL   string `json:"issuer_url,omitempty" jsonschema:"Optional OAuth issuer override, for example http://localhost:3000 for local Lab"`
+	OpenBrowser bool   `json:"open_browser,omitempty" jsonschema:"Whether the CLI subprocess should try to open the verification URL automatically; defaults to false so the agent can show the URL/code"`
+}
+
+type authCompleteInput struct {
+	PendingID string `json:"pending_id,omitempty" jsonschema:"Pending login ID returned by boltz_auth_login; omit only when there is exactly one pending login"`
+}
+
+type noInput struct{}
+
+type pendingAuthLogin struct {
+	ID                      string
+	URL                     string
+	VerificationURI         string
+	VerificationURIComplete string
+	UserCode                string
+	ExpiresIn               any
+	Interval                any
+	StartedAt               time.Time
+	Command                 []string
+	WorkingDirectory        string
+	mu                      sync.Mutex
+	Status                  string
+	Error                   string
+	Stderr                  string
+	Warnings                []string
+	CompletedAt             *time.Time
+	ready                   chan error
+	process                 *os.Process
+}
+
+var pendingAuthLogins = struct {
+	sync.Mutex
+	items map[string]*pendingAuthLogin
+}{items: map[string]*pendingAuthLogin{}}
+
 func main() {
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    serverName,
 		Version: serverVersion,
 	}, nil)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "boltz_auth_login",
+		Title:       "Start Boltz Login",
+		Description: "Start OAuth device-code login through boltz-api and return the URL/code the user should approve.",
+		Annotations: writeExternalTool("Start Boltz Login", true),
+	}, handleAuthLogin)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "boltz_auth_complete",
+		Title:       "Check Boltz Login",
+		Description: "Check whether a pending OAuth device-code login has completed and stored tokens locally.",
+		Annotations: readOnlyExternalTool("Check Boltz Login"),
+	}, handleAuthComplete)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "boltz_auth_status",
+		Title:       "Boltz Auth Status",
+		Description: "Return boltz-api auth status as structured JSON without refreshing tokens.",
+		Annotations: readOnlyExternalTool("Boltz Auth Status"),
+	}, handleAuthStatus)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "boltz_auth_logout",
+		Title:       "Boltz Logout",
+		Description: "Clear local Boltz OAuth session state through boltz-api auth logout.",
+		Annotations: writeExternalTool("Boltz Logout", false),
+	}, handleAuthLogout)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "boltz_estimate_run",
@@ -564,6 +634,101 @@ func handleGetLocalRun(_ context.Context, _ *mcp.CallToolRequest, input getLocal
 	return nil, out, nil
 }
 
+func handleAuthLogin(ctx context.Context, _ *mcp.CallToolRequest, input authLoginInput) (*mcp.CallToolResult, map[string]any, error) {
+	baseDir := resolveBaseDir()
+	pending, err := startAuthLoginProcess(baseDir, input)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	select {
+	case err := <-pending.ready:
+		if err != nil {
+			return nil, nil, err
+		}
+	case <-time.After(authEventTimeout):
+		pending.markFailed("timed out waiting for boltz-api to emit a device-code auth URL")
+		if pending.process != nil {
+			_ = pending.process.Kill()
+		}
+		return nil, nil, errors.New("timed out waiting for boltz-api auth login to emit a device-code auth URL")
+	case <-ctx.Done():
+		pending.markFailed(ctx.Err().Error())
+		if pending.process != nil {
+			_ = pending.process.Kill()
+		}
+		return nil, nil, ctx.Err()
+	}
+
+	response := pending.snapshot()
+	response["instructions"] = "Ask the user to open the URL, confirm the displayed code, and then call boltz_auth_complete with pending_id to check whether token storage finished."
+	return nil, response, nil
+}
+
+func handleAuthComplete(_ context.Context, _ *mcp.CallToolRequest, input authCompleteInput) (*mcp.CallToolResult, map[string]any, error) {
+	pending, err := selectPendingAuthLogin(input.PendingID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	response := pending.snapshot()
+	switch response["status"] {
+	case "success":
+		response["instructions"] = "Authentication is complete. Continue the original Boltz task."
+	case "failed":
+		response["instructions"] = "Authentication failed. Show the error to the user and start a new boltz_auth_login if they want to retry."
+	default:
+		response["instructions"] = "Authentication is still pending. Ask the user to finish approval in the browser, then call boltz_auth_complete again."
+	}
+	return nil, response, nil
+}
+
+func handleAuthStatus(ctx context.Context, _ *mcp.CallToolRequest, _ noInput) (*mcp.CallToolResult, map[string]any, error) {
+	baseDir := resolveBaseDir()
+	args := []string{"--format", "json", "auth", "status"}
+	stdout, stderr, err := runBoltzCommandRaw(ctx, baseDir, args)
+	if err != nil && strings.TrimSpace(stdout) == "" {
+		return nil, nil, wrapBoltzError(args, stdout, stderr, err)
+	}
+
+	response := map[string]any{
+		"command":           commandWithBinary(args),
+		"working_directory": baseDir,
+		"raw_output":        stdout,
+	}
+	if strings.TrimSpace(stderr) != "" {
+		response["stderr"] = stderr
+	}
+	if err != nil {
+		response["exit_error"] = err.Error()
+	}
+	if parsed, parseErr := parseStructuredText(stdout); parseErr == nil && parsed != nil {
+		response["status"] = parsed
+	} else if parseErr != nil {
+		response["parse_warning"] = parseErr.Error()
+	}
+	return nil, response, nil
+}
+
+func handleAuthLogout(ctx context.Context, _ *mcp.CallToolRequest, _ noInput) (*mcp.CallToolResult, map[string]any, error) {
+	baseDir := resolveBaseDir()
+	args := []string{"auth", "logout"}
+	stdout, stderr, err := runBoltzCommandRaw(ctx, baseDir, args)
+	if err != nil {
+		return nil, nil, wrapBoltzError(args, stdout, stderr, err)
+	}
+
+	response := map[string]any{
+		"command":           commandWithBinary(args),
+		"working_directory": baseDir,
+		"raw_output":        stdout,
+	}
+	if strings.TrimSpace(stderr) != "" {
+		response["stderr"] = stderr
+	}
+	return nil, response, nil
+}
+
 func appendCommonArgs(args []string, model string, workspaceID string) []string {
 	if strings.TrimSpace(model) != "" {
 		args = append(args, "--model", model)
@@ -621,6 +786,258 @@ func readJSONFile(path string) (map[string]any, error) {
 		return nil, fmt.Errorf("parse %s: %w", path, err)
 	}
 	return out, nil
+}
+
+func startAuthLoginProcess(baseDir string, input authLoginInput) (*pendingAuthLogin, error) {
+	args := authLoginArgs(input)
+	cmd := exec.Command("boltz-api", args...)
+	cmd.Dir = baseDir
+	cmd.Env = os.Environ()
+	cmd.Stdin = nil
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("create auth login stdout pipe: %w", err)
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, fmt.Errorf("create auth login stderr pipe: %w", err)
+	}
+
+	pending := &pendingAuthLogin{
+		ID:               randomPendingID(),
+		StartedAt:        time.Now().UTC(),
+		Command:          commandWithBinary(args),
+		WorkingDirectory: baseDir,
+		Status:           "starting",
+		ready:            make(chan error, 1),
+	}
+
+	if err := cmd.Start(); err != nil {
+		return nil, wrapBoltzError(args, "", "", err)
+	}
+	pending.process = cmd.Process
+	storePendingAuthLogin(pending)
+
+	go pending.collectStderr(stderrPipe)
+	go pending.collectStdout(stdoutPipe)
+	go pending.waitForProcess(cmd)
+
+	return pending, nil
+}
+
+func authLoginArgs(input authLoginInput) []string {
+	args := make([]string, 0, 8)
+	if !input.OpenBrowser {
+		args = append(args, "--no-browser")
+	}
+	if issuerURL := strings.TrimSpace(input.IssuerURL); issuerURL != "" {
+		args = append(args, "--auth-issuer-url", issuerURL)
+	}
+	return append(args, "auth", "login", "--device-code", "--json-events")
+}
+
+func storePendingAuthLogin(pending *pendingAuthLogin) {
+	pendingAuthLogins.Lock()
+	defer pendingAuthLogins.Unlock()
+	pendingAuthLogins.items[pending.ID] = pending
+}
+
+func selectPendingAuthLogin(id string) (*pendingAuthLogin, error) {
+	pendingAuthLogins.Lock()
+	defer pendingAuthLogins.Unlock()
+
+	if trimmed := strings.TrimSpace(id); trimmed != "" {
+		pending, ok := pendingAuthLogins.items[trimmed]
+		if !ok {
+			return nil, fmt.Errorf("pending login %q not found", trimmed)
+		}
+		return pending, nil
+	}
+
+	if len(pendingAuthLogins.items) == 0 {
+		return nil, errors.New("no pending Boltz auth login exists; call boltz_auth_login first")
+	}
+	if len(pendingAuthLogins.items) > 1 {
+		ids := make([]string, 0, len(pendingAuthLogins.items))
+		for pendingID := range pendingAuthLogins.items {
+			ids = append(ids, pendingID)
+		}
+		sort.Strings(ids)
+		return nil, fmt.Errorf("multiple pending Boltz auth logins exist; pass pending_id explicitly. pending_ids=%s", strings.Join(ids, ", "))
+	}
+	for _, pending := range pendingAuthLogins.items {
+		return pending, nil
+	}
+	return nil, errors.New("no pending Boltz auth login exists; call boltz_auth_login first")
+}
+
+func (p *pendingAuthLogin) collectStderr(reader io.Reader) {
+	data, err := io.ReadAll(reader)
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if trimmed := strings.TrimSpace(string(data)); trimmed != "" {
+		p.Stderr = trimmed
+	}
+	if err != nil && p.Status != "success" {
+		p.Status = "failed"
+		p.Error = fmt.Sprintf("read auth login stderr: %v", err)
+		p.signalReadyLocked(errors.New(p.Error))
+	}
+}
+
+func (p *pendingAuthLogin) collectStdout(reader io.Reader) {
+	scanner := bufio.NewScanner(reader)
+	scanner.Buffer(make([]byte, 0, 16*1024), 1024*1024)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		var event map[string]any
+		if err := json.Unmarshal([]byte(line), &event); err != nil {
+			p.appendWarning(fmt.Sprintf("failed to parse auth login event %q: %v", line, err))
+			continue
+		}
+		p.applyAuthEvent(event)
+	}
+	if err := scanner.Err(); err != nil {
+		p.markFailed(fmt.Sprintf("read auth login stdout: %v", err))
+	}
+}
+
+func (p *pendingAuthLogin) applyAuthEvent(event map[string]any) {
+	eventName, _ := event["event"].(string)
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	switch eventName {
+	case "auth_url":
+		p.URL = stringFromAny(event["url"])
+		p.VerificationURI = stringFromAny(event["verification_uri"])
+		p.VerificationURIComplete = stringFromAny(event["verification_uri_complete"])
+		p.UserCode = stringFromAny(event["user_code"])
+		p.ExpiresIn = event["expires_in"]
+		p.Interval = event["interval"]
+		p.Status = "authorization_pending"
+		p.signalReadyLocked(nil)
+	case "success":
+		now := time.Now().UTC()
+		p.Status = "success"
+		p.CompletedAt = &now
+		p.signalReadyLocked(nil)
+	case "warning":
+		if message := stringFromAny(event["message"]); message != "" {
+			p.Warnings = append(p.Warnings, message)
+		}
+	default:
+		p.Warnings = append(p.Warnings, fmt.Sprintf("unknown auth login event %q", eventName))
+	}
+}
+
+func (p *pendingAuthLogin) waitForProcess(cmd *exec.Cmd) {
+	err := cmd.Wait()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if err != nil {
+		if p.Status != "success" && p.Status != "failed" {
+			p.Status = "failed"
+			p.Error = err.Error()
+			p.signalReadyLocked(fmt.Errorf("boltz-api auth login failed before returning an auth URL: %w", err))
+		}
+		return
+	}
+
+	if p.Status != "success" {
+		p.Status = "exited"
+		p.signalReadyLocked(errors.New("boltz-api auth login exited before reporting success"))
+	}
+}
+
+func (p *pendingAuthLogin) markFailed(message string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.Status == "success" {
+		return
+	}
+	p.Status = "failed"
+	p.Error = message
+	p.signalReadyLocked(errors.New(message))
+}
+
+func (p *pendingAuthLogin) appendWarning(message string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Warnings = append(p.Warnings, message)
+}
+
+func (p *pendingAuthLogin) signalReadyLocked(err error) {
+	select {
+	case p.ready <- err:
+	default:
+	}
+}
+
+func (p *pendingAuthLogin) snapshot() map[string]any {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	out := map[string]any{
+		"pending_id":        p.ID,
+		"status":            p.Status,
+		"url":               p.URL,
+		"verification_uri":  p.VerificationURI,
+		"user_code":         p.UserCode,
+		"started_at":        p.StartedAt.Format(time.RFC3339),
+		"command":           append([]string(nil), p.Command...),
+		"working_directory": p.WorkingDirectory,
+	}
+	if p.VerificationURIComplete != "" {
+		out["verification_uri_complete"] = p.VerificationURIComplete
+	}
+	if p.ExpiresIn != nil {
+		out["expires_in"] = p.ExpiresIn
+		if seconds, ok := numberFromAny(p.ExpiresIn); ok {
+			expiresAt := p.StartedAt.Add(time.Duration(seconds) * time.Second)
+			out["expires_at"] = expiresAt.Format(time.RFC3339)
+			if time.Now().UTC().After(expiresAt) && p.Status != "success" {
+				out["likely_expired"] = true
+			}
+		}
+	}
+	if p.Interval != nil {
+		out["interval"] = p.Interval
+	}
+	if p.CompletedAt != nil {
+		out["completed_at"] = p.CompletedAt.Format(time.RFC3339)
+	}
+	if p.Error != "" {
+		out["error"] = p.Error
+	}
+	if p.Stderr != "" {
+		out["stderr"] = p.Stderr
+	}
+	if len(p.Warnings) > 0 {
+		out["warnings"] = append([]string(nil), p.Warnings...)
+	}
+	return out
+}
+
+func runBoltzCommandRaw(ctx context.Context, baseDir string, args []string) (string, string, error) {
+	cmd := exec.CommandContext(ctx, "boltz-api", args...)
+	cmd.Dir = baseDir
+	cmd.Env = os.Environ()
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	return strings.TrimSpace(stdout.String()), strings.TrimSpace(stderr.String()), err
 }
 
 func runBoltzCommand(ctx context.Context, baseDir string, args []string) (string, string, error) {
@@ -969,4 +1386,42 @@ func boolPtr(value bool) *bool {
 
 func commandWithBinary(args []string) []string {
 	return append([]string{"boltz-api"}, args...)
+}
+
+func randomPendingID() string {
+	var raw [18]byte
+	if _, err := rand.Read(raw[:]); err != nil {
+		return fmt.Sprintf("auth_%d", time.Now().UnixNano())
+	}
+	return "auth_" + base64.RawURLEncoding.EncodeToString(raw[:])
+}
+
+func stringFromAny(value any) string {
+	text, _ := value.(string)
+	return strings.TrimSpace(text)
+}
+
+func numberFromAny(value any) (int64, bool) {
+	switch typed := value.(type) {
+	case int:
+		return int64(typed), true
+	case int64:
+		return typed, true
+	case float64:
+		return int64(typed), true
+	case float32:
+		return int64(typed), true
+	case json.Number:
+		integer, err := typed.Int64()
+		if err == nil {
+			return integer, true
+		}
+		float, err := typed.Float64()
+		if err == nil {
+			return int64(float), true
+		}
+		return 0, false
+	default:
+		return 0, false
+	}
 }

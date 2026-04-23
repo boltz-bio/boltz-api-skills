@@ -15,7 +15,7 @@ boltz-compute-<version>.mcpb        (ZIP archive)
 
 > **Icon**: the manifest intentionally does not reference an icon yet. `mcpb validate` fails if the manifest references a file that doesn't exist on disk. When the 512×512 PNG is ready, drop `icon.png` in this directory and add `"icon": "icon.png"` back to `manifest.json`.
 
-The MCP server's tools (`boltz_estimate_run`, `boltz_submit_run`, `boltz_list_jobs`, `boltz_get_job`, `boltz_resume_download`, `boltz_get_local_run`) are auto-discovered by Claude Desktop (`tools_generated: true` in the manifest).
+The MCP server's tools (`boltz_auth_login`, `boltz_auth_complete`, `boltz_auth_status`, `boltz_auth_logout`, `boltz_estimate_run`, `boltz_submit_run`, `boltz_list_jobs`, `boltz_get_job`, `boltz_resume_download`, `boltz_get_local_run`) are auto-discovered by Claude Desktop (`tools_generated: true` in the manifest).
 
 ## Skills are NOT bundled here
 
@@ -24,9 +24,13 @@ MCPB extensions don't support skills — skills are a separate Claude Desktop di
 ## Prerequisites for end users
 
 - Claude Desktop (macOS or Windows; see [Anthropic docs](https://claude.com/docs/connectors/building/mcpb)).
-- A Boltz Compute API key — requested at install time via the manifest's `user_config`.
+- Either OAuth device-code login through the `boltz_auth_login` tool, or a Boltz Compute API key configured at install time via the manifest's `user_config`.
 
 **No separate CLI installation required** — `boltz-api` is bundled.
+
+## OAuth Device-Code Login
+
+When no API key is configured, Claude can call `boltz_auth_login`. The tool returns a verification URL, user code, and `pending_id`; Claude should show those to the user, then call `boltz_auth_complete` until the bundled CLI reports that tokens were stored locally.
 
 ## Building the bundle
 
