@@ -15,13 +15,15 @@ Use `download-status` first when the user knows the original slug / run name or 
 
 ### Mode 1 — "what's running?" (no ID provided)
 
-Enumerate recent jobs across all five resources, merge, and sort by `created_at` descending. Use `--limit 20` per resource; bump higher if the user asks to see more. Derive `resource_type` from the job ID prefix:
+Enumerate recent jobs across all five resources, merge, and sort by `created_at` descending. Use `--limit 20` per resource; bump higher if the user asks to see more. Derive `resource_type` from the job ID prefix (empirical — not part of the spec contract; verified 2026-04-23 against live `list --limit 1` on each endpoint):
 
-- `pred_*` → `prediction`
+- `sab_pred_*` → `prediction` (structure-and-binding)
 - `prot_des_*` → `protein_design_ppi`
 - `prot_scr_*` → `protein_library_screen_ppi`
 - `sm_des_*` → `boltz_sm_design`
 - `sm_scr_*` → `boltz_sm_screen`
+
+If a returned ID doesn't match any of these prefixes, fall through to the all-resources probe — the mapping is observational, not guaranteed.
 
 ### Mode 2 — "how's job $ID doing?" (ID provided)
 
@@ -74,7 +76,7 @@ for R in predictions:structure-and-binding \
         | $row + {
             resource: $r,
             resource_type:
-              (if $id | startswith("pred_") then "prediction"
+              (if $id | startswith("sab_pred_") then "prediction"
                elif $id | startswith("prot_des_") then "protein_design_ppi"
                elif $id | startswith("prot_scr_") then "protein_library_screen_ppi"
                elif $id | startswith("sm_des_") then "boltz_sm_design"
@@ -86,7 +88,7 @@ done | jq -s 'sort_by(.created_at) | reverse | .[0:20]'
 
 # Mode 2: route retrieve from the ID prefix; probe all 5 only if unknown
 case "$ID" in
-  pred_*)     R="predictions:structure-and-binding" ;;
+  sab_pred_*) R="predictions:structure-and-binding" ;;
   prot_des_*) R="protein:design" ;;
   prot_scr_*) R="protein:library-screen" ;;
   sm_des_*)   R="small-molecule:design" ;;

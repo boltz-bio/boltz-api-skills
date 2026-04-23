@@ -15,7 +15,7 @@ Use this skill when the user already has candidate proteins / peptides / antibod
 4. Author the payload YAML, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
 5. `start` to submit. Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility (Claude Code: `run_in_background: true` on Bash; Codex: background shells). After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-7. Rank hits by `optimization_score` descending (fallback `binding_confidence`). Report top 5–10 with the sequence identifier, key metrics, and structure path.
+7. Rank hits by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:library-screen` — do not sort by it. Report top 5–10 with the sequence identifier, key metrics, and structure path.
 
 ## Command Pattern
 
@@ -50,7 +50,7 @@ Payload keys are `proteins`, `target` — API body field names.
 - Use the same slug as both `--idempotency-key` and `--name`.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. `--poll-interval-seconds 30` is a reasonable default. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - If background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
-- Cost is $0.025 per submitted protein — quote the exact number from `estimate-cost` before submitting.
+- Cost scales with total complex length (target + candidate). Typically ≈$0.025 per submitted candidate for small complexes, more for larger ones. Quote the exact figure from `estimate-cost`.
 
 ## Escape Hatch
 
@@ -68,4 +68,4 @@ Under `$ROOT/$IDEM/`:
 - `results/<pres_*>/archive.tar.gz` — one dir per scored binder
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result metrics: `optimization_score` (primary, if present), `binding_confidence`, `structure_confidence`, `iptm`, `min_interaction_pae`, `helix_fraction`, `sheet_fraction`, `loop_fraction`.
+Per-result metrics: `binding_confidence` (primary), `structure_confidence`, `iptm` (higher better), `min_interaction_pae` (lower better), `helix_fraction`, `sheet_fraction`, `loop_fraction`. **No `optimization_score`** on this endpoint — sorting by it returns an empty list.

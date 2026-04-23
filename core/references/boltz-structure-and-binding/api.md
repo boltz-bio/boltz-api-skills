@@ -40,7 +40,7 @@ Top-level fields:
 
 - `entities` (required) — list of polymer / ligand entities. Chain IDs across entities must be unique.
 - `binding` (optional) — include only when you want binding metrics. Two variants below.
-- `num_samples` (optional, 1–10, default 1) — structure samples to generate.
+- `num_samples` (optional) — structure samples to generate. Spec does not document a min/max; server-enforced bounds apply.
 - `bonds` (optional) — custom covalent bonds; see below.
 - `constraints` (optional) — pocket / contact constraints; see below.
 - `model_options` (optional) — see below.
@@ -142,10 +142,10 @@ binding:
   binder_chain_ids: [B]
 ```
 
-Returned binding metrics:
+Returned binding metrics (under `output.binding_metrics`):
 
-- `binding_confidence`
-- `optimization_score`
+- For `ligand_protein_binding`: `{binding_confidence, optimization_score, type: "ligand_protein_binding_metrics"}`.
+- For `protein_protein_binding`: `{binding_confidence, type: "protein_protein_binding_metrics"}` — **no `optimization_score`**.
 
 ## `bonds`
 
@@ -207,10 +207,12 @@ Token variants:
 
 ```yaml
 model_options:
-  recycling_steps: 3           # default 3, min 1
-  sampling_steps: 200          # default 200, min 1
-  step_scale: 1.638            # default 1.638, range 1.3–2.0
+  recycling_steps: 3           # default 3 (per spec)
+  sampling_steps: 200          # default 200 (per spec)
+  step_scale: 1.638            # default 1.638 (per spec)
 ```
+
+Numeric bounds beyond the defaults aren't in the spec — the server enforces them at submit time.
 
 ## Structure templates in a constraint / binding setup
 
@@ -232,15 +234,26 @@ Under `$ROOT/$IDEM/`:
 - `.boltz-run.json` — run metadata, cursor, idempotency key, timing
 - `outputs/archive.tar.gz` — contains `prediction/metrics.json`, `prediction/sample_*_predicted_structure.cif`, `prediction/sample_*_pae.npz`
 
-Metrics available in `metrics.json`:
+Metrics in `metrics.json` are split across `best_sample.metrics`, each `all_sample_results[].metrics`, and a separate top-level `binding_metrics` object.
 
-- `pLDDT` — per-residue confidence
-- `pTM` — predicted TM-score
-- `ipTM` — interface predicted TM-score
-- `PDE`, `ipDE` — predicted distance errors
-- `structure_confidence` — aggregate score
-- `binding_confidence` — present only when `binding` was requested
-- `optimization_score` — present only when `binding` was requested
+**Per-sample metrics** (nine lowercase keys, present on both `best_sample.metrics` and each entry in `all_sample_results[].metrics`):
+
+- `structure_confidence` — aggregate confidence
+- `ptm` — predicted TM-score
+- `iptm` — interface predicted TM-score
+- `ligand_iptm` — interface iptm restricted to ligand chains (**only when ligands are present**)
+- `protein_iptm` — interface iptm restricted to protein chains (**only for multi-protein complexes**)
+- `complex_plddt` — pLDDT averaged across the complex
+- `complex_iplddt` — pLDDT restricted to interface residues
+- `complex_pde` — predicted distance error across the complex
+- `complex_ipde` — predicted distance error restricted to interface residues
+
+**Binding metrics** (top-level `binding_metrics`, only present when `binding` was requested):
+
+- `ligand_protein_binding` → `{binding_confidence, optimization_score, type: "ligand_protein_binding_metrics"}`
+- `protein_protein_binding` → `{binding_confidence, type: "protein_protein_binding_metrics"}` — **no `optimization_score`**
+
+Uppercase aliases like `pLDDT`, `pTM`, `ipTM`, `PDE`, `ipDE` are **not** what the server emits — use the lowercase keys above.
 
 ## 400 validation quirk
 

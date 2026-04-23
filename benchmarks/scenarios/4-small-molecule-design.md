@@ -26,13 +26,13 @@ Pocket residues (0-based): 78, 79, 80, 81, 82, 83, 145, 146, 147
 2. Sets `num_molecules: 10`. Optionally adds `chemical_space: enamine_real`
    because user said "synthesizable" — good agents do this; it's not strictly
    required.
-3. Calls cost estimation. Cost = (10 + 1) × $0.025 = $0.275.
+3. Calls cost estimation. Cost = 10 × $0.025 = $0.250.
 4. Confirms, submits, backgrounds, reports top designs when ranked.
 
 ## Success criteria
 
 - `num_molecules >= 10` enforced.
-- Cost formula correct (num + 1).
+- Cost formula correct (`num_molecules × $0.025` = $0.250 for a batch of 10).
 - Output ranked by `optimization_score`.
 
 ## What to watch for

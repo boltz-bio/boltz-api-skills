@@ -229,7 +229,7 @@ Token variants: `polymer_contact {chain_id, residue_index}` or `ligand_contact {
 
 ## Cost
 
-$0.025 per submitted candidate binder (one entry in `proteins`). `estimate-cost` on the full payload gives the authoritative quote.
+Cost scales with total complex length (target + candidate). Typically ≈$0.025 per candidate for small complexes, more for larger ones (observed empirically — see `debugging_log.md` §4a for the protein:design tier behavior, which likely also applies here). `estimate-cost` on the full payload gives the authoritative quote — do not hardcode a flat per-candidate rate.
 
 ## Outputs (after `download-results`)
 
@@ -242,16 +242,18 @@ Under `$ROOT/$IDEM/`:
 Per-result fields:
 
 - `id` — server-assigned `pres_*` ID
+- `external_id` — echoed from the optional `id` on your input `proteins[]` entry
 - `entities` — echoed input entities for this candidate
-- `metrics.binding_confidence`
-- `metrics.optimization_score` — primary ranking (when present)
+- `metrics.binding_confidence` — **primary ranking metric**
 - `metrics.structure_confidence`
-- `metrics.iptm`
-- `metrics.min_interaction_pae`
+- `metrics.iptm` (higher is better)
+- `metrics.min_interaction_pae` (lower is better)
 - `metrics.helix_fraction`, `metrics.sheet_fraction`, `metrics.loop_fraction`
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
 
-Rank by `optimization_score` descending if present, otherwise by `binding_confidence`.
+`optimization_score` is **not emitted** for `protein:library-screen`. Sorting by it returns an empty list.
+
+Rank by `binding_confidence` descending. Use `iptm` (higher better) and `min_interaction_pae` (lower better) as tiebreakers.
 
 ## Escape hatch
 

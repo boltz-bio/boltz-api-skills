@@ -11,10 +11,10 @@ Use this skill when the user wants de novo small-molecule binders (no existing l
 2. Pick `num_molecules` — minimum **10**, server rejects anything lower. If the user says a smaller number, explain the floor and propose 10.
 3. Only add `chemical_space` (e.g. `"enamine_real"`) if the user explicitly wants synthesis-aware generation within that library.
 4. Only add `molecule_filters` on explicit request — the default filtering is usually fine.
-5. Author the payload YAML, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Design cost is `(num_molecules + 1) * $0.025`** — the extra unit is the scheduler iteration.
+5. Author the payload YAML, run `estimate-cost`, show the USD cost, wait for explicit confirmation. Cost is approximately $0.025 per molecule for small targets (may scale with complex size); always quote `estimated_cost_usd` from the response rather than a hardcoded formula.
 6. `start` to submit (synchronous). Capture the ID.
 7. Launch `download-results` with the agent runtime's background/non-blocking command facility (Claude Code: `run_in_background: true` on Bash; Codex: background shells); it polls, paginates, downloads per-hit structures, and exits when terminal. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-8. Rank hits by `optimization_score` descending and report top 5–10 with `smiles`, `binding_confidence`, and structure path.
+8. Rank hits by `binding_confidence` (for **hit discovery**) or `optimization_score` (for **lead optimization**, binding strength) — these are parallel intents, not a primary/fallback hierarchy. Sort by whichever matches the user's goal. Report top 5–10 with `smiles`, the chosen ranking metric, and structure path.
 
 ## Command Pattern
 
@@ -44,7 +44,7 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 ## Always Do This
 
 - Enforce `num_molecules >= 10` before calling `estimate-cost`. The server rejects smaller batches.
-- Cost formula: `(num_molecules + 1) * $0.025`. A batch of 10 costs $0.275, not $0.250. Quote the exact number from `estimate-cost`.
+- Cost is approximately $0.025 per molecule for small targets (may scale with complex size). Always quote `estimated_cost_usd` from `estimate-cost` rather than a hardcoded per-molecule rate.
 - Treat pocket residue indices as 0-based.
 - Prefer one merged top-level payload via `--input @yaml://payload.yaml` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
 - Direct object flags still work as overrides: for example `--target @yaml://target.yaml` or `--molecule-filters @json://filters.json`. Piped YAML / JSON on stdin also works, but it must use API body field names such as `num_molecules`, `target`, `chemical_space`, and `molecule_filters`. Never use `@file://`.
@@ -69,4 +69,4 @@ Under `$ROOT/$IDEM/`:
 - `results/<pres_*>/archive.tar.gz` — one dir per generated candidate
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result fields to rank on: `smiles`, `metrics.optimization_score` (primary), `metrics.binding_confidence`, `metrics.structure_confidence`, `metrics.complex_plddt`, `metrics.complex_iplddt`, `metrics.iptm`, `metrics.ptm`.
+Per-result fields: `smiles`, `metrics.binding_confidence` (primary for **hit discovery**), `metrics.optimization_score` (for **lead optimization**, binding strength — parallel intent, not fallback), `metrics.structure_confidence`, `metrics.complex_plddt`, `metrics.complex_iplddt`, `metrics.iptm`, `metrics.ptm`.

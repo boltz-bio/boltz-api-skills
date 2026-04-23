@@ -59,7 +59,7 @@ The server rejects `num_molecules < 10` with `VALIDATION_ERROR`. Validate client
 
 ## Cost formula
 
-`(num_molecules + 1) * $0.025`. The `+1` is the SynFlowNet / designer scheduler iteration — it's real, not padding. A batch of 10 is $0.275.
+Empirically ≈$0.025 per molecule for small targets. The spec only defines `breakdown.{application, cost_per_unit_usd, num_units}`; it doesn't document a formula. The server's `breakdown` has been observed to echo `num_units: num_molecules + 1` (a scheduler iteration) with `cost_per_unit_usd` adjusted so the total matches `num_molecules * $0.025` for small targets — but this isn't a contract, and cost may scale with complex size. Always quote `estimated_cost_usd` from the response rather than a hardcoded formula.
 
 ## `chemical_space`
 
@@ -187,14 +187,14 @@ Per-result fields:
 
 - `id` — server-assigned `pres_*` ID
 - `smiles` — generated SMILES
-- `metrics.binding_confidence`
-- `metrics.optimization_score` ← primary ranking metric
+- `metrics.binding_confidence` — primary for **hit discovery**
+- `metrics.optimization_score` — ranks by binding strength for **lead optimization**
 - `metrics.structure_confidence`
 - `metrics.complex_plddt`, `metrics.complex_iplddt`
 - `metrics.iptm`, `metrics.ptm`
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
 
-Rank by `optimization_score` descending.
+`binding_confidence` and `optimization_score` are parallel intents (hit discovery vs. lead optimization), not a primary/fallback hierarchy. Sort by whichever matches the user's goal.
 
 ## Escape hatch
 

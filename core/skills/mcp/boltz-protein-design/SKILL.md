@@ -14,10 +14,10 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
 3. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein`.
 4. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
 5. Add `rules` only on request (`excluded_amino_acids`, `excluded_sequence_motifs` with `X` wildcards, `max_hydrophobic_fraction`).
-6. Author the payload object, call `boltz_estimate_run` with `resource="protein:design"`, show the USD cost, and wait for explicit confirmation. **Design cost is `(num_proteins + 1) * $0.025`** — the extra unit is the scheduler iteration.
+6. Author the payload object, call `boltz_estimate_run` with `resource="protein:design"`, show the USD cost, and wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure returned by `boltz_estimate_run`.
 7. Call `boltz_submit_run` to submit. It starts detached `download-results` polling internally and returns the job ID, run name, and output directory.
 8. After `boltz_submit_run` returns, report the job ID, run name, and output directory, then end the turn immediately. Do not run shell background commands yourself unless you're debugging the MCP server.
-9. Rank by `optimization_score` (fallback `binding_confidence`). Report top 5–10 designs with sequence, key metrics, and structure path.
+9. Rank by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:design` — do not sort by it. Report top 5–10 designs with sequence, key metrics, and structure path.
 
 ## MCP Tool Pattern
 
@@ -49,7 +49,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 ## Always Do This
 
 - Enforce `num_proteins >= 10` before calling `estimate-cost`. Server rejects anything lower.
-- Cost formula: `(num_proteins + 1) * $0.025`. A batch of 10 is $0.275. Quote the exact number from `estimate-cost`.
+- Cost scales with total complex length (target + binder). Do not quote a flat `num_proteins * $0.025` formula; always quote the exact figure returned by `boltz_estimate_run`. Empirically: minimal peptide + small target ≈$0.025/design; GFP-sized target + 20-mer binder ≈$0.05/design.
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
@@ -77,4 +77,14 @@ Under `$ROOT/$RUN_NAME/`:
 - `results/<pres_*>/archive.tar.gz` — one dir per generated design
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result fields: `id`, `entities` (with the generated sequences), `metrics.optimization_score` (primary), `metrics.binding_confidence`, `metrics.structure_confidence`, `metrics.iptm`, `metrics.min_interaction_pae`, `metrics.helix_fraction` / `sheet_fraction` / `loop_fraction`.
+Per-result fields:
+
+- `id`, `artifacts.{structure, archive}`
+- `entities` — the generated designs. **Type-flip gotcha:** the binder entity comes back as `type: "protein"` (not `"designed_protein"`), with the DSL resolved to a real AA sequence in `value`. Select the binder by `chain_ids` (the ID you assigned at submit time), **not** by `type == "designed_protein"`.
+- `metrics.binding_confidence` — **primary ranking metric**
+- `metrics.structure_confidence`
+- `metrics.iptm` (higher is better)
+- `metrics.min_interaction_pae` (lower is better)
+- `metrics.helix_fraction` / `sheet_fraction` / `loop_fraction`
+
+**No `optimization_score` on this endpoint.** Sorting by it returns an empty list.

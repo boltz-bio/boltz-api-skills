@@ -7,7 +7,13 @@ description: Predict the 3D structure of a protein, RNA, DNA, or ligand complex 
 
 Use this skill for one defined complex, not a library workflow.
 
-1. Normalize the inputs into `entities`: proteins, RNA, DNA, ligand SMILES, or ligand CCD codes. Chain IDs go in entity order (`A`, `B`, `C`, …) unless the user specifies otherwise.
+1. Normalize the inputs into `entities`. Each entity is **`{type, chain_ids, value}`** — note plural `chain_ids` (an array, even for one chain) and the field is `value`, **not** `sequence`:
+
+   ```json
+   {"entities": [{"type": "protein", "chain_ids": ["A"], "value": "MKTAYIAKQRQISFVKSHFSRQ"}]}
+   ```
+
+   `type` is one of `protein | rna | dna | ligand_smiles | ligand_ccd`. Chain IDs go in entity order (`A`, `B`, `C`, …) unless the user specifies otherwise. Read `references/api.md` for per-type field variants (`cyclic`, `modifications`, ligand CCD codes, etc.) **before** authoring your first payload — agent guesses like `sequence:` or `chain_id: "A"` (singular) fail with opaque 400s.
 2. If the user wants binding metrics, add a `binding` block and pick the right variant (`ligand_protein_binding` for a single ligand binder chain, otherwise `protein_protein_binding`).
 3. Only add `constraints` / `bonds` / `modifications` / `model_options` if the user asks.
 4. Author the payload object, call `boltz_estimate_run` with `resource="predictions:structure-and-binding"` and `model="boltz-2.1"`, show the USD cost, and wait for explicit confirmation.
@@ -69,7 +75,12 @@ Under `$ROOT/$RUN_NAME/`:
 - `.boltz-run.json` — run metadata, cursor, idempotency key
 - `outputs/archive.tar.gz` — unpacks to `prediction/{metrics.json, sample_*_predicted_structure.cif, sample_*_pae.npz}`
 
-Useful metrics in `metrics.json`: `pLDDT`, `pTM`, `ipTM`, `PDE`, `ipDE`, `structure_confidence`, and when `binding` was requested, `binding_confidence` + `optimization_score`. Summarize these for the user and point them at the CIF path.
+Metrics in `metrics.json` are **nested, not flat**:
+
+- `best_sample.metrics` and each `all_sample_results[].metrics` contain nine lowercase keys: `structure_confidence`, `ptm`, `iptm`, `ligand_iptm` (only when ligands present), `protein_iptm` (only for multi-protein complexes), `complex_plddt`, `complex_iplddt`, `complex_pde`, `complex_ipde`.
+- `binding_metrics` is a **separate top-level object** present only when `binding` was requested. Shape depends on the binding variant: `ligand_protein_binding` → `{binding_confidence, optimization_score}`; `protein_protein_binding` → `{binding_confidence}` only (no `optimization_score`).
+
+Summarize these for the user and point them at the CIF path.
 
 ## SAB 400 validation quirk
 

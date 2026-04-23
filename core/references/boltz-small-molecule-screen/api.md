@@ -209,7 +209,7 @@ Per-result fields (available in the `list-results` stream as well):
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
 - `warnings` — any server warnings for this molecule
 
-Rank by `optimization_score` descending for binder strength, or `binding_confidence` if `optimization_score` is absent.
+`binding_confidence` and `optimization_score` are parallel intents, not a primary/fallback hierarchy: `binding_confidence` is the primary metric for **hit discovery** (find any binder); `optimization_score` ranks by **binding strength** for **lead optimization**. Both are always present on sm:library-screen results. Sort by whichever matches the user's goal.
 
 ## Escape hatch
 

@@ -11,9 +11,9 @@ Three modes, decided by what the user gives you:
 
 ### Mode 1 — "what's running?" (no ID provided)
 
-Call `boltz_list_jobs`, merge across all five resources, and sort by `created_at` descending. Use `per_resource_limit=20` unless the user asks to see more. Each row includes prefix-derived `resource_type` / `resource_prefix` metadata:
+Call `boltz_list_jobs`, merge across all five resources, and sort by `created_at` descending. Use `per_resource_limit=20` unless the user asks to see more. Each row includes prefix-derived `resource_type` / `resource_prefix` metadata (empirical — not part of the spec contract; verified 2026-04-23 against live `list --limit 1` on each endpoint):
 
-- `pred_*` → `prediction`
+- `sab_pred_*` → `prediction` (structure-and-binding)
 - `prot_des_*` → `protein_design_ppi`
 - `prot_scr_*` → `protein_library_screen_ppi`
 - `sm_des_*` → `boltz_sm_design`

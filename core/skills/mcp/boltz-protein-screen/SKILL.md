@@ -15,7 +15,7 @@ Use this skill when the user already has candidate proteins / peptides / antibod
 4. Author the payload object, call `boltz_estimate_run` with `resource="protein:library-screen"`, show the USD cost, and wait for explicit confirmation.
 5. Call `boltz_submit_run` to submit. It starts detached `download-results` polling internally and returns the job ID, run name, and output directory.
 6. After `boltz_submit_run` returns, report the job ID, run name, and output directory, then end the turn immediately. Do not run shell background commands yourself unless you're debugging the MCP server.
-7. Rank hits by `optimization_score` descending (fallback `binding_confidence`). Report top 5–10 with the sequence identifier, key metrics, and structure path.
+7. Rank hits by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:library-screen` — do not sort by it. Report top 5–10 with the sequence identifier, key metrics, and structure path.
 
 ## MCP Tool Pattern
 
@@ -54,7 +54,7 @@ Payload keys are `proteins`, `target` — API body field names.
 - `boltz_submit_run` already starts detached `download-results`. Do not run `boltz-api download-results` yourself from the skill flow.
 - Only check status when the user asks. Use `boltz_get_job` for server-side status and `boltz_get_local_run` for local log / `.boltz-run.json` state.
 - If detached download needs to be restarted, use `boltz_resume_download` with the same `run_name`.
-- Cost is $0.025 per submitted protein — quote the exact number from `estimate-cost` before submitting.
+- Cost scales with total complex length (target + candidate). Typically ≈$0.025 per submitted candidate for small complexes, more for larger ones. Quote the exact figure from `boltz_estimate_run`.
 
 ## Escape Hatch
 
@@ -72,4 +72,4 @@ Under `$ROOT/$RUN_NAME/`:
 - `results/<pres_*>/archive.tar.gz` — one dir per scored binder
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result metrics: `optimization_score` (primary, if present), `binding_confidence`, `structure_confidence`, `iptm`, `min_interaction_pae`, `helix_fraction`, `sheet_fraction`, `loop_fraction`.
+Per-result metrics: `binding_confidence` (primary), `structure_confidence`, `iptm` (higher better), `min_interaction_pae` (lower better), `helix_fraction`, `sheet_fraction`, `loop_fraction`. **No `optimization_score`** on this endpoint — sorting by it returns an empty list.

@@ -11,10 +11,10 @@ Use this skill when the user wants de novo small-molecule binders (no existing l
 2. Pick `num_molecules` — minimum **10**, server rejects anything lower. If the user says a smaller number, explain the floor and propose 10.
 3. Only add `chemical_space` (e.g. `"enamine_real"`) if the user explicitly wants synthesis-aware generation within that library.
 4. Only add `molecule_filters` on explicit request — the default filtering is usually fine.
-5. Author the payload object, call `boltz_estimate_run` with `resource="small-molecule:design"`, show the USD cost, and wait for explicit confirmation. **Design cost is `(num_molecules + 1) * $0.025`** — the extra unit is the scheduler iteration.
+5. Author the payload object, call `boltz_estimate_run` with `resource="small-molecule:design"`, show the USD cost, and wait for explicit confirmation. Cost is approximately $0.025 per molecule for small targets (may scale with complex size); always quote `estimated_cost_usd` from the response rather than a hardcoded formula.
 6. Call `boltz_submit_run` to submit. It starts detached `download-results` polling internally and returns the job ID, run name, and output directory.
 7. After `boltz_submit_run` returns, report the job ID, run name, and output directory, then end the turn immediately. Do not run shell background commands yourself unless you're debugging the MCP server.
-8. Rank hits by `optimization_score` descending and report top 5–10 with `smiles`, `binding_confidence`, and structure path.
+8. Rank hits by `binding_confidence` (for **hit discovery**) or `optimization_score` (for **lead optimization**, binding strength) — these are parallel intents, not a primary/fallback hierarchy. Sort by whichever matches the user's goal. Report top 5–10 with `smiles`, the chosen ranking metric, and structure path.
 
 ## MCP Tool Pattern
 
@@ -46,7 +46,7 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 ## Always Do This
 
 - Enforce `num_molecules >= 10` before calling `estimate-cost`. The server rejects smaller batches.
-- Cost formula: `(num_molecules + 1) * $0.025`. A batch of 10 costs $0.275, not $0.250. Quote the exact number from `estimate-cost`.
+- Cost is approximately $0.025 per molecule for small targets (may scale with complex size). Always quote `estimated_cost_usd` from `boltz_estimate_run` rather than a hardcoded per-molecule rate.
 - Treat pocket residue indices as 0-based.
 - Keep the payload field names exactly as the API body names shown in `references/api.md`.
 - If you drop to raw CLI for debugging, prefer one merged top-level `--input @yaml://payload.yaml` (or `@json://...`) and keep `--idempotency-key` / `--workspace-id` top-level. Direct object flags such as `--target @yaml://target.yaml` or `--molecule-filters @json://filters.json` still work as overrides. Piped YAML / JSON on stdin also works, but it must use API body field names.
@@ -72,4 +72,4 @@ Under `$ROOT/$RUN_NAME/`:
 - `results/<pres_*>/archive.tar.gz` — one dir per generated candidate
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result fields to rank on: `smiles`, `metrics.optimization_score` (primary), `metrics.binding_confidence`, `metrics.structure_confidence`, `metrics.complex_plddt`, `metrics.complex_iplddt`, `metrics.iptm`, `metrics.ptm`.
+Per-result fields: `smiles`, `metrics.binding_confidence` (primary for **hit discovery**), `metrics.optimization_score` (for **lead optimization**, binding strength — parallel intent, not fallback), `metrics.structure_confidence`, `metrics.complex_plddt`, `metrics.complex_iplddt`, `metrics.iptm`, `metrics.ptm`.

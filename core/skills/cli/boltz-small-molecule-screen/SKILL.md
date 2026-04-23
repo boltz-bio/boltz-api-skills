@@ -13,7 +13,9 @@ Use this skill when the user already has candidate molecules.
 4. Author the payload YAML, run `estimate-cost`, show the user the USD cost, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility (Claude Code: `run_in_background: true` on Bash; Codex: background shells) — it polls, paginates `list-results`, downloads every per-hit structure, and exits when terminal. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-7. When done, rank results by `optimization_score` descending (fallback `binding_confidence`), report the top 5–10 hits with `smiles` + key metrics, and point the user at `$ROOT/$IDEM/results/`.
+7. When done, rank via `boltz-api small-molecule:library-screen list-results --id "$ID" --format jsonl` — **do not** try to rank from the per-hit `metrics.json` files on disk: they currently carry `external_id: null` / `smiles: null`, so you can't map scores back to your input library from disk alone. `list-results` returns `external_id`, `smiles`, and metrics together per hit. Sort by `optimization_score` descending (fallback `binding_confidence`), report the top 5–10 hits with `smiles` + key metrics, and point the user at `$ROOT/$IDEM/results/`.
+
+**Heads-up: the `results/<pres_*>/` directory count is usually less than `len(molecules)`.** Default server-side `molecule_filters` (SMARTS catalog at level `recommended`) silently drops candidates — the drop is not logged in `.boltz-run.json` or surfaced as a progress counter. Typical drop rate is 20–30% on generic drug libraries. `list-results` is the authoritative filtered list; if the user needs to know which input IDs were dropped, compute `input_ids - seen(external_id)` from the list-results output.
 
 ## Command Pattern
 
@@ -50,7 +52,7 @@ Payload keys in `payload.yaml` are `molecules`, `target`, `molecule_filters` —
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - If background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
 - Only check status when the user asks. Use the background session notification/output if available, or read `download-results.log` for detached fallback runs. Never run a manual poll loop.
-- Cost is $0.025 per molecule — quote the exact number from `estimate-cost` before submitting.
+- Cost is approximately $0.025 per molecule for small targets (may scale with complex size). `estimate-cost` returns the authoritative quote — always use it.
 - Poll interval: `--poll-interval-seconds 30` is a reasonable default; libraries can run 10–60 min depending on size.
 
 ## Escape Hatch
@@ -68,4 +70,6 @@ Under `$ROOT/$IDEM/`:
 - `.boltz-run.json` — run metadata
 - `results/<pres_*>/archive.tar.gz` and `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}` — one per scored molecule
 
-Per-result metrics to rank on: `optimization_score` (primary), `binding_confidence`, `structure_confidence`, `complex_plddt`, `complex_iplddt`, `iptm`, `ptm`. Each result also carries `external_id` (your input `id`) and `smiles`.
+Rank via `boltz-api small-molecule:library-screen list-results --id "$ID" --format jsonl` — it returns `external_id`, `smiles`, and metrics together per hit. The per-hit `metrics.json` files on disk have `external_id: null` / `smiles: null`, so ranking from on-disk files alone loses the input-library mapping (tracked as a CLI bug — see CLI_BUG_REPORT.md §7).
+
+Per-result metrics (all 7 always present for sm:library-screen): `binding_confidence` — primary metric for **hit discovery**; `optimization_score` — for **lead-optimization** ranking (binding strength). These are parallel intents, not a primary/fallback hierarchy. Sort by whichever matches the user's goal. Also available: `structure_confidence`, `complex_plddt`, `complex_iplddt`, `iptm`, `ptm`.

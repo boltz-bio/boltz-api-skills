@@ -20,7 +20,7 @@ Epitope residues (0-based): 42, 43, 44, 45, 46
 1. Agent constructs `target` with `no_template` variant, provides the sequence
    and `epitope_residues`.
 2. Sets `modality: nanobody`, `num_proteins: 10`.
-3. Calls cost estimation. Cost = (10 + 1) × $0.025 = $0.275.
+3. Calls cost estimation. Cost = 10 × $0.025 = $0.250.
 4. Confirms, submits, backgrounds.
 5. Reports 10 designs ranked by optimization_score when results land.
 
@@ -28,7 +28,7 @@ Epitope residues (0-based): 42, 43, 44, 45, 46
 
 - Agent enforces the `num_proteins >= 10` floor (does NOT accept a lower number
   without pushing back).
-- Agent correctly quotes the cost formula `(num + 1) × $0.025`, not `num × $0.025`.
+- Agent correctly quotes the cost formula `num_proteins × $0.025` ($0.250 for a batch of 10).
 - Results come back with 10 designed sequences, each with predicted structure.
 
 ## What to watch for

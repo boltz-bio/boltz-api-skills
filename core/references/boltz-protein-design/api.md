@@ -70,7 +70,14 @@ Server rejects `num_proteins < 10` with `VALIDATION_ERROR`. Validate client-side
 
 ## Cost formula
 
-`(num_proteins + 1) * $0.025`. A batch of 10 is $0.275. The `+1` is the scheduler iteration unit.
+Cost scales with **total complex length** (target + binder), not flat per design. The spec doesn't expose a formula; `estimate-cost` returns `breakdown.{application, cost_per_unit_usd, num_units}` where `num_units` may exceed `num_proteins` when total length crosses a ~256-token tier (observed empirically — see `debugging_log.md` §4a). Examples:
+
+| Target + binder | num_proteins | Empirical `estimated_cost_usd` |
+|---|---|---|
+| Minimal peptide target + 12-mer peptide binder | 10 | ≈$0.250 (1× tier) |
+| GFP (238 aa) target + 20-mer peptide binder | 10 | ≈$0.500 (2× tier) |
+
+Always quote `estimated_cost_usd` from the response. Do not hardcode a per-protein rate.
 
 ## `binder_specification` — variant 1: `structure_template`
 
@@ -89,8 +96,8 @@ binder_specification:
       crop_residues: all           # or [0, 1, 2, ...]
       design_motifs:
         - type: replacement
-          start_index: 0           # 0-based
-          end_index: 5             # 0-based, exclusive semantics depend on motif
+          start_index: 0           # 0-based, inclusive
+          end_index: 5             # 0-based, **inclusive** — residues start_index..end_index are replaced
           design_length_range:
             min: 4
             max: 8
@@ -134,12 +141,14 @@ B:
 
 ```yaml
 - type: replacement
-  start_index: 0                    # 0-based
-  end_index: 5                      # 0-based
+  start_index: 0                    # 0-based, inclusive
+  end_index: 5                      # 0-based, **inclusive**
   design_length_range:
     min: 4
     max: 8
 ```
+
+Residues from `start_index` to `end_index` inclusive are replaced with a new designed segment. Example: on a 17-mer scaffold with `start_index: 2, end_index: 15`, residues 2..15 (14 residues) are redesigned and residues 0..1 + 16 stay fixed. An empirical off-by-one has been seen at the boundary — verify sequence length on a test output before committing to a template (see `debugging_log.md` §4d).
 
 #### `insertion`
 
@@ -254,16 +263,17 @@ Under `$ROOT/$IDEM/`:
 Per-result fields:
 
 - `id` — server-assigned `pres_*` ID
-- `entities` — generated sequences for this design (with `designed_protein.value` filled in with actual residues)
-- `metrics.optimization_score` — primary ranking (when present)
-- `metrics.binding_confidence`
+- `entities` — generated designs. **Type-flip gotcha:** the binder entity comes back as `type: "protein"` (not `"designed_protein"`), with the DSL resolved to a real AA sequence in `value`. Select the binder by `chain_ids` (the ID assigned at submit time), **not** by `type == "designed_protein"` — the latter match returns zero results.
+- `metrics.binding_confidence` — **primary ranking metric**
 - `metrics.structure_confidence`
-- `metrics.iptm`
-- `metrics.min_interaction_pae`
+- `metrics.iptm` (higher is better)
+- `metrics.min_interaction_pae` (lower is better)
 - `metrics.helix_fraction`, `metrics.sheet_fraction`, `metrics.loop_fraction`
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
 
-Rank by `optimization_score` descending if present, otherwise by `binding_confidence`.
+`optimization_score` is **not emitted** for `protein:design`. Sorting by it yields an empty list.
+
+Rank by `binding_confidence` descending. Use `iptm` (higher better) and `min_interaction_pae` (lower better) as tiebreakers.
 
 ## Escape hatch
 
