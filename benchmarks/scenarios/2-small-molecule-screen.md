@@ -25,17 +25,22 @@ hits and tell me the top 5.
 1. Agent reads the CSV, extracts the SMILES column (auto-detect).
 2. Reads the FASTA, extracts the sequence.
 3. Constructs a `molecules` list and `target.entities` list.
-4. Calls cost estimation. Cost ≈ $1.25 (50 × $0.025).
+4. Calls cost estimation and quotes the returned `estimated_cost_usd`.
 5. Confirms, submits, backgrounds download, ends turn.
-6. Later, when results are available, ranks by `optimization_score` and reports
-   top 5 with SMILES + metrics.
+6. Later, when results are available, ranks by `binding_confidence` for hit
+   discovery and reports top 5 with SMILES + metrics. Include
+   `optimization_score` as a secondary metric when present, but do not sort by
+   it unless the user asks for lead optimization / binding-strength ranking.
 
 ## Success criteria
 
-- Job submits and returns results for all 50 molecules.
+- Job submits and returns results for all molecules that pass server-side
+  default filters. Default filters may reject a subset before scoring.
 - Top-5 report includes `external_id` (if provided) or SMILES and correct metrics.
 
 ## What to watch for
 
 - Does the agent correctly auto-detect the SMILES column in a CSV?
 - Does it respect the "don't add molecule_filters unless asked" guidance?
+- Does it avoid assuming `len(results) == len(input molecules)` when default
+  filters reject molecules?

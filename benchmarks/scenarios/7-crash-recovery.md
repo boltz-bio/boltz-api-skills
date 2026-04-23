@@ -48,5 +48,6 @@ when they're ready.
 - Does the agent preserve the existing output directory or create a new one?
 - If the job is already terminal, does the agent skip polling and just pull the
   final artifacts?
-- Which variant handles the detached-process recovery more smoothly — the CLI
-  shelling to `nohup` or the MCP server's detached spawn?
+- Which variant handles recovery more smoothly — the CLI re-running
+  `download-results` with the same ID/name/root, or the MCP server's detached
+  spawn?

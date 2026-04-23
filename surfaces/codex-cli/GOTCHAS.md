@@ -84,9 +84,11 @@ Install the plugin in a fresh Codex session and verify natural-language prompts 
 
 If any route wrong, tune the `description` frontmatter. The Python plugin's descriptions are tuned for its trigger set — CLI-plugin variants are verbatim lifts, so this is mostly a sanity check.
 
-### - [ ] Background-shell peek works in Codex
+### - [x] Managed download session works in Codex
 
-We designed the "submit → background download → inspect local progress" flow around Claude Code's `run_in_background: true` bash tool. Codex has non-blocking bash too, but we haven't verified that (a) the JSONL stderr from `download-results` is peekable from the agent side, (b) the agent can read it without killing the shell, (c) the shell persists across user turns. If Codex differs, the new `download-status` command is the first fallback, and a detached `nohup boltz-api ... > /tmp/$IDEM.log 2>&1 &` pattern is the second.
+Codex supports this flow by running `download-results` as a foreground shell command with `yield_time_ms=1000`. If the command is still running, Codex returns a session id; the agent can later poll it with an empty `write_stdin` or use `download-status` for structured checkpoint state.
+
+Do not use shell `&`, terminal backgrounding, or `nohup` for `download-results` in Codex. A benchmark follow-up reproduced child cleanup before completion: `nohup ... &` could leave only a PID/log or a partial `.boltz-run.json`, while the managed foreground session wrote the checkpoint and downloaded all results.
 
 ### - [ ] CLI version floor
 

@@ -12,7 +12,7 @@ Use this skill when the user already has candidate molecules.
 3. Keep default server-side filtering unless the user asks for custom filters — only add `molecule_filters` on explicit request.
 4. Author the payload YAML, run `estimate-cost`, show the user the USD cost, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
-6. Launch `download-results` with the agent runtime's background/non-blocking command facility (Claude Code: `run_in_background: true` on Bash; Codex: background shells) — it polls, paginates `list-results`, downloads every per-hit structure, and exits when terminal. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
+6. Launch `download-results` with the agent runtime's background/non-blocking command facility — it polls, paginates `list-results`, downloads every per-hit structure, and exits when terminal. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
 7. When done, rank via `boltz-api small-molecule:library-screen list-results --id "$ID" --format jsonl`. **Do not** try to rank from the per-hit `metrics.json` files on disk: they currently carry `external_id: null` / `smiles: null`, so you can't map scores back to your input library from disk alone. `list-results` returns `external_id`, `smiles`, and metrics together per hit. Sort by `binding_confidence` for hit discovery or `optimization_score` for lead optimization; these are parallel intents, not a fallback hierarchy. Report the top 5-10 hits with `smiles`, the chosen ranking metric, and key confidence metrics, then point the user at `$ROOT/$IDEM/results/`.
 
 **Heads-up: the `results/<pres_*>/` directory count is usually less than `len(molecules)`.** Default server-side `molecule_filters` (SMARTS catalog at level `recommended`) silently drops candidates — the drop is not logged in `.boltz-run.json` or surfaced as a progress counter. Typical drop rate is 20–30% on generic drug libraries. `list-results` is the authoritative filtered list; if the user needs to know which input IDs were dropped, compute `input_ids - seen(external_id)` from the list-results output.
@@ -31,8 +31,10 @@ ID=$(boltz-api small-molecule:library-screen start \
        --input @yaml://payload.yaml \
        --raw-output --transform id)
 
-# Launch this command in the agent runtime's background/non-blocking mode (e.g., Claude Code Bash with `run_in_background: true`, Codex background shell).
-# Do not wait on the returned background session.
+# Launch this command in the agent runtime's background/non-blocking mode.
+# Claude Code: Bash with run_in_background=true.
+# Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
+# Do not append "&" or use nohup in Codex.
 boltz-api download-results \
   --id "$ID" --name "$IDEM" \
   --root-dir "$ROOT" \
@@ -49,9 +51,9 @@ Payload keys in `payload.yaml` are `molecules`, `target`, `molecule_filters` —
 - Treat pocket residue indices as 0-based.
 - Do not invent medicinal-chemistry filters. Only add `molecule_filters` if the user asks; mention the catalog as an option.
 - Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results` so re-runs resume via `.boltz-run.json`.
-- Prefer the agent runtime's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
-- If background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
-- Only check status when the user asks. Use the background session notification/output if available, or read `download-results.log` for detached fallback runs. Never run a manual poll loop.
+- Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
+- After the background/session starts, do not wait on it or poll it. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
+- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "$IDEM" --root-dir "$ROOT"` for structured local checkpoint state. Never run a manual poll loop.
 - Cost is approximately $0.025 per molecule for small targets (may scale with complex size). `estimate-cost` returns the authoritative quote — always use it.
 - Poll interval: `--poll-interval-seconds 30` is a reasonable default; libraries can run 10–60 min depending on size.
 

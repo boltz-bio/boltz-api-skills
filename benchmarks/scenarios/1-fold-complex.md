@@ -18,8 +18,8 @@ confidence, and save the structure.
 
 1. Agent constructs an entities list: protein (chain A) + ligand_smiles (chain B).
 2. Adds a `binding` block with `type: ligand_protein_binding` and `binder_chain_id: B`.
-3. Calls `estimate-cost` (CLI) or `boltz_estimate_run` (MCP). Cost ≈ $0.025.
-4. Shows cost to user, waits for confirmation.
+3. Calls `estimate-cost` (CLI) or `boltz_estimate_run` (MCP).
+4. Shows the returned cost estimate to user, waits for confirmation.
 5. On confirmation, submits and starts a backgrounded download.
 6. Reports job ID, run name, output directory.
 7. Ends the turn.

@@ -36,8 +36,10 @@ This is the crash-recovery path. Two sub-cases:
 **3a. User knows the original slug** (or the dir at `$ROOT/$IDEM/` still exists):
 
 ```bash
-# Launch this command in the agent runtime's background/non-blocking mode (e.g., Claude Code Bash with `run_in_background: true`, Codex background shell).
-# Do not wait on the returned background session.
+# Launch this command in the agent runtime's background/non-blocking mode.
+# Claude Code: Bash with run_in_background=true.
+# Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
+# Do not append "&" or use nohup in Codex.
 boltz-api download-results \
   --id "$ID" --name "$IDEM" \
   --root-dir "$ROOT" \
@@ -112,8 +114,10 @@ if [ -n "${R:-}" ]; then
 fi
 
 # Mode 3: resume download.
-# Launch this command in the agent runtime's background/non-blocking mode (e.g., Claude Code Bash with `run_in_background: true`, Codex background shell).
-# Do not wait on the returned background session.
+# Launch this command in the agent runtime's background/non-blocking mode.
+# Claude Code: Bash with run_in_background=true.
+# Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
+# Do not append "&" or use nohup in Codex.
 boltz-api download-results \
   --id "$ID" --name "$IDEM" \
   --root-dir "$ROOT" \
@@ -125,10 +129,10 @@ boltz-api download-results \
 - If the user has a run name / slug or run dir and only wants local downloader state, prefer `download-status` before `retrieve`.
 - On an unfamiliar `$ID`, run Mode 2 (retrieve) before Mode 3 (download) so you capture `idempotency_key`.
 - Prefer the original `$IDEM` slug over `$ID` as `--name` — it resumes into the existing dir with cursor.
-- Prefer the agent runtime's background/non-blocking command mode for `download-results`. After the background session starts, do not wait on it or poll it. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
-- If background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$IDEM/download-results.log" 2>&1 < /dev/null &`, then write the PID to `$ROOT/$IDEM/download-results.pid`.
+- Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
+- After the background/session starts, do not wait on it or poll it. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - `download-results` now emits machine-readable JSONL progress on stderr by default. Add `--progress-format text --verbose` only when you explicitly want human-readable logs.
-- Only check progress when the user asks. Prefer `download-status` for local checkpoint state or the background session's JSONL stderr if it's still running. Don't loop `retrieve` unless the user wants fresh remote status.
+- Only check progress when the user asks. Prefer `download-status` for local checkpoint state or, in Codex, poll the saved session with an empty `write_stdin` to read JSONL stderr if the session is still running. Don't loop `retrieve` unless the user wants fresh remote status.
 - If `retrieve` surfaces only `{"code":"VALIDATION_ERROR","message":"Request validation failed"}` with no `details`, that's expected for `predictions:structure-and-binding` failures — other endpoints include field paths.
 - Never run `start` again on a failed or interrupted job. Fix the payload and submit with a new `idempotency-key`, or just resume with `download-results`.
 
