@@ -40,7 +40,7 @@ Top-level fields:
 
 - `entities` (required) — list of polymer / ligand entities. Chain IDs across entities must be unique.
 - `binding` (optional) — include only when you want binding metrics. Two variants below.
-- `num_samples` (optional) — structure samples to generate. Spec does not document a min/max; server-enforced bounds apply.
+- `num_samples` (optional, 1-10) — structure samples to generate. Omit for the server default.
 - `bonds` (optional) — custom covalent bonds; see below.
 - `constraints` (optional) — pocket / contact constraints; see below.
 - `model_options` (optional) — see below.
@@ -212,7 +212,11 @@ model_options:
   step_scale: 1.638            # default 1.638 (per spec)
 ```
 
-Numeric bounds beyond the defaults aren't in the spec — the server enforces them at submit time.
+Hosted API Reference bounds:
+
+- `recycling_steps >= 1`
+- `sampling_steps >= 1`
+- `1.3 <= step_scale <= 2`
 
 ## Structure templates in a constraint / binding setup
 

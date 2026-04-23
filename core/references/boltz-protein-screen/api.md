@@ -65,6 +65,7 @@ proteins:
       - type: protein
         chain_ids: [B]
         value: "MKTAYIAKQRQISFVKSHFSRQ"
+    id: binder-001                 # optional; returned as external_id
 ```
 
 Multi-chain candidates (e.g. antibody heavy + light) put multiple entities in one entry:
@@ -89,6 +90,8 @@ Supported entity types inside `proteins[].entities`:
 - `ligand_ccd`
 
 Entity fields: `type`, `value`, `chain_ids`, `modifications` (optional), `cyclic` (optional bool).
+
+Each `proteins[]` entry may also include an optional client-side `id`. The server echoes it as `external_id` on the corresponding result; use it to map ranked hits back to FASTA records, CSV rows, or library IDs.
 
 ## `target` — variant 1: `structure_template`
 
