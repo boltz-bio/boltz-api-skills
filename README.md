@@ -51,7 +51,7 @@ CI (`.github/workflows/release.yml`) runs these on every tagged release and atta
 ## Prerequisites for users
 
 All surfaces need:
-- `BOLTZ_COMPUTE_API_KEY` (CLI plugins: env var; Desktop MCPB: collected at install time via manifest `user_config`; OAuth planned to replace this)
+- Authentication via either `boltz-api auth login` / MCP `boltz_auth_login` OAuth device-code login, or `BOLTZ_COMPUTE_API_KEY` as an API-key fallback.
 - `BOLTZ_COMPUTE_OUTPUT_DIR` optional (defaults to `./boltz-experiments`)
 
 CLI-backed surfaces also need `boltz-api` on `PATH`. The Desktop MCPB bundles `boltz-api` so Desktop users don't need to install it separately.

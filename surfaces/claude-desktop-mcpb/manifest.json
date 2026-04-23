@@ -4,7 +4,7 @@
   "display_name": "Boltz Compute",
   "version": "0.1.0",
   "description": "Run Boltz Compute structure prediction, molecular screening, and de novo design workflows locally from Claude Desktop.",
-  "long_description": "Exposes the Boltz Compute platform as six MCP tools: estimate and submit prediction/screen/design runs, list and inspect jobs, resume downloads after interruption, and read local run state. Results are written to your local disk so large screen and design runs stay under your control. Bundles the Go MCP server and the boltz-api CLI; no external installation required.",
+  "long_description": "Exposes the Boltz Compute platform as MCP tools: OAuth login/logout/status, estimate and submit prediction/screen/design runs, list and inspect jobs, resume downloads after interruption, and read local run state. Results are written to your local disk so large screen and design runs stay under your control. Bundles the Go MCP server and the boltz-api CLI; no external installation required.",
   "author": {
     "name": "Boltz",
     "email": "support@boltz.bio",
@@ -45,9 +45,9 @@
     "api_key": {
       "type": "string",
       "title": "Boltz Compute API Key",
-      "description": "API key for the Boltz Compute service. Get one at https://boltz.bio.",
+      "description": "Optional API key for the Boltz Compute service. Leave blank to authenticate later with the OAuth login tool.",
       "sensitive": true,
-      "required": true
+      "required": false
     },
     "output_dir": {
       "type": "directory",

@@ -22,6 +22,10 @@ This plugin is for head-to-head testing against `codex-plugin-cli/` on criteria 
 
 - The agent no longer shells out to `boltz-api` directly from the skill.
 - A local Go MCP server exposes a small runtime surface:
+  - `boltz_auth_login`
+  - `boltz_auth_complete`
+  - `boltz_auth_status`
+  - `boltz_auth_logout`
   - `boltz_estimate_run`
   - `boltz_submit_run`
   - `boltz_list_jobs`
@@ -36,13 +40,20 @@ This plugin is for head-to-head testing against `codex-plugin-cli/` on criteria 
 
 - Go installed and on `PATH`
 - `boltz-api` on `PATH`
-- `BOLTZ_COMPUTE_API_KEY` exported in the environment
+- Authentication via `boltz_auth_login` / `boltz-api auth login`, or `BOLTZ_COMPUTE_API_KEY` exported in the environment as an API-key fallback
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR`
 
 Important version note:
 
 - This plugin assumes the newer Boltz CLI surface documented by the repo, including commands like `predictions:structure-and-binding estimate-cost` and top-level `download-results`.
 - If `boltz-api` reports errors like `No such command 'predictions:structure-and-binding'`, your local CLI is too old or is a different binary.
+- OAuth device-code login requires a newer `boltz-api` with `auth login --device-code --json-events`.
+
+## Authentication Tools
+
+For agent-hosted login, call `boltz_auth_login`. It starts `boltz-api auth login --device-code --json-events`, returns a `pending_id`, verification URL, and user code, then keeps the CLI subprocess polling in the background. Show the URL/code to the user, then call `boltz_auth_complete` with the `pending_id` until it returns `status: "success"`.
+
+`boltz_auth_status` reports the current local CLI auth state without refreshing tokens, and `boltz_auth_logout` clears the local OAuth session.
 
 ## Installation
 
