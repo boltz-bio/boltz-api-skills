@@ -186,7 +186,7 @@ Any molecule whose SMILES matches any regex is rejected.
 
 ## Cost
 
-$0.025 per submitted molecule. Filters applied pre-scoring reduce the effective count — `estimate-cost` on the same payload gives the authoritative quote.
+Cost is quoted by `estimate-cost` on the exact payload. For small targets it is typically around $0.025 per submitted molecule, but filters applied pre-scoring can reduce the scored count and pricing can change; always report `estimated_cost_usd` from the response.
 
 ## Outputs (after `download-results`)
 
@@ -201,8 +201,8 @@ Per-result fields (available in the `list-results` stream as well):
 - `id` — server-assigned `pres_*` ID
 - `external_id` — your input `id`
 - `smiles` — the scored SMILES
-- `metrics.binding_confidence`
-- `metrics.optimization_score` ← primary ranking metric
+- `metrics.binding_confidence` — primary for hit discovery
+- `metrics.optimization_score` — binding-strength ranking for lead optimization
 - `metrics.structure_confidence`
 - `metrics.complex_plddt`, `metrics.complex_iplddt`
 - `metrics.iptm`, `metrics.ptm`

@@ -15,7 +15,7 @@ Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear ins
 
 - [Top-level request](#top-level-request)
 - [`num_molecules` minimum](#num_molecules-minimum)
-- [Cost formula](#cost-formula)
+- [Cost](#cost)
 - [`chemical_space`](#chemical_space)
 - [`target`](#target)
 - [`molecule_filters`](#molecule_filters)
@@ -57,9 +57,9 @@ Also passed as separate `start` flags:
 
 The server rejects `num_molecules < 10` with `VALIDATION_ERROR`. Validate client-side before submitting.
 
-## Cost formula
+## Cost
 
-Empirically ≈$0.025 per molecule for small targets. The spec only defines `breakdown.{application, cost_per_unit_usd, num_units}`; it doesn't document a formula. The server's `breakdown` has been observed to echo `num_units: num_molecules + 1` (a scheduler iteration) with `cost_per_unit_usd` adjusted so the total matches `num_molecules * $0.025` for small targets — but this isn't a contract, and cost may scale with complex size. Always quote `estimated_cost_usd` from the response rather than a hardcoded formula.
+Cost is quoted by `estimate-cost` on the exact payload. For small targets it is typically around $0.025 per requested molecule, but the API does not document a stable formula and pricing may scale with complex size. Always report `estimated_cost_usd` from the response rather than a hardcoded per-molecule rate.
 
 ## `chemical_space`
 

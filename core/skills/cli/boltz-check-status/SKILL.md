@@ -27,7 +27,7 @@ If a returned ID doesn't match any of these prefixes, fall through to the all-re
 
 ### Mode 2 — "how's job $ID doing?" (ID provided)
 
-Use the job ID prefix to select the right `retrieve` endpoint. Only fall back to probing all five if the prefix is unfamiliar. Report `status`, progress counters for pipeline jobs (`num_molecules_screened` / `num_proteins_generated` / etc.), and the `error` if present. **Capture `idempotency_key` from the response** — you'll need it in Mode 3.
+Use the job ID prefix to select the right `retrieve` endpoint. Only fall back to probing all five if the prefix is unfamiliar. Report `status`, progress counters for pipeline jobs (`num_molecules_screened` / `num_proteins_generated` / etc.), and the `error` if present. For pipeline endpoints, `stopped` is terminal and means the run was stopped early; partial results may be available. SAB predictions do not use `stopped`. **Capture `idempotency_key` from the response**; you'll need it in Mode 3.
 
 ### Mode 3 — "my session died, pull the results"
 

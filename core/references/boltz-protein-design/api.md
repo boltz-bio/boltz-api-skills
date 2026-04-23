@@ -15,7 +15,7 @@ Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear ins
 
 - [Top-level request](#top-level-request)
 - [`num_proteins` minimum](#num_proteins-minimum)
-- [Cost formula](#cost-formula)
+- [Cost](#cost)
 - [`binder_specification` — variant 1: `structure_template`](#binder_specification--variant-1-structure_template)
 - [`binder_specification` — variant 2: `no_template`](#binder_specification--variant-2-no_template)
 - [Sequence DSL (`designed_protein.value`)](#sequence-dsl-designed_proteinvalue)
@@ -68,7 +68,7 @@ Also passed as separate `start` flags:
 
 Server rejects `num_proteins < 10` with `VALIDATION_ERROR`. Validate client-side before submitting.
 
-## Cost formula
+## Cost
 
 Cost scales with **total complex length** (target + binder), not flat per design. The spec doesn't expose a formula; `estimate-cost` returns `breakdown.{application, cost_per_unit_usd, num_units}` where `num_units` may exceed `num_proteins` when total length crosses a ~256-token tier (observed empirically — see `debugging_log.md` §4a). Examples:
 
@@ -184,6 +184,7 @@ Constraints:
 - At least one entity must be `type: designed_protein`.
 - `modifications` on fixed `protein`/`rna`/`dna` entities is optional (defaults to `[]`).
 - `designed_protein` does NOT take `modifications`.
+- If `bonds` references an atom in a designed protein chain, residue indices are counted against the minimum designed length for each DSL segment. Example: in `1..3C1..2`, the fixed `C` is residue index 1 (0-based) because the first designed segment uses its minimum length of 1.
 
 Allowed entity types in `binder_specification.entities` (for `no_template`):
 

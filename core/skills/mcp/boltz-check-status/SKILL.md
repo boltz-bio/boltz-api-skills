@@ -21,7 +21,7 @@ Call `boltz_list_jobs`, merge across all five resources, and sort by `created_at
 
 ### Mode 2 — "how's job $ID doing?" (ID provided)
 
-Call `boltz_get_job` — it uses the job ID prefix to route to the correct `retrieve` endpoint, and only falls back to probing all five when the prefix is unfamiliar. Report `status`, progress counters for pipeline jobs (`num_molecules_screened` / `num_proteins_generated` / etc.), and the `error` if present. **Capture `idempotency_key` from the response** — you'll need it in Mode 3.
+Call `boltz_get_job`: it uses the job ID prefix to route to the correct `retrieve` endpoint, and only falls back to probing all five when the prefix is unfamiliar. Report `status`, progress counters for pipeline jobs (`num_molecules_screened` / `num_proteins_generated` / etc.), and the `error` if present. For pipeline endpoints, `stopped` is terminal and means the run was stopped early; partial results may be available. SAB predictions do not use `stopped`. **Capture `idempotency_key` from the response**; you'll need it in Mode 3.
 
 ### Mode 3 — "my session died, pull the results"
 
