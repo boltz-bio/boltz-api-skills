@@ -165,7 +165,9 @@ Structured fields include:
 
 ```bash
 # Launch this command in the agent runtime's background/non-blocking mode.
-# Do not wait on the returned background session.
+# Claude Code: Bash with run_in_background=true.
+# Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
+# Do not append "&" or use nohup in Codex.
 boltz-api download-results \
   --id "$ID" --name "$IDEM" \
   --root-dir "$ROOT" \
@@ -174,13 +176,13 @@ boltz-api download-results \
 
 Behavior:
 
-- `download-results` itself is a blocking poller. Launch it through the agent runtime's background/non-blocking command facility (Claude Code's `run_in_background`, Codex's background shells, etc.) and immediately return to the user; do not wait on or poll the background session unless the user asks.
+- `download-results` itself is a blocking poller. Launch it through the agent runtime's background/non-blocking command facility and immediately return to the user; do not wait on or poll the background session unless the user asks. In Claude Code, use Bash with `run_in_background: true`. In Codex, run it as a foreground shell command with `yield_time_ms=1000`; if Codex returns a session id, save it for optional later polling.
 - It emits machine-readable JSONL progress events on stderr by default. Use `--progress-format text --verbose` only when you explicitly want human-readable logs.
 - Writes `$ROOT/$NAME/.boltz-run.json` containing the cursor (`cursor_after_id`), status, idempotency key, and timing.
 - On re-run with the same `--root-dir` + `--name`, reuses `.boltz-run.json` and only pulls results past the recorded cursor. Idempotent.
 - If the run dir exists and `.boltz-run.json` has the ID, `--id` can be omitted.
 - If `--name` is not passed, the CLI generates a random petname dir — use `--name` for cross-session resume.
-- If background mode is unavailable or blocks the conversation, use the detached fallback: `nohup boltz-api download-results ... > "$ROOT/$NAME/download-results.log" 2>&1 < /dev/null &` and write the PID to `$ROOT/$NAME/download-results.pid`.
+- Do not use shell `&`, terminal backgrounding, or `nohup` as the Codex detach mechanism. Codex may clean up shell-backgrounded descendants when the tool command exits, before `.boltz-run.json` is fully written. Prefer the managed foreground session with a short yield, or recover later by re-running `download-results` with the same ID/name/root.
 
 ### Directory layout
 

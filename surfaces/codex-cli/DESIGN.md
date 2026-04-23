@@ -70,11 +70,13 @@ Alternative considered: use the server-assigned job ID as `--name`. Rejected bec
 
 **Trade:** artifacts live under whatever CWD the user is in; a user who runs Codex from many project dirs has results scattered. **Gain:** matches the CLI's native default (surprising users less), keeps results inside project repos by default, easily overridden via env var. The env var is resolved by the skill (CLI doesn't honor it natively) and passed as `--root-dir` explicitly.
 
-### 7. Background `download-results`, never agent-side polling
+### 7. Managed `download-results`, never agent-side polling
 
-**Chose:** after `start` returns synchronously, agent kicks off `download-results` with `run_in_background: true`. Progress reporting happens by peeking at the background shell's default JSONL stderr or by reading `download-status` — no new API calls.
+**Chose:** after `start` returns synchronously, agent kicks off `download-results` through the host runtime's managed long-running command support. In Claude Code that is Bash with `run_in_background: true`. In Codex that is a foreground shell command with `yield_time_ms=1000`; if the command is still running, Codex returns a session id that can be polled later. Progress reporting happens by peeking at the default JSONL stderr or by reading `download-status` — no new API calls.
 
-**Trade:** depends on the agent host having non-blocking bash (both Claude Code and Codex do). If a session dies, the background shell dies with it, but the server-side job continues and the `boltz-check-status` skill handles recovery. **Gain:** no agent-loop polling (cheap, and avoids burning tokens on "still running" responses). One long-running tool call per job, not N. The CLI now emits JSONL progress on stderr by default and exposes `download-status` for local checkpoint reads, so progress can be inspected without a fresh API round-trip.
+**Trade:** depends on the agent host having managed long-running shell sessions. If a session dies, the downloader may die with it, but the server-side job continues and the `boltz-check-status` skill handles recovery. **Gain:** no agent-loop polling (cheap, and avoids burning tokens on "still running" responses). One long-running tool call per job, not N. The CLI now emits JSONL progress on stderr by default and exposes `download-status` for local checkpoint reads, so progress can be inspected without a fresh API round-trip.
+
+**Codex warning:** do not use shell `&`, terminal backgrounding, or `nohup` as the detach mechanism. Codex may clean up shell-backgrounded descendants when the initiating tool command exits, before `.boltz-run.json` is fully written. Keep `download-results` in the managed foreground session and let Codex return control after a 1000 ms yield.
 
 ### 8. No preflight for install or auth
 

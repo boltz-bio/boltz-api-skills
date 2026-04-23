@@ -39,8 +39,10 @@ Each `start`-family skill follows the same flow:
 2. `boltz-api <resource> estimate-cost` — shows you the USD cost.
 3. You confirm.
 4. Submit with `boltz-api <resource> start --input @yaml://payload.yaml ...`. For the four design/screen endpoints, prefer one merged `--input` payload and keep `--idempotency-key` / `--workspace-id` top-level. Piping YAML / JSON on stdin still works, but the body must use API field names such as `molecules`, `proteins`, `target`, or `binder_specification`.
-5. `boltz-api download-results --id $ID --name $IDEM --root-dir $ROOT ...` — runs in the background; polls + downloads. It now emits machine-readable JSONL progress events on stderr by default and checkpoints local state in `.boltz-run.json`.
-6. Agent answers "how's it going?" either by peeking those JSONL progress events or by calling `boltz-api --format json download-status --name $IDEM --root-dir $ROOT` for a local-only checkpoint snapshot.
+5. `boltz-api download-results --id $ID --name $IDEM --root-dir $ROOT ...` — run as a foreground Codex shell command with `yield_time_ms=1000`. If Codex returns a session id, keep it and return to the user; the CLI keeps polling + downloading in that managed session. It emits machine-readable JSONL progress events on stderr by default and checkpoints local state in `.boltz-run.json`.
+6. Agent answers "how's it going?" either by polling the saved Codex session for JSONL output or by calling `boltz-api --format json download-status --name $IDEM --root-dir $ROOT` for a local-only checkpoint snapshot.
+
+Do not use shell `&`, terminal backgrounding, or `nohup` for `download-results` in Codex. Those detach mechanisms can be cleaned up by the tool runner before `.boltz-run.json` is fully written. Use Codex's managed long-running shell session instead.
 
 Results land in `$ROOT/$IDEM/` where `$ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}` and `$IDEM` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
 

@@ -26,17 +26,22 @@ Pocket residues (0-based): 78, 79, 80, 81, 82, 83, 145, 146, 147
 2. Sets `num_molecules: 10`. Optionally adds `chemical_space: enamine_real`
    because user said "synthesizable" — good agents do this; it's not strictly
    required.
-3. Calls cost estimation. Cost = 10 × $0.025 = $0.250.
+3. Calls cost estimation and quotes the returned `estimated_cost_usd`.
 4. Confirms, submits, backgrounds, reports top designs when ranked.
 
 ## Success criteria
 
 - `num_molecules >= 10` enforced.
-- Cost formula correct (`num_molecules × $0.025` = $0.250 for a batch of 10).
-- Output ranked by `optimization_score`.
+- Cost estimate quoted from `estimate-cost`, not a hardcoded
+  `num_molecules × $0.025` formula.
+- Output ranked by the metric matching user intent: `binding_confidence` for
+  hit discovery / novel-hit design, or `optimization_score` when the user asks
+  for lead optimization / binding-strength ranking.
 
 ## What to watch for
 
 - Did the agent add `chemical_space: enamine_real` for "synthesizable"? (Bonus
   for yes; not wrong if no.)
 - Does it offer filters but not silently add them?
+- Does it explain the chosen ranking metric rather than treating
+  `binding_confidence` and `optimization_score` as a fallback hierarchy?

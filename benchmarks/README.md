@@ -9,7 +9,7 @@ trigger descriptions; they differ only in execution layer.
 | Metric | How | Why |
 |---|---|---|
 | **Approvals per run** | Count permission prompts (Bash, MCP tool, file write) observed during the run. | The CLI variant invokes Bash N times per workflow; the MCP variant invokes 1 MCP tool. Approval friction is the main UX hypothesis we're testing. |
-| **Wall-clock time** | Timestamp at user-prompt submit → timestamp at final agent response. | Validates neither variant adds meaningful latency over the other. |
+| **Wall-clock time** | Record agent submit/detach time, server runtime, download runtime, and time to verified artifacts separately. Keep the legacy overall `wall_clock_seconds` field for coarse comparison. | Separates UX latency from Boltz runtime and local artifact download behavior. |
 | **Tokens (input / output)** | From the Claude Code session usage report. | CLI variant forces the model to author long bash pipelines; MCP variant uses typed tool params. Expect MCP variant to use fewer output tokens. |
 | **Success** | Did the job actually run on Boltz and land results on disk? | If either variant fails more often, that's the dominant signal. |
 | **Error recovery** | Scenario 7 only — did the variant successfully resume a crashed run? | The crash-recovery path is where the MCP variant's in-process state management should shine. |
@@ -45,6 +45,11 @@ a v2 task.
    - Every permission prompt that appears (type + tool or command).
    - Any errors the agent encounters and how it recovers.
    - Whether the job submits successfully and results land on disk.
+   - Timing breakouts when available:
+     - Agent submit/detach time: prompt submit → job ID + downloader launched.
+     - Server runtime: remote `started_at` → `completed_at`.
+     - Download runtime: downloader start → local ready/checkpoint complete.
+     - Time to verified artifacts: prompt submit → expected files present.
 
 5. When the agent ends the turn, record final tokens from the session footer.
 

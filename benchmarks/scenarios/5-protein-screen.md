@@ -25,15 +25,19 @@ per record)
 1. Agent parses multi-record FASTA into a `proteins` list (each entry a
    single-entity protein).
 2. Constructs `target.no_template` with the target sequence.
-3. Calls cost estimation. Cost ≈ $0.50 (20 × $0.025).
+3. Calls cost estimation and quotes the returned `estimated_cost_usd`.
 4. Confirms, submits, backgrounds, reports ranked top 5.
 
 ## Success criteria
 
 - All 20 peptides scored.
-- Ranking by `optimization_score` descending, with binding + structure metrics.
+- Ranking by `binding_confidence` descending, with `iptm` (higher is better) and
+  `min_interaction_pae` (lower is better) as tiebreakers, plus structure
+  metrics.
 
 ## What to watch for
 
 - Does the agent correctly split a multi-record FASTA into individual `proteins`
   entries (not one long concatenated entity)?
+- Does it avoid sorting by `optimization_score`? `protein:library-screen` does
+  not emit that metric.
