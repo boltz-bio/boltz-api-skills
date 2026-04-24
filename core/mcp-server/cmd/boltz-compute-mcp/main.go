@@ -25,18 +25,20 @@ import (
 )
 
 const (
-	serverName         = "boltz-compute-mcp"
-	serverVersion      = "0.1.0"
-	defaultOutputDir   = "./boltz-experiments"
-	requestFileName    = "request.json"
-	metadataFileName   = ".boltz-mcp.json"
-	pidFileName        = "download-results.pid"
-	logFileName        = "download-results.log"
-	boltzRunFileName   = ".boltz-run.json"
-	defaultListLimit   = 20
-	defaultTotalLimit  = 20
-	defaultStatusLines = 30
-	authEventTimeout   = 30 * time.Second
+	serverName                 = "boltz-compute-mcp"
+	serverVersion              = "0.1.0"
+	defaultOutputDir           = "./boltz-experiments"
+	requestFileName            = "request.json"
+	metadataFileName           = ".boltz-mcp.json"
+	pidFileName                = "download-results.pid"
+	logFileName                = "download-results.log"
+	boltzRunFileName           = ".boltz-run.json"
+	defaultListLimit           = 20
+	defaultTotalLimit          = 20
+	defaultStatusLines         = 30
+	authEventTimeout           = 30 * time.Second
+	authCompletePollInterval   = 250 * time.Millisecond
+	defaultAuthCompleteTimeout = 60 * time.Second
 )
 
 type resourceDescriptor struct {
@@ -132,7 +134,8 @@ type authLoginInput struct {
 }
 
 type authCompleteInput struct {
-	PendingID string `json:"pending_id,omitempty" jsonschema:"Pending login ID returned by boltz_auth_login; omit only when there is exactly one pending login"`
+	PendingID      string `json:"pending_id,omitempty" jsonschema:"Pending login ID returned by boltz_auth_login; omit only when there is exactly one pending login"`
+	TimeoutSeconds int    `json:"timeout_seconds,omitempty" jsonschema:"How long to wait before returning status waiting; defaults to 60 seconds"`
 }
 
 type noInput struct{}
@@ -178,9 +181,9 @@ func main() {
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "boltz_auth_complete",
-		Title:       "Check Boltz Login",
-		Description: "Check whether a pending OAuth device-code login has completed and stored tokens locally.",
-		Annotations: readOnlyExternalTool("Check Boltz Login"),
+		Title:       "Wait For Boltz Login",
+		Description: "Wait for a pending OAuth device-code login to complete and store tokens locally.",
+		Annotations: readOnlyExternalTool("Wait For Boltz Login"),
 	}, handleAuthComplete)
 
 	mcp.AddTool(server, &mcp.Tool{
@@ -661,24 +664,27 @@ func handleAuthLogin(ctx context.Context, _ *mcp.CallToolRequest, input authLogi
 	}
 
 	response := pending.snapshot()
-	response["instructions"] = "Ask the user to open the URL, confirm the displayed code, and then call boltz_auth_complete with pending_id to check whether token storage finished."
+	response["instructions"] = "Show the user the URL and code, then call boltz_auth_complete with pending_id. It will wait for approval and return waiting if the timeout expires."
 	return nil, response, nil
 }
 
-func handleAuthComplete(_ context.Context, _ *mcp.CallToolRequest, input authCompleteInput) (*mcp.CallToolResult, map[string]any, error) {
+func handleAuthComplete(ctx context.Context, _ *mcp.CallToolRequest, input authCompleteInput) (*mcp.CallToolResult, map[string]any, error) {
 	pending, err := selectPendingAuthLogin(input.PendingID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	response := pending.snapshot()
+	response, err := waitForPendingAuthLogin(ctx, pending, input.TimeoutSeconds)
+	if err != nil {
+		return nil, nil, err
+	}
 	switch response["status"] {
 	case "success":
 		response["instructions"] = "Authentication is complete. Continue the original Boltz task."
 	case "failed":
 		response["instructions"] = "Authentication failed. Show the error to the user and start a new boltz_auth_login if they want to retry."
 	default:
-		response["instructions"] = "Authentication is still pending. Ask the user to finish approval in the browser, then call boltz_auth_complete again."
+		response["instructions"] = "Authentication is still waiting on browser approval. Keep the URL/code visible to the user and call boltz_auth_complete again if you want to keep waiting."
 	}
 	return nil, response, nil
 }
@@ -835,6 +841,53 @@ func authLoginArgs(input authLoginInput) []string {
 		args = append(args, "--auth-issuer-url", issuerURL)
 	}
 	return append(args, "auth", "login", "--device-code", "--json-events")
+}
+
+func waitForPendingAuthLogin(ctx context.Context, pending *pendingAuthLogin, timeoutSeconds int) (map[string]any, error) {
+	timeout := defaultAuthCompleteTimeout
+	if timeoutSeconds > 0 {
+		timeout = time.Duration(timeoutSeconds) * time.Second
+	}
+
+	deadline := time.Now().UTC().Add(timeout)
+	for {
+		response := pending.snapshot()
+		status, _ := response["status"].(string)
+		switch status {
+		case "success", "failed":
+			return response, nil
+		case "exited":
+			response["pending_status"] = status
+			response["status"] = "failed"
+			if _, exists := response["error"]; !exists {
+				response["error"] = "boltz-api auth login exited before reporting success"
+			}
+			return response, nil
+		}
+
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			response["pending_status"] = status
+			response["status"] = "waiting"
+			response["timed_out"] = true
+			response["timeout_seconds"] = int(timeout.Seconds())
+			return response, nil
+		}
+
+		sleepFor := authCompletePollInterval
+		if remaining < sleepFor {
+			sleepFor = remaining
+		}
+		timer := time.NewTimer(sleepFor)
+		select {
+		case <-ctx.Done():
+			if !timer.Stop() {
+				<-timer.C
+			}
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
 }
 
 func storePendingAuthLogin(pending *pendingAuthLogin) {

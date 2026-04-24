@@ -51,7 +51,7 @@ Important version note:
 
 ## Authentication Tools
 
-For agent-hosted login, call `boltz_auth_login`. It starts `boltz-api auth login --device-code --json-events`, returns a `pending_id`, verification URL, and user code, then keeps the CLI subprocess polling in the background. Show the URL/code to the user, then call `boltz_auth_complete` with the `pending_id` until it returns `status: "success"`.
+For agent-hosted login, call `boltz_auth_login`. It starts `boltz-api auth login --device-code --json-events`, returns a `pending_id`, verification URL, and user code, then keeps the CLI subprocess polling in the background. Show the URL/code to the user, then immediately call `boltz_auth_complete` with the `pending_id`. That tool waits for approval, returning `status: "success"` when tokens are stored locally or `status: "waiting"` if its timeout expires.
 
 `boltz_auth_status` reports the current local CLI auth state without refreshing tokens, and `boltz_auth_logout` clears the local OAuth session.
 
