@@ -30,7 +30,7 @@ MCPB extensions don't support skills — skills are a separate Claude Desktop di
 
 ## OAuth Device-Code Login
 
-When no API key is configured, Claude can call `boltz_auth_login`. The tool returns a verification URL, user code, and `pending_id`; Claude should show those to the user, then call `boltz_auth_complete` until the bundled CLI reports that tokens were stored locally.
+When no API key is configured, Claude can call `boltz_auth_login`. The tool returns a verification URL, user code, and `pending_id`; Claude should show those to the user, then immediately call `boltz_auth_complete`. That tool waits for the bundled CLI to finish polling the device flow, returning `success` once tokens are stored locally or `waiting` if its timeout expires first.
 
 ## Building the bundle
 

@@ -49,20 +49,18 @@ exit 2
 		t.Fatalf("expected pending_id string, got %#v", login["pending_id"])
 	}
 
-	var complete map[string]any
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		_, complete, err = handleAuthComplete(context.Background(), nil, authCompleteInput{PendingID: pendingID})
-		if err != nil {
-			t.Fatalf("handleAuthComplete returned error: %v", err)
-		}
-		if complete["status"] == "success" {
-			break
-		}
-		time.Sleep(25 * time.Millisecond)
+	_, complete, err := handleAuthComplete(context.Background(), nil, authCompleteInput{
+		PendingID:      pendingID,
+		TimeoutSeconds: 1,
+	})
+	if err != nil {
+		t.Fatalf("handleAuthComplete returned error: %v", err)
 	}
 	if complete["status"] != "success" {
 		t.Fatalf("expected completed auth status, got %#v", complete)
+	}
+	if complete["instructions"] != "Authentication is complete. Continue the original Boltz task." {
+		t.Fatalf("expected success instructions, got %#v", complete["instructions"])
 	}
 
 	_, status, err := handleAuthStatus(context.Background(), nil, noInput{})
@@ -86,6 +84,57 @@ exit 2
 	}
 	if logout["raw_output"] != "Logged out." {
 		t.Fatalf("expected logout output, got %#v", logout["raw_output"])
+	}
+}
+
+func TestAuthCompleteReturnsWaitingStatusOnTimeout(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("test uses a POSIX shell fake boltz-api")
+	}
+
+	resetPendingAuthLoginsForTest()
+	installFakeBoltzAPI(t, `#!/bin/sh
+if [ "$*" = "--no-browser auth login --device-code --json-events" ]; then
+  echo '{"event":"auth_url","url":"https://auth.example/device?user_code=WAIT-1234","verification_uri":"https://auth.example/device","verification_uri_complete":"https://auth.example/device?user_code=WAIT-1234","user_code":"WAIT-1234","expires_in":600,"interval":5}'
+  sleep 2
+  echo '{"event":"success"}'
+  exit 0
+fi
+echo "unexpected args: $*" >&2
+exit 2
+`)
+
+	_, login, err := handleAuthLogin(context.Background(), nil, authLoginInput{})
+	if err != nil {
+		t.Fatalf("handleAuthLogin returned error: %v", err)
+	}
+	pendingID, ok := login["pending_id"].(string)
+	if !ok || pendingID == "" {
+		t.Fatalf("expected pending_id string, got %#v", login["pending_id"])
+	}
+
+	startedAt := time.Now()
+	_, complete, err := handleAuthComplete(context.Background(), nil, authCompleteInput{
+		PendingID:      pendingID,
+		TimeoutSeconds: 1,
+	})
+	if err != nil {
+		t.Fatalf("handleAuthComplete returned error: %v", err)
+	}
+	if time.Since(startedAt) < 900*time.Millisecond {
+		t.Fatalf("expected handleAuthComplete to wait close to the timeout, got %s", time.Since(startedAt))
+	}
+	if complete["status"] != "waiting" {
+		t.Fatalf("expected waiting status, got %#v", complete)
+	}
+	if complete["pending_status"] != "authorization_pending" {
+		t.Fatalf("expected authorization_pending pending status, got %#v", complete["pending_status"])
+	}
+	if complete["timed_out"] != true {
+		t.Fatalf("expected timed_out=true, got %#v", complete["timed_out"])
+	}
+	if complete["instructions"] != "Authentication is still waiting on browser approval. Keep the URL/code visible to the user and call boltz_auth_complete again if you want to keep waiting." {
+		t.Fatalf("expected waiting instructions, got %#v", complete["instructions"])
 	}
 }
 

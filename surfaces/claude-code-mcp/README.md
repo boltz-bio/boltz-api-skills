@@ -24,7 +24,7 @@ This produces `surfaces/claude-code-mcp/bin/boltz-compute-mcp` (and its MCPB sib
 
 ## OAuth Device-Code Login
 
-Call `boltz_auth_login` to start OAuth. The tool returns a verification URL, user code, and `pending_id`; show the URL/code to the user, then call `boltz_auth_complete` with the `pending_id` until it reports success. `boltz_auth_status` checks local auth state, and `boltz_auth_logout` clears the local OAuth session.
+Call `boltz_auth_login` to start OAuth. The tool returns a verification URL, user code, and `pending_id`; show the URL/code to the user, then immediately call `boltz_auth_complete` with the `pending_id`. That tool blocks for a short window and returns `success` once the CLI has stored tokens locally, or `waiting` if the timeout expires before approval lands. `boltz_auth_status` checks local auth state, and `boltz_auth_logout` clears the local OAuth session.
 
 ## Installation
 
