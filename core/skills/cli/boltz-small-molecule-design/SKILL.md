@@ -11,7 +11,7 @@ Use this skill when the user wants de novo small-molecule binders (no existing l
 2. Pick `num_molecules` — minimum **10**, server rejects anything lower. If the user says a smaller number, explain the floor and propose 10.
 3. Only add `chemical_space` (e.g. `"enamine_real"`) if the user explicitly wants synthesis-aware generation within that library.
 4. Only add `molecule_filters` on explicit request — the default filtering is usually fine.
-5. Author the payload YAML, run `estimate-cost`, show the USD cost, wait for explicit confirmation. Cost is approximately $0.025 per molecule for small targets (may scale with complex size); always quote `estimated_cost_usd` from the response rather than a hardcoded formula.
+5. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. Cost is approximately $0.025 per molecule for small targets (may scale with complex size); always quote `estimated_cost_usd` from the response rather than a hardcoded formula.
 6. `start` to submit (synchronous). Capture the ID.
 7. Launch `download-results` with the agent runtime's background/non-blocking command facility; it polls, paginates, downloads per-hit structures, and exits when terminal. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
 8. Rank hits by `binding_confidence` (for **hit discovery**) or `optimization_score` (for **lead optimization**, binding strength) — these are parallel intents, not a primary/fallback hierarchy. Sort by whichever matches the user's goal. Report top 5–10 with `smiles`, the chosen ranking metric, and structure path.
@@ -20,13 +20,13 @@ Use this skill when the user wants de novo small-molecule binders (no existing l
 
 ```bash
 ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
-IDEM="sm-design-<target>-<batch>-v1"
+RUN_NAME="sm-design-<target>-<batch>-v1"
 
 boltz-api small-molecule:design estimate-cost \
   --input @yaml://payload.yaml
 
 ID=$(boltz-api small-molecule:design start \
-       --idempotency-key "$IDEM" \
+       --idempotency-key "$RUN_NAME" \
        --input @yaml://payload.yaml \
        --raw-output --transform id)
 
@@ -35,10 +35,10 @@ ID=$(boltz-api small-molecule:design start \
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
+  --id "$ID" --name "$RUN_NAME" \
   --root-dir "$ROOT" \
   --poll-interval-seconds 60
-# → $ROOT/$IDEM/results/<pres_*>/...
+# → $ROOT/$RUN_NAME/results/<pres_*>/...
 ```
 
 Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters` — the API body field names.
@@ -48,11 +48,14 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 - Enforce `num_molecules >= 10` before calling `estimate-cost`. The server rejects smaller batches.
 - Cost is approximately $0.025 per molecule for small targets (may scale with complex size). Always quote `estimated_cost_usd` from `estimate-cost` rather than a hardcoded per-molecule rate.
 - Treat pocket residue indices as 0-based.
-- Prefer one merged top-level payload via `--input @yaml://payload.yaml` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
-- Direct object flags still work as overrides: for example `--target @yaml://target.yaml` or `--molecule-filters @json://filters.json`. Piped YAML / JSON on stdin also works, but it must use API body field names such as `num_molecules`, `target`, `chemical_space`, and `molecule_filters`. Never use `@file://`.
+- Keep payload field names exactly as the API body names shown in `references/api.md`.
+- Prefer one merged top-level payload via `--input @yaml://payload.yaml` or `@json://payload.json` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
+- Direct object flags still work as overrides: for example `--target @yaml://target.yaml` or `--molecule-filters @json://filters.json`. Piped YAML / JSON on stdin also works, but it must use API body field names. Never use `@file://`.
 - Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results`.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. Design jobs can run 30 min to a few hours — `--poll-interval-seconds 60` is a sensible default. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
+- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "$RUN_NAME" --root-dir "$ROOT"` for structured local checkpoint state. Never run a manual poll loop.
+- If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "$RUN_NAME"` and the same `--root-dir`.
 - Do not invent filters; only add `molecule_filters` on user request.
 
 ## Escape Hatch
@@ -65,7 +68,7 @@ Read [references/api.md](references/api.md) for the `target`, `chemical_space`, 
 
 ## Outputs
 
-Under `$ROOT/$IDEM/`:
+Under `$ROOT/$RUN_NAME/`:
 
 - `.boltz-run.json`
 - `results/<pres_*>/archive.tar.gz` — one dir per generated candidate

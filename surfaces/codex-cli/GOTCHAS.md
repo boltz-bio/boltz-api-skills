@@ -12,8 +12,8 @@ Grouped by severity. Checkbox form so we can work through them.
 
 Send a tiny SAB prediction (one small protein + one ligand) following the exact command pattern in `skills/boltz-structure-and-binding/SKILL.md`. Verify:
 - `estimate-cost` returns expected `{estimated_cost_usd, breakdown, disclaimer}`
-- `start` with `--idempotency-key $IDEM --raw-output --transform id` returns the ID
-- `download-results --id $ID --name $IDEM --root-dir ./test-run` creates `./test-run/$IDEM/.boltz-run.json` and `./test-run/$IDEM/outputs/archive.tar.gz`
+- `start` with `--idempotency-key $RUN_NAME --raw-output --transform id` returns the ID
+- `download-results --id $ID --name $RUN_NAME --root-dir ./test-run` creates `./test-run/$RUN_NAME/.boltz-run.json` and `./test-run/$RUN_NAME/outputs/archive.tar.gz`
 - Tarball unpacks to `prediction/{metrics.json, sample_*_predicted_structure.cif, sample_*_pae.npz}`
 - Metrics file has the fields we list (`pLDDT`, `pTM`, `ipTM`, `binding_confidence` if `binding` was requested, etc.)
 
@@ -23,7 +23,7 @@ If any of this breaks, the SKILL.md command pattern is wrong and every other ski
 
 - Submit a job, launch `download-results` in the background, `kill -9` the process mid-download.
 - Re-run the exact same `download-results --id --name --root-dir` command.
-- Verify it reads `.boltz-run.json`, advances from `cursor_after_id`, downloads only new results. Also verify `download-status --name $IDEM --root-dir ... --format json` reflects the interrupted and resumed state cleanly. We haven't personally triggered this on v0.7.0 yet.
+- Verify it reads `.boltz-run.json`, advances from `cursor_after_id`, downloads only new results. Also verify `download-status --name $RUN_NAME --root-dir ... --format json` reflects the interrupted and resumed state cleanly. We haven't personally triggered this on v0.7.0 yet.
 
 ### - [ ] `modifications` is actually optional (CLI_USAGE §3)
 
@@ -90,9 +90,9 @@ Codex supports this flow by running `download-results` as a foreground shell com
 
 Do not use shell `&`, terminal backgrounding, or `nohup` for `download-results` in Codex. A benchmark follow-up reproduced child cleanup before completion: `nohup ... &` could leave only a PID/log or a partial `.boltz-run.json`, while the managed foreground session wrote the checkpoint and downloaded all results.
 
-### - [ ] CLI version floor
+### - [x] CLI version floor
 
-SKILL.md and `plugin.json` now assume the current v0.7.0 surface: unified `--id`, merged `--input` on design/screen commands, and `download-status`. If a user has `<0.7.0` installed, some commands and help text will differ enough that the skill instructions can mislead them. Options: (a) bump README to say "boltz-api >= 0.7.0 required"; (b) add a one-line version check in each SKILL.md; (c) live with it since we're not preflighting anyway. Pick.
+SKILL.md and `plugin.json` assume the current v0.7.0+ surface: unified `--id`, merged `--input` on design/screen commands, top-level `download-results`, and `download-status`. README now states `boltz-api >= 0.7.0` and calls out the likely "No such command" symptom when an older or wrong binary is installed. The skills still do not preflight every run.
 
 ---
 

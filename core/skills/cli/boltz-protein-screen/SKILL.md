@@ -12,7 +12,7 @@ Use this skill when the user already has candidate proteins / peptides / antibod
    - `structure_template` — user has a CIF/PDB file or URL; select which chains are polymer vs ligand, which residues to keep (`crop_residues`), and optionally `epitope_residues` / `flexible_residues`.
    - `no_template` — user has only sequences; pass them as `target.entities` plus optional `epitope_residues`.
 3. Don't add `bonds` / `constraints` unless the user asks for geometric steering.
-4. Author the payload YAML, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
+4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
 5. `start` to submit. Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
 7. Rank hits by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:library-screen` — do not sort by it. Report top 5–10 with the sequence identifier, key metrics, and structure path.
@@ -21,13 +21,13 @@ Use this skill when the user already has candidate proteins / peptides / antibod
 
 ```bash
 ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
-IDEM="protein-screen-<target>-<library>-v1"
+RUN_NAME="protein-screen-<target>-<library>-v1"
 
 boltz-api protein:library-screen estimate-cost \
   --input @yaml://payload.yaml
 
 ID=$(boltz-api protein:library-screen start \
-       --idempotency-key "$IDEM" \
+       --idempotency-key "$RUN_NAME" \
        --input @yaml://payload.yaml \
        --raw-output --transform id)
 
@@ -36,7 +36,7 @@ ID=$(boltz-api protein:library-screen start \
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
+  --id "$ID" --name "$RUN_NAME" \
   --root-dir "$ROOT" \
   --poll-interval-seconds 30
 ```
@@ -47,11 +47,14 @@ Payload keys are `proteins`, `target` — API body field names.
 
 - For `structure_template`, embed CIF/PDB bytes with `@data:///abs/path/target.cif` inside the `structure.data` field. Don't use bare `@path` (the auto-sniff once sent CIF as plain text into a base64 field and broke the server parser).
 - Residue indices are 0-based. `epitope_residues` and `flexible_residues` must be subsets of `crop_residues`.
-- Prefer one merged top-level payload via `--input @yaml://payload.yaml` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
-- Direct object flags still work as overrides, such as `--target @yaml://target.yaml` or repeated `--protein @json://protein-1.json` entries. Piped YAML / JSON on stdin also works, but it must use API body field names such as `proteins` and `target`. Never use `@file://` or `@./`.
+- Keep payload field names exactly as the API body names shown in `references/api.md`.
+- Prefer one merged top-level payload via `--input @yaml://payload.yaml` or `@json://payload.json` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
+- Direct object flags still work as overrides, such as `--target @yaml://target.yaml` or repeated `--protein @json://protein-1.json` entries. Piped YAML / JSON on stdin also works, but it must use API body field names. Never use `@file://` or `@./`.
 - Use the same slug as both `--idempotency-key` and `--name`.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. `--poll-interval-seconds 30` is a reasonable default. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
+- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "$RUN_NAME" --root-dir "$ROOT"` for structured local checkpoint state. Never run a manual poll loop.
+- If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "$RUN_NAME"` and the same `--root-dir`.
 - Cost scales with total complex length (target + candidate). Typically ≈$0.025 per submitted candidate for small complexes, more for larger ones. Quote the exact figure from `estimate-cost`.
 
 ## Escape Hatch
@@ -64,7 +67,7 @@ Read [references/api.md](references/api.md) for the `proteins` list shape and bo
 
 ## Outputs
 
-Under `$ROOT/$IDEM/`:
+Under `$ROOT/$RUN_NAME/`:
 
 - `.boltz-run.json`
 - `results/<pres_*>/archive.tar.gz` — one dir per scored binder
