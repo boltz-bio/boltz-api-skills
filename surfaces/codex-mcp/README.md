@@ -1,6 +1,6 @@
 # boltz-compute-mcp-go (Codex plugin)
 
-This plugin keeps the same six Boltz Compute skills and the same per-skill reference docs as [`../codex-plugin-cli`](../codex-plugin-cli), but swaps the execution layer to a local Go MCP server.
+This plugin keeps the same six Boltz Compute skills and the same per-skill reference docs as [`../codex-cli`](../codex-cli), but swaps the execution layer to a local Go MCP server.
 
 The comparison target is deliberate:
 
@@ -11,7 +11,7 @@ The comparison target is deliberate:
 
 ## Why this variant exists
 
-This plugin is for head-to-head testing against `codex-plugin-cli/` on criteria like:
+This plugin is for head-to-head testing against `codex-cli/` on criteria like:
 
 - approval fatigue
 - sandbox / network friction

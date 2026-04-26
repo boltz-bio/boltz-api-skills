@@ -15,7 +15,7 @@ Use `download-status` first when the user knows the original slug / run name or 
 
 ### Mode 1 — "what's running?" (no ID provided)
 
-Enumerate recent jobs across all five resources, merge, and sort by `created_at` descending. Use `--limit 20` per resource; bump higher if the user asks to see more. Derive `resource_type` from the job ID prefix (empirical — not part of the spec contract; verified 2026-04-23 against live `list --limit 1` on each endpoint):
+Enumerate recent jobs across all five resources, merge, and sort by `created_at` descending. Use `--limit 20` per resource and cap the streamed output with `head -20` because the CLI auto-paginates; bump higher if the user asks to see more. Derive `resource_type` / `resource_prefix` from the job ID prefix (empirical — not part of the spec contract; verified 2026-04-23 against live `list --limit 1` on each endpoint):
 
 - `sab_pred_*` → `prediction` (structure-and-binding)
 - `prot_des_*` → `protein_design_ppi`
@@ -33,7 +33,7 @@ Use the job ID prefix to select the right `retrieve` endpoint. Only fall back to
 
 This is the crash-recovery path. Two sub-cases:
 
-**3a. User knows the original slug** (or the dir at `$ROOT/$IDEM/` still exists):
+**3a. User knows the original slug** (or the dir at `$ROOT/$RUN_NAME/` still exists):
 
 ```bash
 # Launch this command in the agent runtime's background/non-blocking mode.
@@ -41,12 +41,12 @@ This is the crash-recovery path. Two sub-cases:
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
+  --id "$ID" --name "$RUN_NAME" \
   --root-dir "$ROOT" \
   --poll-interval-seconds 30
 ```
 
-CLI reuses the existing `.boltz-run.json` and only pulls results past the last recorded cursor. If the run dir exists, `--id` can be omitted — the CLI reads the ID from metadata. Re-run in background mode the same as a fresh submit.
+CLI reuses the existing `.boltz-run.json` and only pulls results past the last recorded cursor. If the run dir exists, `--id` can be omitted because the CLI can read the ID from metadata. Re-run in background mode the same as a fresh submit.
 
 **3b. User has only the `$ID`:**
 
@@ -58,10 +58,11 @@ Never run `start` again "to resume" — that creates a new job.
 
 ```bash
 ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
+RUN_NAME="<original-run-slug>"
 
 # Local helper: inspect local checkpoint state without API calls.
 boltz-api --format json download-status \
-  --name "$IDEM" \
+  --name "$RUN_NAME" \
   --root-dir "$ROOT"
 
 # Mode 1: list recent jobs across all 5 resources.
@@ -83,9 +84,16 @@ for R in predictions:structure-and-binding \
                elif $id | startswith("prot_scr_") then "protein_library_screen_ppi"
                elif $id | startswith("sm_des_") then "boltz_sm_design"
                elif $id | startswith("sm_scr_") then "boltz_sm_screen"
+               else "unknown" end),
+            resource_prefix:
+              (if $id | startswith("sab_pred_") then "sab_pred"
+               elif $id | startswith("prot_des_") then "prot_des"
+               elif $id | startswith("prot_scr_") then "prot_scr"
+               elif $id | startswith("sm_des_") then "sm_des"
+               elif $id | startswith("sm_scr_") then "sm_scr"
                else "unknown" end)
           }
-        | {id, resource, resource_type, status, created_at, completed_at, idempotency_key}'
+        | {id, resource, resource_type, resource_prefix, status, created_at, completed_at, idempotency_key}'
 done | jq -s 'sort_by(.created_at) | reverse | .[0:20]'
 
 # Mode 2: route retrieve from the ID prefix; probe all 5 only if unknown
@@ -119,7 +127,7 @@ fi
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
+  --id "$ID" --name "$RUN_NAME" \
   --root-dir "$ROOT" \
   --poll-interval-seconds 30
 ```
@@ -128,7 +136,7 @@ boltz-api download-results \
 
 - If the user has a run name / slug or run dir and only wants local downloader state, prefer `download-status` before `retrieve`.
 - On an unfamiliar `$ID`, run Mode 2 (retrieve) before Mode 3 (download) so you capture `idempotency_key`.
-- Prefer the original `$IDEM` slug over `$ID` as `--name` — it resumes into the existing dir with cursor.
+- Prefer the original `$RUN_NAME` slug over `$ID` as `--name` — it resumes into the existing dir with cursor.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - `download-results` now emits machine-readable JSONL progress on stderr by default. Add `--progress-format text --verbose` only when you explicitly want human-readable logs.
@@ -147,4 +155,4 @@ Read [references/api.md](references/api.md) for per-resource `list` columns, `re
 ## Outputs
 
 - Local helper / Mode 1 / Mode 2 print structured data to stdout; present as a table.
-- Mode 3 writes recovered artifacts under `$ROOT/$IDEM/` — same layout as a fresh run: `.boltz-run.json`, `outputs/` (SAB) or `results/<pres_*>/` (screens and designs).
+- Mode 3 writes recovered artifacts under `$ROOT/$RUN_NAME/` — same layout as a fresh run: `.boltz-run.json`, `outputs/` (SAB) or `results/<pres_*>/` (screens and designs).

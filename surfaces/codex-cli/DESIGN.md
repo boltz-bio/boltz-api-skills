@@ -4,7 +4,7 @@ What this plugin is, why it's shaped the way it is, and what we're explicitly gi
 
 ## One-line summary
 
-A Codex plugin that ships six workflow skills for the Boltz Compute API. Each skill is prose + schema reference. The agent authors a YAML payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
+A Codex plugin that ships six workflow skills for the Boltz Compute API. Each skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
 
 ## Context
 
@@ -31,7 +31,7 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 
 ### 2. Agent authors YAML; no input-parsing helpers
 
-**Chose:** no `scripts/` dir. The agent reads FASTA / CSV / SMI / raw sequences itself and emits a payload YAML.
+**Chose:** no `scripts/` dir. The agent reads FASTA / CSV / SMI / raw sequences itself and emits a YAML or JSON payload.
 
 **Trade:** LLM tokens per invocation are higher (reads `references/api.md`, constructs YAML). **Gain:** the entire input-parsing layer (FASTA detection, CSV SMILES-column autodetect, entity dict construction, chain-ID assignment) — ~100 LOC per skill in the Python version — vanishes. Agents are already very good at parsing structured files; the cost is small.
 
@@ -59,7 +59,7 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 
 **Trade:** agent has to pick a slug — small judgment cost. **Gain:**
 - Retrying `start` with the same key is a no-op (server dedups).
-- `download-results` reuses `.boltz-run.json` at `$ROOT/$IDEM/` and resumes from the cursor — this is the crash-recovery primitive.
+- `download-results` reuses `.boltz-run.json` at `$ROOT/$RUN_NAME/` and resumes from the cursor — this is the crash-recovery primitive.
 - Output dirs are readable (`ls $ROOT` shows project slugs, not `pred_AwcjRFqcDMguILMl4laU/`).
 
 Alternative considered: use the server-assigned job ID as `--name`. Rejected because it's opaque, can only be known post-submit, and loses the "pre-submit dir is predictable" property.
@@ -84,7 +84,7 @@ Alternative considered: use the server-assigned job ID as `--name`. Rejected bec
 
 **Trade:** if the CLI is missing or the key is invalid, the first real command fails. **Gain:** zero ceremony per invocation; errors from the CLI are readable enough for the agent to relay. Matches the user's stated preference ("just assume they're set").
 
-### 9. New `codex-plugin-cli/` directory, not an in-place rewrite
+### 9. New `surfaces/codex-cli/` plugin surface, not an in-place rewrite
 
 **Chose:** sibling of `codex-plugin-python/`; Python version untouched.
 

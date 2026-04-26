@@ -29,7 +29,7 @@
   "interface": {
     "displayName": "Boltz Compute",
     "shortDescription": "Run Boltz Compute structure prediction, screening, design, and job-recovery workflows via the boltz-api CLI.",
-    "longDescription": "Provides six Codex skills that drive the boltz-api Go CLI: structure and binding prediction, small-molecule library screening, small-molecule design, protein library screening, protein binder design, and job-status recovery. Each skill authors a YAML request body, runs estimate-cost and then start, and backgrounds download-results so polling and artifact download happen in one idempotent resumable step. Results land under ./boltz-experiments/<run-name>/ by default (override via BOLTZ_COMPUTE_OUTPUT_DIR).",
+    "longDescription": "Provides six Codex skills that drive the boltz-api Go CLI: structure and binding prediction, small-molecule library screening, small-molecule design, protein library screening, protein binder design, and job-status recovery. Each skill authors a YAML or JSON request body, runs estimate-cost and then start, and launches download-results in Codex's managed long-running shell session so polling and artifact download happen in one idempotent resumable step. Results land under ./boltz-experiments/<run-name>/ by default (override via BOLTZ_COMPUTE_OUTPUT_DIR).",
     "developerName": "Boltz",
     "category": "Science",
     "capabilities": [
