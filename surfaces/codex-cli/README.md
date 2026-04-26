@@ -10,6 +10,28 @@ Six Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-referen
 
 The skills assume these are already configured and do not preflight-check them. If the CLI is missing or the key is invalid, `boltz-api` will error readably and the agent will relay the message.
 
+Verify the CLI is installed:
+
+```sh
+boltz-api --version
+```
+
+If `boltz-api` is not installed, install or update it from the official CLI repo:
+
+macOS and Linux:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | sh
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+```
+
+The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Add that directory to `PATH` if `boltz-api --version` is still not found after install. Set `BOLTZ_API_INSTALL_DIR` before running the installer to choose a different install directory.
+
 Important version note:
 
 - This plugin assumes the newer Boltz CLI surface documented by the repo, including commands like `predictions:structure-and-binding estimate-cost`, merged `--input` payloads, top-level `download-results`, and `download-status`.

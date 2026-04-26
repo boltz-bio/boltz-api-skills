@@ -122,10 +122,6 @@ CLI_USAGE §8.2 notes `@./model.txt` on a scalar flag includes the trailing newl
 
 We picked `BOLTZ_COMPUTE_OUTPUT_DIR` to match the CLI's `BOLTZ_COMPUTE_*` namespace. The old Python skills used `BOLTZ_OUTPUT_DIR`. If the CLI team has an opinion on the name, align with theirs; this is a one-line grep-and-replace across the plugin.
 
-### - [ ] README CLI install instructions
-
-Currently README says "prereqs: boltz-api on PATH" but gives no install one-liner. Per user decision we're not preflighting the install, but a user looking at the plugin page still wants to know *how* to get the CLI. Before a public listing, add a line pointing at the canonical install (Homebrew tap? `go install ...@latest`? a GitHub releases page?). We never confirmed which channel is canonical.
-
 ### - [ ] `results/<pres_*>/files/result/` layout is consistent
 
 We document this layout in every screen/design `api.md` and `SKILL.md`. Verified indirectly via CLI_USAGE §4.3 — should spot-check on a live download that the dir structure actually matches what we claim, especially the `files/result/` vs `files/` distinction.
