@@ -58,8 +58,7 @@ Payload keys are `proteins`, `target` — API body field names.
 
 ## Escape Hatch
 
-- Payload reference: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/library_screen/methods/start>
 - CLI flag names: `boltz-api protein:library-screen start --help`
 
 Read [references/api.md](references/api.md) for the `proteins` list shape and both `target` variants (structure_template with `chain_selection`, and no_template with epitope hints).

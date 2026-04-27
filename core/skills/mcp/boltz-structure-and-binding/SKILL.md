@@ -62,8 +62,7 @@ internally and returns `{id, run_name, output_dir, log_path, download_pid}`.
 
 For anything not covered in `references/api.md`:
 
-- Upstream request body reference: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/predictions/subresources/structure_and_binding/methods/start>
 - CLI flag names: `boltz-api predictions:structure-and-binding start --help` (schema details aren't there — just flag names and types)
 
 Read [references/api.md](references/api.md) for entity shapes, binding variants, bonds, constraints, model options, and output metrics.

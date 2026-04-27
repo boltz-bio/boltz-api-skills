@@ -11,7 +11,11 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
 2. Pick the `binder_specification` variant:
    - `structure_template` — redesign motifs in an existing binder scaffold (CIF + `design_motifs` with `replacement` / `insertion` segments).
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
-3. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein`.
+3. Pick `modality` — a **generation-config switch only**, not a scaffold loader. The API will not auto-supply an antibody framework or nanobody scaffold; for `antibody` / `nanobody` you must provide your own scaffold via `binder_specification.structure_template` (or sequence components via `no_template`). Options:
+   - `custom_protein` — general de novo protein binder. Cys allowed. Includes a design-folding step and the largest-hydrophobic-patch filter. Use this for `protein-anything`, `protein-small_molecule`, and `protein-redesign` workflows from boltzgen.
+   - `peptide` — short / cyclic peptide binder. **No Cys** generated in inverse folding. No design-folding step. No LHP filter. Pair with `cyclic: true` on the designed entity for head-to-tail peptides.
+   - `antibody` — designs CDRs only on a Fab framework you supply. Same gen-config as `peptide` (no Cys, no design folding, no LHP filter).
+   - `nanobody` — same gen-config as `antibody`, for VHH scaffolds you supply.
 4. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
 5. Add `rules` only on request (`excluded_amino_acids`, `excluded_sequence_motifs` with `X` wildcards, `max_hydrophobic_fraction`).
 6. Author the payload object, call `boltz_estimate_run` with `resource="protein:design"`, show the USD cost, and wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure returned by `boltz_estimate_run`.
@@ -63,8 +67,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 
 ## Escape Hatch
 
-- Payload reference: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/design/methods/start>
 - CLI flag names: `boltz-api protein:design start --help`
 
 Read [references/api.md](references/api.md) for both `binder_specification` variants, the motif shapes, the sequence DSL, and the `target` variants.

@@ -213,6 +213,5 @@ Per-result fields (available in the `list-results` stream as well):
 
 ## Escape hatch
 
-- <https://docs.boltz.bio/api-reference/api-input-format.md>
-- <https://docs.boltz.bio/api-reference/openapi.json>
+- <https://boltz-compute-api.stldocs.app/api/python/resources/small_molecule/subresources/library_screen/methods/start>
 - `boltz-api small-molecule:library-screen start --help`

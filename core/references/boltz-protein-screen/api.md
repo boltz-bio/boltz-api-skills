@@ -260,6 +260,5 @@ Rank by `binding_confidence` descending. Use `iptm` (higher better) and `min_int
 
 ## Escape hatch
 
-- <https://docs.boltz.bio/api-reference/api-input-format.md>
-- <https://docs.boltz.bio/api-reference/openapi.json>
+- <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/library_screen/methods/start>
 - `boltz-api protein:library-screen start --help`
