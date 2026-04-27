@@ -6,6 +6,7 @@ description: Score a user-supplied SMILES library against a protein target with 
 ## Workflow
 
 If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
 
 Use this skill when the user already has candidate molecules.
 
