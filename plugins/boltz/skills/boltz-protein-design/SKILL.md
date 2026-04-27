@@ -6,6 +6,7 @@ description: Generate novel protein binders (peptide, antibody, nanobody, or cus
 ## Workflow
 
 If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
 
 Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
 

@@ -6,6 +6,7 @@ description: List recent Boltz Compute jobs across all five endpoints, or inspec
 ## Workflow
 
 If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
 
 Use this skill to recover state across sessions and to inspect or download results for prior Boltz jobs. No payload authoring — this skill only calls `list` / `retrieve` / `download-results` / `download-status`.
 

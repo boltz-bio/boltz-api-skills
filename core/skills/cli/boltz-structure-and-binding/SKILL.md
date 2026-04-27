@@ -6,6 +6,7 @@ description: Predict the 3D structure of a protein, RNA, DNA, or ligand complex 
 ## Workflow
 
 If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
 
 Use this skill for one defined complex, not a library workflow.
 

@@ -78,11 +78,11 @@ Alternative considered: use the server-assigned job ID as `--name`. Rejected bec
 
 **Codex warning:** do not use shell `&`, terminal backgrounding, or `nohup` as the detach mechanism. Codex may clean up shell-backgrounded descendants when the initiating tool command exits, before `.boltz-run.json` is fully written. Keep `download-results` in the managed foreground session and let Codex return control after a 1000 ms yield.
 
-### 8. No preflight for install or auth
+### 8. No install preflight; reactive auth recovery
 
-**Chose:** skills assume `boltz-api` is on PATH and `BOLTZ_COMPUTE_API_KEY` is set. No "command -v boltz-api" check, no "auth status" call before every run.
+**Chose:** skills assume `boltz-api` is on PATH and don't run a preflight auth check before every command. If the CLI reports missing or expired auth, the agent uses the `boltz-api-cli` skill to start `boltz-api auth login --device-code` on the user's behalf, without a separate permission prompt.
 
-**Trade:** if the CLI is missing or the key is invalid, the first real command fails. **Gain:** zero ceremony per invocation; errors from the CLI are readable enough for the agent to relay. Matches the user's stated preference ("just assume they're set").
+**Trade:** the first real command may still be the thing that discovers missing install/auth state. **Gain:** zero ceremony per invocation while keeping auth recovery actionable; errors from the CLI are readable enough for the agent to route to install guidance or device-code login.
 
 ### 9. New `surfaces/codex-cli/` plugin surface, not an in-place rewrite
 

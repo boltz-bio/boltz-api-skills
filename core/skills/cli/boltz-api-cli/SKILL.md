@@ -1,6 +1,6 @@
 ---
 name: boltz-api-cli
-description: Boltz Compute CLI setup and authentication guidance. Use when the user asks how to install, update, verify, or authenticate the boltz-api CLI, or when a workflow reports that boltz-api is missing from PATH.
+description: Boltz Compute CLI setup and authentication guidance. Use when the user asks how to install, update, verify, or authenticate the boltz-api CLI, or when a workflow reports that boltz-api is missing from PATH or authentication is missing/expired.
 ---
 
 # Boltz API CLI
@@ -33,22 +33,24 @@ The installer updates an existing `boltz-api` on `PATH`. If no binary is found, 
 
 ## Authenticate
 
-Use OAuth for local interactive work:
-
-```sh
-boltz-api auth login
-```
-
-For automation or headless environments, use an API key:
-
-```sh
-export BOLTZ_COMPUTE_API_KEY=<api-key>
-```
-
 Check the current auth state with:
 
 ```sh
 boltz-api auth status
+```
+
+If `auth status` reports unauthenticated, or any Boltz command fails because authentication is missing or expired, start device-code login on the user's behalf before retrying:
+
+```sh
+boltz-api auth login --device-code
+```
+
+Do not ask the user for permission before starting device-code login; relaying the login URL/code and waiting for the CLI to complete is part of auth recovery.
+
+For automation where a key is already available, an API key is still supported:
+
+```sh
+export BOLTZ_COMPUTE_API_KEY=<api-key>
 ```
 
 ## Version Checks
