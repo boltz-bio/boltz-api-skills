@@ -7,6 +7,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  verify-generated:
+    name: Verify generated distribution surfaces
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify generated surfaces
+        run: scripts/verify-generated.sh
+
   build-mcp-server:
     name: Build MCP server (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-latest
@@ -111,7 +119,7 @@ jobs:
 
   release:
     name: Publish release
-    needs: [package-mcpb, package-plugins]
+    needs: [verify-generated, package-mcpb, package-plugins]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:

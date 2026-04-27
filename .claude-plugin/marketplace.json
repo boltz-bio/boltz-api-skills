@@ -1,0 +1,27 @@
+{
+  "name": "boltz-marketplace",
+  "owner": {
+    "name": "Boltz",
+    "email": "support@boltz.bio"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for Boltz Compute workflows.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "boltz",
+      "source": "./plugins/boltz",
+      "description": "Run Boltz Compute structure prediction, screening, and design workflows from Claude Code.",
+      "category": "Computational Biology",
+      "tags": [
+        "boltz",
+        "boltz-compute",
+        "computational-biology",
+        "protein-design",
+        "virtual-screening",
+        "structure-prediction"
+      ]
+    }
+  ]
+}

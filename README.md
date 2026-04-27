@@ -38,6 +38,49 @@ claude --plugin-dir ./surfaces/claude-code-cli
 claude --plugin-dir ./surfaces/claude-code-mcp
 ```
 
+## Claude Code local install
+
+The repo root is also a Claude Code marketplace named `boltz-marketplace`. It
+publishes one installable plugin named `boltz`, backed by a self-contained copy
+of the CLI-direct Claude Code skills under `plugins/boltz`.
+
+For a local checkout:
+
+```bash
+claude plugin marketplace add "$PWD"
+claude plugin install boltz@boltz-marketplace --scope user
+```
+
+Or use the install script:
+
+```bash
+scripts/install-claude-code-plugin.sh
+```
+
+To install from a local checkout instead of GitHub, run:
+
+```bash
+BOLTZ_CLAUDE_MARKETPLACE="$PWD" scripts/install-claude-code-plugin.sh
+```
+
+Restart Claude Code after installing. The installed `boltz` plugin requires
+`boltz-api` on `PATH` and either `boltz-api auth login` or
+`BOLTZ_COMPUTE_API_KEY`.
+
+When editing the shared skill source under `core/` or Claude-specific files
+under `surfaces/claude-code-cli/`, refresh generated distribution surfaces:
+
+```bash
+scripts/generate-surfaces.sh
+```
+
+Treat `plugins/boltz` as generated output. Make source changes under `core/` or
+`surfaces/claude-code-cli/`, then sync. CI verifies the generated copy, and a
+branch push workflow auto-commits regenerated `plugins/boltz` changes when a
+development branch drifts.
+
+For the full development lifecycle, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ## Release builds
 
 ```bash

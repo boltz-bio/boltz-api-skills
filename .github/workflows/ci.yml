@@ -37,6 +37,8 @@ jobs:
         run: mcpb validate surfaces/claude-desktop-mcpb
       - name: JSON syntax for Claude plugins
         run: |
+          jq empty .claude-plugin/marketplace.json
+          jq empty plugins/boltz/.claude-plugin/plugin.json
           jq empty surfaces/claude-code-cli/.claude-plugin/plugin.json
           jq empty surfaces/claude-code-mcp/.claude-plugin/plugin.json
           jq empty surfaces/claude-code-mcp/.mcp.json
@@ -69,6 +71,14 @@ jobs:
             done
           done
           echo "All 4 surfaces × 6 skills × 2 files = 48 symlinks resolved."
+
+  verify-claude-plugin-copy:
+    name: Verify generated distribution surfaces
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify generated surfaces
+        run: scripts/verify-generated.sh
 
   package-plugins:
     name: Package plugin zips
