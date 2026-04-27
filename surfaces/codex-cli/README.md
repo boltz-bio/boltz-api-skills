@@ -2,8 +2,6 @@
 
 Six Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz Compute API. No Python runtime, no SDK install, no wrapper scripts — each skill is workflow prose plus a per-endpoint schema reference. The agent authors a YAML or JSON payload and calls `boltz-api` directly.
 
-This is the CLI-first counterpart to `codex-mcp`: same skill names, same trigger language, same `references/api.md` payload docs, and the same newer Boltz CLI command surface underneath. The difference is the runtime boundary: this plugin lets Codex use the CLI directly, which can be the simpler default when shell execution is available and users want the raw `boltz-api` workflow visible.
-
 ## Prerequisites
 
 - `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.7.0`)
@@ -57,9 +55,8 @@ Results land in `$ROOT/$RUN_NAME/` where `$ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-./
 ## Why use the CLI variant
 
 - The user can inspect and rerun every command the agent used.
-- No local MCP server has to be built, launched, or debugged.
+- No local server has to be built, launched, or debugged.
 - The CLI owns the long-running poll/download behavior, local `.boltz-run.json` checkpoint, JSONL progress stream, and `download-status` view.
-- The skill docs stay aligned with `codex-mcp`; choosing CLI vs MCP is mostly an operational decision, not a different reasoning surface.
 
 ## Escape hatch
 

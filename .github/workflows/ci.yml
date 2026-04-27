@@ -7,44 +7,28 @@ on:
     branches: [main]
 
 jobs:
-  go-build-and-test:
-    name: Go MCP server build & test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-          cache-dependency-path: core/mcp-server/go.sum
-      - name: Build
-        working-directory: core/mcp-server
-        run: go build ./cmd/boltz-compute-mcp
-      - name: Test
-        working-directory: core/mcp-server
-        run: go test ./cmd/boltz-compute-mcp
-
   validate-manifests:
-    name: Validate plugin/MCPB manifests
+    name: Validate plugin manifests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Install mcpb
-        run: npm install -g @anthropic-ai/mcpb
-      - name: Validate MCPB manifest
-        run: mcpb validate surfaces/claude-desktop-mcpb
+      - name: Install Claude Code validator
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate Claude Code plugins
+        run: |
+          claude plugin validate .
+          claude plugin validate plugins/boltz
+          claude plugin validate surfaces/claude-code-cli
       - name: JSON syntax for Claude plugins
         run: |
+          jq empty .claude-plugin/marketplace.json
+          jq empty plugins/boltz/.claude-plugin/plugin.json
           jq empty surfaces/claude-code-cli/.claude-plugin/plugin.json
-          jq empty surfaces/claude-code-mcp/.claude-plugin/plugin.json
-          jq empty surfaces/claude-code-mcp/.mcp.json
       - name: JSON syntax for Codex plugins
-        run: |
-          jq empty surfaces/codex-cli/.codex-plugin/plugin.json
-          jq empty surfaces/codex-mcp/.codex-plugin/plugin.json
-          jq empty surfaces/codex-mcp/.mcp.json
+        run: jq empty surfaces/codex-cli/.codex-plugin/plugin.json
 
   verify-symlinks:
     name: Verify skill symlinks resolve
@@ -54,7 +38,7 @@ jobs:
       - name: Check every surface's skill symlinks
         run: |
           set -euo pipefail
-          for surface in claude-code-cli claude-code-mcp codex-cli codex-mcp; do
+          for surface in claude-code-cli codex-cli; do
             for skill in boltz-structure-and-binding boltz-small-molecule-screen \
                          boltz-small-molecule-design boltz-protein-screen \
                          boltz-protein-design boltz-check-status; do
@@ -68,19 +52,21 @@ jobs:
               }
             done
           done
-          echo "All 4 surfaces × 6 skills × 2 files = 48 symlinks resolved."
+          echo "All 2 surfaces × 6 skills × 2 files = 24 symlinks resolved."
+
+  verify-claude-plugin-copy:
+    name: Verify generated distribution surfaces
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify generated surfaces
+        run: scripts/verify-generated.sh
 
   package-plugins:
     name: Package plugin zips
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-          cache-dependency-path: core/mcp-server/go.sum
-      - name: Build release binaries
-        run: scripts/build-mcp-release.sh
       - name: Package plugin zips
         run: scripts/package-plugins.sh
       - name: Verify packaged skills are self-contained
@@ -91,24 +77,3 @@ jobs:
           test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
           test ! -L "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
           test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/references/api.md"
-          unzip -p "dist/claude-code-mcp-"*-windows-amd64.zip .mcp.json \
-            | jq -e '.mcpServers.boltzComputeLocal.command | endswith(".exe")' >/dev/null
-
-  package-mcpb:
-    name: Package MCPB bundle
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-          cache-dependency-path: core/mcp-server/go.sum
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Install mcpb
-        run: npm install -g @anthropic-ai/mcpb
-      - name: Build release binaries
-        run: scripts/build-mcp-release.sh
-      - name: Package MCPB
-        run: scripts/package-mcpb.sh

@@ -1,1 +1,0 @@
-../../../../core/skills/mcp/boltz-protein-design/SKILL.md

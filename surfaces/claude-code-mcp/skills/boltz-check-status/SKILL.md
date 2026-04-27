@@ -1,1 +1,0 @@
-../../../../core/skills/mcp/boltz-check-status/SKILL.md
