@@ -31,10 +31,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Install mcpb
-        run: npm install -g @anthropic-ai/mcpb
+      - name: Install Anthropic validators
+        run: npm install -g @anthropic-ai/mcpb @anthropic-ai/claude-code
       - name: Validate MCPB manifest
         run: mcpb validate surfaces/claude-desktop-mcpb
+      - name: Validate Claude Code plugins
+        run: |
+          claude plugin validate .
+          claude plugin validate plugins/boltz
+          claude plugin validate surfaces/claude-code-cli
+          claude plugin validate surfaces/claude-code-mcp
       - name: JSON syntax for Claude plugins
         run: |
           jq empty .claude-plugin/marketplace.json
