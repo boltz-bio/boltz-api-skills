@@ -1,1 +1,0 @@
-../../../../core/skills/mcp/boltz-structure-and-binding/SKILL.md

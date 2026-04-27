@@ -1,1 +1,0 @@
-../../../../core/skills/mcp/boltz-small-molecule-design/SKILL.md

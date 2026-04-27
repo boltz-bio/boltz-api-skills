@@ -2,14 +2,13 @@
 
 ## Source Of Truth
 
-Shared workflow prose, API references, and MCP code live under `core/`.
-Development plugin surfaces live under `surfaces/`. Checked-in installable
-plugin copies live under `plugins/` and are generated.
+Shared workflow prose and API references live under `core/`. Development plugin
+surfaces live under `surfaces/`. Checked-in installable plugin copies live under
+`plugins/` and are generated.
 
 | Path | Role | Edit directly? |
 |---|---|---|
 | `core/skills/cli/` | Shared CLI-backed skill workflows | Yes |
-| `core/skills/mcp/` | Shared MCP-backed skill workflows | Yes |
 | `core/references/` | Shared API reference docs | Yes |
 | `surfaces/claude-code-cli/` | Claude Code CLI development surface and Claude-specific wrapper files | Yes |
 | `plugins/boltz/` | Self-contained Claude Code marketplace plugin | No, generated |

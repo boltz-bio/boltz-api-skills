@@ -1,1 +1,0 @@
-../../../../core/skills/mcp/boltz-protein-screen/SKILL.md

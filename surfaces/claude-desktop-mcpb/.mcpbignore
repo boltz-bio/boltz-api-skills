@@ -1,5 +1,0 @@
-# Exclude build artifacts and dev files from the packed .mcpb
-.gitignore
-.gitkeep
-*.md
-README.md

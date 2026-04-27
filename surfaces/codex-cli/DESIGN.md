@@ -88,7 +88,7 @@ Alternative considered: use the server-assigned job ID as `--name`. Rejected bec
 
 **Chose:** sibling of `codex-plugin-python/`; Python version untouched.
 
-**Trade:** another flavor in a repo that already has six (`skills-python`, `skills-rest`, `skills-rest-hybrid`, `skills-mcp`, `boltz-mcp`, `boltz-compute-mcp`). **Gain:** the Python plugin stays as a reference for anyone wanting the SDK path, and there's zero migration risk for existing installs. If the CLI plugin ships well, deprecating the Python one is a separate commit.
+**Trade:** another maintained plugin surface alongside the legacy Python reference. **Gain:** the Python plugin stays as a reference for anyone wanting the SDK path, and there's zero migration risk for existing installs. If the CLI plugin ships well, deprecating the Python one is a separate commit.
 
 ## What survives from the Python plugin
 

@@ -1,8 +1,6 @@
 # boltz (Claude Code plugin)
 
-Six skills for the Boltz Compute API, executed by shelling out to the `boltz-api` Go CLI directly from Claude Code. This is the **CLI-direct variant**; the repo also contains an MCP-backed Claude Code variant for benchmarking.
-
-Both surfaces expose the same six skills with identical trigger descriptions, differing only in execution layer. They exist side-by-side to support benchmarking before a single Claude Code surface is chosen for directory submission.
+Six skills for the Boltz Compute API, executed by shelling out to the `boltz-api` Go CLI directly from Claude Code.
 
 ## Skills
 
