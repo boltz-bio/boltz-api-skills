@@ -5,6 +5,8 @@ description: Generate novel protein binders (peptide, antibody, nanobody, or cus
 
 ## Workflow
 
+If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+
 Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
 
 1. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.

@@ -87,6 +87,26 @@ All surfaces need:
 - `BOLTZ_COMPUTE_OUTPUT_DIR` optional (defaults to `./boltz-experiments`)
 - `boltz-api` on `PATH`
 
+Verify the CLI is installed:
+
+```sh
+boltz-api --version
+```
+
+If `boltz-api` is not installed, install or update it from the official CLI repo:
+
+macOS and Linux:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | sh
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+```
+
 ## Directory submissions
 
 Targets:

@@ -1,6 +1,6 @@
 # boltz-compute-cli (Codex plugin)
 
-Six Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz Compute API. No Python runtime, no SDK install, no wrapper scripts — each skill is workflow prose plus a per-endpoint schema reference. The agent authors a YAML or JSON payload and calls `boltz-api` directly.
+Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz Compute API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-api-cli` covers CLI setup.
 
 ## Prerequisites
 
@@ -9,6 +9,28 @@ Six Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-referen
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land (default: `./boltz-experiments/`)
 
 The skills assume these are already configured and do not preflight-check them. If the CLI is missing or the key is invalid, `boltz-api` will error readably and the agent will relay the message.
+
+Verify the CLI is installed:
+
+```sh
+boltz-api --version
+```
+
+If `boltz-api` is not installed, install or update it from the official CLI repo:
+
+macOS and Linux:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | sh
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+```
+
+The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Add that directory to `PATH` if `boltz-api --version` is still not found after install. Set `BOLTZ_API_INSTALL_DIR` before running the installer to choose a different install directory.
 
 Important version note:
 
@@ -20,6 +42,7 @@ Important version note:
 
 | Skill | Use when… |
 |---|---|
+| `boltz-api-cli` | install, update, verify, or authenticate the `boltz-api` CLI |
 | `boltz-structure-and-binding` | fold one defined complex; dock one ligand; get pTM/ipTM/binding_confidence for one system |
 | `boltz-small-molecule-screen` | rank an existing SMILES library against a target |
 | `boltz-small-molecule-design` | generate novel small-molecule binders for a target (no library yet) |
@@ -35,7 +58,7 @@ From a Codex session:
 /plugins add <path-to-this-directory>
 ```
 
-Or configure in your Codex plugin config. The plugin registers the six skills; the agent picks the right one based on your request.
+Or configure in your Codex plugin config. The plugin registers the seven skills; the agent picks the right one based on your request.
 
 ## Lifecycle
 
