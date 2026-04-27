@@ -1,7 +1,7 @@
 {
   "name": "boltz",
   "version": "0.1.0",
-  "description": "Run Boltz Compute CLI setup, structure prediction, screening, and de novo design workflows from Claude Code by shelling out to the boltz-api CLI. CLI-direct variant for benchmarking against the MCP variant.",
+  "description": "Run Boltz Compute CLI setup, structure prediction, screening, and de novo design workflows from Claude Code by shelling out to the boltz-api CLI.",
   "author": {
     "name": "Boltz",
     "email": "support@boltz.bio",

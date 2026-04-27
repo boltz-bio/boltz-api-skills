@@ -5,6 +5,8 @@ description: Score a user-supplied SMILES library against a protein target with 
 
 ## Workflow
 
+If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+
 Use this skill when the user already has candidate molecules.
 
 1. Normalize the library from raw SMILES, a CSV (auto-detect the SMILES column), `.smi`, or `.txt` into the `molecules` list. Each entry is `{smiles, id?}`; the optional `id` is echoed back as `external_id` on each result.

@@ -5,6 +5,8 @@ description: Generate novel small-molecule binders for a protein target with the
 
 ## Workflow
 
+If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+
 Use this skill when the user wants de novo small-molecule binders (no existing library).
 
 1. Normalize the target: one or more protein sequences into `target.entities`, plus optional `pocket_residues` (0-based) and/or `reference_ligands` (known binders to seed pocket detection).
