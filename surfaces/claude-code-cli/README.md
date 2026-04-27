@@ -1,11 +1,12 @@
 # boltz (Claude Code plugin)
 
-Six skills for the Boltz Compute API, executed by shelling out to the `boltz-api` Go CLI directly from Claude Code.
+Seven skills for the Boltz Compute API, executed by shelling out to the `boltz-api` Go CLI directly from Claude Code. Six workflow skills run Boltz Compute jobs, and `boltz-api-cli` covers install/auth guidance.
 
 ## Skills
 
 | Skill | What it does |
 |---|---|
+| `boltz-api-cli` | Install, update, verify, and authenticate the `boltz-api` CLI. |
 | `boltz-structure-and-binding` | Predict 3D structure of one defined complex; optionally score binding. |
 | `boltz-small-molecule-screen` | Rank a user-supplied SMILES library against a target. |
 | `boltz-small-molecule-design` | Generate novel small-molecule binders. |

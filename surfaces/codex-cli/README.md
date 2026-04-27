@@ -1,6 +1,6 @@
 # boltz-compute-cli (Codex plugin)
 
-Six Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz Compute API. No Python runtime, no SDK install, no wrapper scripts — each skill is workflow prose plus a per-endpoint schema reference. The agent authors a YAML or JSON payload and calls `boltz-api` directly.
+Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz Compute API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-api-cli` covers CLI setup.
 
 ## Prerequisites
 
@@ -42,6 +42,7 @@ Important version note:
 
 | Skill | Use when… |
 |---|---|
+| `boltz-api-cli` | install, update, verify, or authenticate the `boltz-api` CLI |
 | `boltz-structure-and-binding` | fold one defined complex; dock one ligand; get pTM/ipTM/binding_confidence for one system |
 | `boltz-small-molecule-screen` | rank an existing SMILES library against a target |
 | `boltz-small-molecule-design` | generate novel small-molecule binders for a target (no library yet) |
@@ -57,7 +58,7 @@ From a Codex session:
 /plugins add <path-to-this-directory>
 ```
 
-Or configure in your Codex plugin config. The plugin registers the six skills; the agent picks the right one based on your request.
+Or configure in your Codex plugin config. The plugin registers the seven skills; the agent picks the right one based on your request.
 
 ## Lifecycle
 

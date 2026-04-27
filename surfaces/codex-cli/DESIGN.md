@@ -4,7 +4,7 @@ What this plugin is, why it's shaped the way it is, and what we're explicitly gi
 
 ## One-line summary
 
-A Codex plugin that ships six workflow skills for the Boltz Compute API. Each skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
+A Codex plugin that ships six workflow skills for the Boltz Compute API plus one `boltz-api` setup skill. Each workflow skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
 
 ## Context
 
@@ -35,9 +35,9 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 
 **Trade:** LLM tokens per invocation are higher (reads `references/api.md`, constructs YAML). **Gain:** the entire input-parsing layer (FASTA detection, CSV SMILES-column autodetect, entity dict construction, chain-ID assignment) — ~100 LOC per skill in the Python version — vanishes. Agents are already very good at parsing structured files; the cost is small.
 
-### 3. Five workflow skills + one status/recovery skill, not one omnibus
+### 3. Endpoint workflows + CLI setup, not one omnibus
 
-**Chose:** six separate `SKILL.md` files with tight per-endpoint `description` triggers (lifted verbatim from the Python plugin — those triggers are tuned).
+**Chose:** six separate workflow `SKILL.md` files with tight per-endpoint `description` triggers (lifted verbatim from the Python plugin — those triggers are tuned), plus one small `boltz-api-cli` setup skill for install/auth guidance.
 
 **Trade:** small prose duplication of the "estimate → confirm → submit → background download" lifecycle across five skills. **Gain:** precise trigger matching (Codex selects the right skill from "design a nanobody" vs "screen these SMILES" without loose overlap); each SKILL.md stays short enough that agents read past the first 30%.
 

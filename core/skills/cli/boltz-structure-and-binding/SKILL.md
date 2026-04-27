@@ -5,6 +5,8 @@ description: Predict the 3D structure of a protein, RNA, DNA, or ligand complex 
 
 ## Workflow
 
+If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+
 Use this skill for one defined complex, not a library workflow.
 
 1. Normalize the inputs into `entities`. Each entity is **`{type, chain_ids, value}`** — note plural `chain_ids` (an array, even for one chain) and the field is `value`, **not** `sequence`:

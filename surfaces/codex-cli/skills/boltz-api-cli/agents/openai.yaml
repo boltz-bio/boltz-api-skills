@@ -1,0 +1,4 @@
+interface:
+  display_name: "Boltz API CLI"
+  short_description: "Install, update, verify, and authenticate boltz-api"
+  default_prompt: "Use $boltz-api-cli to verify my boltz-api installation and help me install or authenticate it if needed."

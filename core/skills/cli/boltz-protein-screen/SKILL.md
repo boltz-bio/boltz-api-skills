@@ -5,6 +5,8 @@ description: Score a user-supplied library of protein sequences against a target
 
 ## Workflow
 
+If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
+
 Use this skill when the user already has candidate proteins / peptides / antibodies / nanobodies.
 
 1. Normalize the binder library into `proteins` — a list of candidate complexes. For a simple sequence library each entry has one protein entity; multi-chain candidates (antibody heavy+light) are also allowed.
