@@ -50,3 +50,16 @@ Check the current auth state with:
 ```sh
 boltz-api auth status
 ```
+
+## Version Checks
+
+Do not hard-code expected command surfaces or minimum versions in this skill. Treat the CLI's own update check as the source of truth.
+
+When `boltz-api` reports that an update is available or required, relay that message and the install command it provides. The CLI may power this with a Boltz-hosted version metadata endpoint such as `/cli/version`, returning latest version, minimum supported version, whether an update is required, and platform-appropriate install instructions.
+
+If a user asks why the CLI thinks it is stale, explain the split:
+
+- GitHub Releases define which CLI binaries are available to install.
+- The Boltz version endpoint defines API compatibility, including the minimum supported CLI version.
+
+Respect user or CI opt-outs such as `BOLTZ_API_NO_UPDATE_CHECK=1`; do not force update checks when the environment disables them.
