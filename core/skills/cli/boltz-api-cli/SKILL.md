@@ -50,14 +50,3 @@ Check the current auth state with:
 ```sh
 boltz-api auth status
 ```
-
-## Expected Version
-
-CLI-backed skills expect the newer command surface with:
-
-- `predictions:structure-and-binding estimate-cost`
-- merged `--input` payloads for design and screen commands
-- top-level `download-results`
-- `download-status`
-
-If the CLI reports `No such command` for these commands, install or update `boltz-api` and retry.
