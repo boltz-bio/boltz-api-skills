@@ -7,6 +7,7 @@ description: List recent Boltz Compute jobs across all five endpoints, or inspec
 
 If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
 If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
 
 Use this skill to recover state across sessions and to inspect or download results for prior Boltz jobs. No payload authoring — this skill only calls `list` / `retrieve` / `download-results` / `download-status`.
 
@@ -60,7 +61,8 @@ Never run `start` again "to resume" — that creates a new job.
 ## Command Pattern
 
 ```bash
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
+WORKDIR="$(pwd)"
+ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-$WORKDIR/boltz-experiments}"
 RUN_NAME="<original-run-slug>"
 
 # Local helper: inspect local checkpoint state without API calls.
@@ -138,6 +140,7 @@ boltz-api download-results \
 ## Always Do This
 
 - If the user has a run name / slug or run dir and only wants local downloader state, prefer `download-status` before `retrieve`.
+- Use an absolute `ROOT` and keep passing it through `--root-dir`. Do not `cd "$ROOT/$RUN_NAME"`; that makes later relative paths point at the run directory instead of the user's workspace.
 - On an unfamiliar `$ID`, run Mode 2 (retrieve) before Mode 3 (download) so you capture `idempotency_key`.
 - Prefer the original `$RUN_NAME` slug over `$ID` as `--name` — it resumes into the existing dir with cursor.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.

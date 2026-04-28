@@ -18,7 +18,9 @@ Seven skills for the Boltz Compute API, executed by shelling out to the `boltz-a
 
 - `boltz-api` on `PATH`.
 - `BOLTZ_COMPUTE_API_KEY` exported in your shell environment.
-- Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` (defaults to `./boltz-experiments`).
+- Optional: `BOLTZ_COMPUTE_OUTPUT_DIR`. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
+
+If the Claude Code sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-api-cli`. Use `dangerouslyDisableSandbox: true` only if workspace-local state still cannot access the network, temp files, credentials, or install path.
 
 Verify the CLI is installed:
 

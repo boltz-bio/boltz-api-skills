@@ -84,8 +84,10 @@ CI (`.github/workflows/release.yml`) runs these on every tagged release and atta
 
 All surfaces need:
 - Authentication via either `boltz-api auth login --device-code` or `BOLTZ_COMPUTE_API_KEY` as an API-key fallback.
-- `BOLTZ_COMPUTE_OUTPUT_DIR` optional (defaults to `./boltz-experiments`)
+- `BOLTZ_COMPUTE_OUTPUT_DIR` optional. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
 - `boltz-api` on `PATH`
+
+If an agent sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-api-cli`. Request the host sandbox bypass only if workspace-local state still cannot access the network, temp files, credentials, or install path.
 
 Verify the CLI is installed:
 

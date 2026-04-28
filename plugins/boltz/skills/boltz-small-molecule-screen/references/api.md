@@ -5,11 +5,11 @@ Covers the `small-molecule:library-screen` endpoint. Prefer a single merged top-
 Minimal CLI pattern:
 
 ```bash
-boltz-api small-molecule:library-screen estimate-cost --input @yaml://payload.yaml
-ID=$(boltz-api small-molecule:library-screen start --idempotency-key "$IDEM" --input @yaml://payload.yaml --raw-output --transform id)
+boltz-api small-molecule:library-screen estimate-cost --input @yaml:///absolute/path/payload.yaml
+ID=$(boltz-api small-molecule:library-screen start --idempotency-key "$IDEM" --input @yaml:///absolute/path/payload.yaml --raw-output --transform id)
 ```
 
-Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml://target.yaml`, `--molecule-filters @json://filters.json`, or repeated `--molecule @json://mol-1.json` entries. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
+Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml`, `--molecule-filters @json:///absolute/path/filters.json`, or repeated `--molecule @json:///absolute/path/mol-1.json` entries. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
 
 ## Contents
 
@@ -121,6 +121,8 @@ Top-level filter fields:
 - `boltz_smarts_catalog_filter_level` — built-in catalog. Values: `"recommended"` (default), `"extra"`, `"aggressive"`, `"disabled"`.
 - `custom_filters` — list of user filters, AND-combined (a molecule is rejected if any filter rejects it).
 
+Filtering happens before scoring and can reduce the result count. The local `.boltz-run.json` checkpoint and `download-status` do not currently report how many submitted molecules were dropped by the default recommended SMARTS catalog; after `download-results`, check `run.json` for `progress.rejection_summary` when present. Use `results/index.jsonl` as the authoritative local scored-molecule list after download, or `list-results` when no local manifest is available.
+
 ### `lipinski_filter`
 
 ```yaml
@@ -193,10 +195,13 @@ Cost is quoted by `estimate-cost` on the exact payload. For small targets it is 
 Under `$ROOT/$IDEM/`:
 
 - `.boltz-run.json`
+- `run.json` — sanitized remote run record, including `progress.rejection_summary` when the server returned it
+- `results/index.jsonl` — one scored molecule per line, copied from list-results metadata plus local artifact paths
+- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
 - `results/<pres_*>/archive.tar.gz` — one dir per scored molecule
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result fields (available in the `list-results` stream as well):
+Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadata.json`, and the `list-results` stream):
 
 - `id` — server-assigned `pres_*` ID
 - `external_id` — your input `id`
@@ -210,6 +215,8 @@ Per-result fields (available in the `list-results` stream as well):
 - `warnings` — any server warnings for this molecule
 
 `binding_confidence` and `optimization_score` are parallel intents, not a primary/fallback hierarchy: `binding_confidence` is the primary metric for **hit discovery** (find any binder); `optimization_score` ranks by **binding strength** for **lead optimization**. Both are always present on sm:library-screen results. Sort by whichever matches the user's goal.
+
+For downloaded per-hit directories, do not rely on `files/result/metrics.json` to map back to the input library: those files are engine metrics only. Use `results/index.jsonl` or `results/<pres_*>/metadata.json` for ranked reporting because they contain `external_id`, `smiles`, metrics, and local artifact paths together. Use `boltz-api small-molecule:library-screen list-results --id "$ID" --format jsonl` only when the local manifest is missing or stale.
 
 ## Escape hatch
 
