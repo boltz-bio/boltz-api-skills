@@ -47,6 +47,8 @@ boltz-api auth login --device-code
 
 Do not ask the user for permission before starting device-code login; relaying the login URL/code and waiting for the CLI to complete is part of auth recovery.
 
+Prefer device-code login in agent or sandboxed environments. Even with device-code login, sandboxing can prevent network access or browser auto-open from working reliably. If the agent host exposes a way to run the command outside the network/browser sandbox, request that bypass for `boltz-api auth login --device-code` so the CLI can open the user's browser. If the bypass is not allowed, or if the browser still does not open, continue in the sandbox and relay the CLI's verification URL and user code to the user so they can complete login manually.
+
 For automation where a key is already available, an API key is still supported:
 
 ```sh
