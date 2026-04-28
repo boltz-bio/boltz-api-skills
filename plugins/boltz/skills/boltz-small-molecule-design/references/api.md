@@ -5,13 +5,13 @@ Covers the `small-molecule:design` endpoint. Prefer a single merged top-level `-
 Minimal CLI pattern:
 
 ```bash
-boltz-api small-molecule:design estimate-cost --input @yaml://payload.yaml
-boltz-api small-molecule:design start --idempotency-key "<run-name>" --input @yaml://payload.yaml --raw-output --transform id
+boltz-api small-molecule:design estimate-cost --input @yaml:///absolute/path/payload.yaml
+boltz-api small-molecule:design start --idempotency-key "<run-name>" --input @yaml:///absolute/path/payload.yaml --raw-output --transform id
 ```
 
 In permission-gated agents, keep the submit command as a top-level `boltz-api ... start` invocation. Read the printed job ID from stdout and paste it into the later `download-results` command.
 
-Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml://target.yaml` or `--molecule-filters @json://filters.json`. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
+Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml` or `--molecule-filters @json:///absolute/path/filters.json`. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
 
 ## Contents
 
@@ -182,10 +182,13 @@ custom_filters:
 Under `<output-root>/<run-name>/`:
 
 - `.boltz-run.json`
+- `run.json` — sanitized remote run record
+- `results/index.jsonl` — one generated candidate per line, copied from list-results metadata plus local artifact paths
+- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
 - `results/<pres_*>/archive.tar.gz` — one dir per generated candidate
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result fields:
+Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadata.json`, and the `list-results` stream):
 
 - `id` — server-assigned `pres_*` ID
 - `smiles` — generated SMILES
@@ -196,7 +199,7 @@ Per-result fields:
 - `metrics.iptm`, `metrics.ptm`
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
 
-`binding_confidence` and `optimization_score` are parallel intents (hit discovery vs. lead optimization), not a primary/fallback hierarchy. Sort by whichever matches the user's goal.
+Rank from `results/index.jsonl` after `download-results`. `binding_confidence` and `optimization_score` are parallel intents (hit discovery vs. lead optimization), not a primary/fallback hierarchy. Sort by whichever matches the user's goal.
 
 ## Escape hatch
 

@@ -7,6 +7,7 @@ description: List recent Boltz Compute jobs across all five endpoints, or inspec
 
 If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
 If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
 
 Use this skill to recover state across sessions and to inspect or download results for prior Boltz jobs. No payload authoring — this skill only calls `list` / `retrieve` / `download-results` / `download-status`.
 
@@ -45,7 +46,7 @@ This is the crash-recovery path. Two sub-cases:
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
   --id "<job-id>" --name "<run-name>" \
-  --root-dir "<output-root>" \
+  --root-dir "/absolute/path/boltz-experiments" \
   --poll-interval-seconds 30
 ```
 
@@ -60,12 +61,12 @@ Never run `start` again "to resume" — that creates a new job.
 ## Command Pattern
 
 ```bash
-# Replace placeholders with concrete values before running; do not keep angle brackets.
+# Replace placeholders with concrete absolute paths before running.
 
 # Local helper: inspect local checkpoint state without API calls.
 boltz-api --format json download-status \
   --name "<run-name>" \
-  --root-dir "<output-root>"
+  --root-dir "/absolute/path/boltz-experiments"
 
 # Mode 1: list recent jobs across all 5 resources.
 # NB: the CLI emits one JSON object per record (streamed, no {data:[]} wrapper).
@@ -91,16 +92,17 @@ boltz-api protein:design retrieve --id "<job-id>" --format json
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
   --id "<job-id>" --name "<run-name>" \
-  --root-dir "<output-root>" \
+  --root-dir "/absolute/path/boltz-experiments" \
   --poll-interval-seconds 30
 ```
 
 ## Always Do This
 
 - If the user has a run name / slug or run dir and only wants local downloader state, prefer `download-status` before `retrieve`.
+- Use an absolute output root and keep passing it through `--root-dir`. Do not `cd` into the run directory; that makes later relative paths point at the run directory instead of the user's workspace.
 - On an unfamiliar job ID, run Mode 2 (retrieve) before Mode 3 (download) so you capture `idempotency_key`.
 - Prefer the original run-name slug over the job ID as `--name` — it resumes into the existing dir with cursor.
-- In permission-gated agents such as Claude Code, keep each Boltz call as a top-level command that starts with `boltz-api`. Avoid `sh -c`, inline environment assignments, aliases, wrapper scripts, `for`/`while` loops, command substitutions, or dynamically generated pipelines unless the user already allowed that exact wrapper. Prefer running the five `list` / `retrieve` commands explicitly over generating them from a shell loop; a fixed `| head -20` cap is okay when listing to avoid runaway streamed output.
+- In permission-gated agents such as Claude Code, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer running the five `list` / `retrieve` commands explicitly over generating them from a shell loop; a fixed `| head -20` cap is okay when listing to avoid runaway streamed output.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - `download-results` now emits machine-readable JSONL progress on stderr by default. Add `--progress-format text --verbose` only when you explicitly want human-readable logs.

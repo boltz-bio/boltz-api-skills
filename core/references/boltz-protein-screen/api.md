@@ -5,13 +5,13 @@ Covers the `protein:library-screen` endpoint. Prefer a single merged top-level `
 Minimal CLI pattern:
 
 ```bash
-boltz-api protein:library-screen estimate-cost --input @yaml://payload.yaml
-boltz-api protein:library-screen start --idempotency-key "<run-name>" --input @yaml://payload.yaml --raw-output --transform id
+boltz-api protein:library-screen estimate-cost --input @yaml:///absolute/path/payload.yaml
+boltz-api protein:library-screen start --idempotency-key "<run-name>" --input @yaml:///absolute/path/payload.yaml --raw-output --transform id
 ```
 
 In permission-gated agents, keep the submit command as a top-level `boltz-api ... start` invocation. Read the printed job ID from stdout and paste it into the later `download-results` command.
 
-Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml://target.yaml` or repeated `--protein @json://protein-1.json` entries. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
+Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml` or repeated `--protein @json:///absolute/path/protein-1.json` entries. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
 
 ## Contents
 
@@ -241,10 +241,13 @@ Cost scales with total complex length (target + candidate). Typically ≈$0.025 
 Under `<output-root>/<run-name>/`:
 
 - `.boltz-run.json`
+- `run.json` — sanitized remote run record
+- `results/index.jsonl` — one scored candidate per line, copied from list-results metadata plus local artifact paths
+- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
 - `results/<pres_*>/archive.tar.gz` — one dir per scored candidate
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result fields:
+Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadata.json`, and the `list-results` stream):
 
 - `id` — server-assigned `pres_*` ID
 - `external_id` — echoed from the optional `id` on your input `proteins[]` entry
@@ -258,7 +261,7 @@ Per-result fields:
 
 `optimization_score` is **not emitted** for `protein:library-screen`. Sorting by it returns an empty list.
 
-Rank by `binding_confidence` descending. Use `iptm` (higher better) and `min_interaction_pae` (lower better) as tiebreakers.
+Rank from `results/index.jsonl` after `download-results` by `binding_confidence` descending. Use `iptm` (higher better) and `min_interaction_pae` (lower better) as tiebreakers.
 
 ## Escape hatch
 

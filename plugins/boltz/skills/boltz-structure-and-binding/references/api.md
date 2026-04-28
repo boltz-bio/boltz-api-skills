@@ -1,6 +1,6 @@
 # Structure and Binding — Payload Reference
 
-This covers the `predictions:structure-and-binding` endpoint. The request body becomes the `--input` object passed via `@yaml://payload.yaml`. Field names below are **API body field names** (what you write in the YAML) — not CLI flag names.
+This covers the `predictions:structure-and-binding` endpoint. The request body becomes the `--input` object passed via `@yaml:///absolute/path/payload.yaml`. Field names below are **API body field names** (what you write in the YAML) — not CLI flag names.
 
 ## Contents
 
