@@ -43,7 +43,7 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export PATH="$BOLTZ_API_INSTALL_DIR:$PATH"
 ```
 
-Run install/auth/API commands with the same environment so OAuth config, session cache, and file-backed refresh token storage all stay inside the workspace. Only request the host's sandbox bypass (for example `dangerouslyDisableSandbox: true` where supported) if this workspace-local state setup still cannot access the network, keychain fallback, temp files, or target install path.
+Run install/API commands with the same environment so config, session cache, and file-backed token storage all stay inside the workspace. Only request the host's sandbox bypass (for example `dangerouslyDisableSandbox: true` where supported) if this workspace-local state setup still cannot access the network, keychain fallback, temp files, or target install path.
 
 ## Authenticate
 
@@ -59,9 +59,9 @@ If `auth status` reports unauthenticated, or any Boltz command fails because aut
 boltz-api auth login --device-code
 ```
 
-Do not ask the user for permission before starting device-code login; relaying the login URL/code and waiting for the CLI to complete is part of auth recovery.
+Do not ask the user for permission before starting device-code login; relaying the login URL/code and waiting for the CLI to complete is part of auth recovery. When sharing the authentication login URL/code, tell the user to use exactly `boltz-api auth login --device-code`.
 
-Prefer device-code login in agent or sandboxed environments. Use `--device-code --no-browser` when browser auto-open is likely to be blocked; relay the verification URL and user code to the user. Keep the workspace-local environment above active for later `boltz-api` calls, because every API command resolves auth from the same config/cache/credential locations. If token access is still blocked after using workspace-local state, request the host's sandbox bypass for auth recovery and subsequent API calls.
+For auth recovery, assume the CLI can auto-open the browser and run the exact command above. In sandboxed environments, request the host's sandbox bypass for the login command so browser auto-open, OAuth callbacks, credential storage, and temp files can work normally. Keep the same config/cache/credential environment active for later `boltz-api` calls, because every API command resolves auth from those locations.
 
 For automation where a key is already available, an API key is still supported:
 
