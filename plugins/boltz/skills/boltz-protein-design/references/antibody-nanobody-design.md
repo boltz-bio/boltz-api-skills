@@ -14,12 +14,19 @@ It does **not** auto-supply a Fab framework or VHH scaffold. To actually design 
 
 ## Decision tree
 
-When the user asks for a Fab, antibody, or nanobody binder, ask up front:
+The scaffold choice is the user's, not yours. Do **not** silently pick a packaged scaffold and continue — that hides a design decision the user owns. Stop, ask, and wait for an answer before authoring any payload.
 
-1. **"Do you have a scaffold CIF and CDR residue indices?"**
-   - **Yes + indices** → use the user's CIF in `binder_specification.structure.data` (or `.url`), set `modality` to `antibody` or `nanobody`, paste their CDR indices into `chain_selection.<chain>.design_motifs` as `replacement` motifs. See [Worked example](#worked-example).
-   - **Yes, CIF but no CDR indices** → we cannot infer CDR boundaries from a CIF here. Tell the user: "I can't extract CDRs from a structure file. Either (a) supply the start/end residue indices for each CDR yourself, or (b) switch to one of the packaged scaffolds below — they come with CDR indices already mapped." Do not guess.
-   - **No scaffold** → present the [packaged scaffolds](#packaged-scaffolds) (3 Fabs, 3 nanobodies). Default suggestion: `adalimumab.6cr1` for Fabs, `7eow` for nanobodies. Confirm pick before proceeding.
+When the user asks for a Fab, antibody, or nanobody binder, your **first response** is a question, not a payload. Ask:
+
+> "Antibody/nanobody design needs a scaffold (a Fab framework or VHH structure) — the `modality` flag alone doesn't supply one. Do you have a scaffold CIF and CDR residue indices you want to use, or should I list the packaged scaffolds we ship?"
+
+Then branch on the answer:
+
+- **User has CIF + CDR indices** → use the user's CIF in `binder_specification.structure.data` (or `.url`), set `modality` to `antibody` or `nanobody`, paste their CDR indices into `chain_selection.<chain>.design_motifs` as `replacement` motifs. See [Worked example](#worked-example). Confirm cost via `estimate-cost`, then submit.
+- **User has CIF but no CDR indices** → we cannot infer CDR boundaries from a structure file in this skill. Reply: "I can't extract CDRs from a CIF here. You can either (a) supply the start/end residue indices for each CDR yourself, or (b) switch to one of the packaged scaffolds below — they come with CDR indices already mapped." Wait for the user to choose. Do not guess CDR boundaries.
+- **User has no scaffold (or asked for the list)** → list all 6 packaged scaffolds (3 Fabs, 3 nanobodies) with their one-line description from the tables below, and ask which one to use. **Do not pick for them.** If they explicitly say "you choose" or "any is fine," then and only then default to `adalimumab.6cr1` (Fab) or `7eow` (nanobody) and call out the choice in your reply so they can override.
+
+Only after the user confirms a scaffold do you author the payload, run `estimate-cost`, show the cost, and wait for the explicit "go" before submitting.
 
 ## Packaged scaffolds
 
