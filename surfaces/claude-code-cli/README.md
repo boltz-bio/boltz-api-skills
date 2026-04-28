@@ -42,6 +42,16 @@ irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scrip
 
 The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Add that directory to `PATH` if `boltz-api --version` is still not found after install. Set `BOLTZ_API_INSTALL_DIR` before running the installer to choose a different install directory.
 
+## Agent-friendly command style
+
+Claude Code permission prompts are easiest to reuse when Boltz calls are simple top-level commands whose first token is `boltz-api`. The skills therefore prefer patterns like:
+
+```bash
+boltz-api protein:design start --idempotency-key "protein-design-nanobody-gfp-v1" --input @yaml://payload.yaml --raw-output --transform id
+```
+
+The agent should read the printed job ID from stdout and paste that literal ID into the next `boltz-api download-results ...` command. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, shell loops, or generated command strings unless the user has already allowed that exact command form. This keeps permission rules such as `boltz-api *` useful while preserving the important practices: explicit cost estimates, stable idempotency keys, merged payload files, and detached/non-blocking result downloads.
+
 ## Installation
 
 The repository root is a local Claude Code marketplace named

@@ -50,21 +50,20 @@ Common columns across resources:
 Merge + sort flow:
 
 ```bash
-# CLI emits one JSON object per record (streamed, no {data:[]} wrapper) and
-# auto-paginates, so cap per-resource output with head after --limit.
-for R in predictions:structure-and-binding \
-         small-molecule:library-screen small-molecule:design \
-         protein:library-screen protein:design; do
-  boltz-api "$R" list --limit 20 --format jsonl 2>/dev/null \
-    | head -20 \
-    | jq -c --arg r "$R" '{id, resource:$r, status, created_at, completed_at, idempotency_key}'
-done | jq -s 'sort_by(.created_at) | reverse | .[0:20]'
+# Permission-friendly agents should run these as explicit top-level commands
+# instead of generating them from a shell loop. CLI output is streamed, so cap
+# each resource with head when you only need recent rows.
+boltz-api predictions:structure-and-binding list --limit 20 --format jsonl | head -20
+boltz-api small-molecule:library-screen list --limit 20 --format jsonl | head -20
+boltz-api small-molecule:design list --limit 20 --format jsonl | head -20
+boltz-api protein:library-screen list --limit 20 --format jsonl | head -20
+boltz-api protein:design list --limit 20 --format jsonl | head -20
 ```
 
 ## `retrieve` mode
 
 ```bash
-boltz-api <resource> retrieve --id "$ID" --format json
+boltz-api <resource> retrieve --id "<job-id>" --format json
 ```
 
 Returns the full job record. Key fields:
@@ -89,20 +88,15 @@ Returns the full job record. Key fields:
 ### Route from the ID prefix when possible
 
 ```bash
-case "$ID" in
-  pred_*)     R="predictions:structure-and-binding" ;;
-  prot_des_*) R="protein:design" ;;
-  prot_scr_*) R="protein:library-screen" ;;
-  sm_des_*)   R="small-molecule:design" ;;
-  sm_scr_*)   R="small-molecule:library-screen" ;;
-  *)
-    echo "Unknown ID prefix; fall back to probing all five resources" >&2
-    ;;
-esac
+# Pick the resource from the ID prefix above, then run one concrete command.
+boltz-api protein:design retrieve --id "<job-id>" --format json
 
-if [ -n "${R:-}" ]; then
-  boltz-api "$R" retrieve --id "$ID" --format json | jq '{status, idempotency_key, error}'
-fi
+# If the prefix is unknown, probe explicitly one command at a time until one succeeds.
+boltz-api predictions:structure-and-binding retrieve --id "<job-id>" --format json
+boltz-api small-molecule:library-screen retrieve --id "<job-id>" --format json
+boltz-api small-molecule:design retrieve --id "<job-id>" --format json
+boltz-api protein:library-screen retrieve --id "<job-id>" --format json
+boltz-api protein:design retrieve --id "<job-id>" --format json
 ```
 
 ### `predictions:structure-and-binding` 400 quirk
@@ -120,7 +114,7 @@ with no `details`. The other four endpoints include field paths. If you see the 
 Applies to the four pipeline resources (not SAB, which has a single `output`):
 
 ```bash
-boltz-api <resource> list-results --id "$ID" --limit 100
+boltz-api <resource> list-results --id "<job-id>" --limit 100
 ```
 
 Each row:
@@ -143,12 +137,12 @@ Pagination:
 Use `download-status` when you want the local checkpoint only, without making an API call:
 
 ```bash
-boltz-api --format json download-status --name "$IDEM" --root-dir "$ROOT"
+boltz-api --format json download-status --name "<run-name>" --root-dir "<output-root>"
 ```
 
 Selectors:
 
-- `--name <slug>` — look up `$ROOT/$NAME/`
+- `--name <slug>` — look up `<output-root>/<run-name>/`
 - `--run-dir <path>` — inspect an explicit run directory
 - `--name` and `--run-dir` are mutually exclusive
 - `--root-dir` cannot be used with `--run-dir`
@@ -169,8 +163,8 @@ Structured fields include:
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
-  --root-dir "$ROOT" \
+  --id "<job-id>" --name "<run-name>" \
+  --root-dir "<output-root>" \
   --poll-interval-seconds 30
 ```
 
@@ -178,7 +172,7 @@ Behavior:
 
 - `download-results` itself is a blocking poller. Launch it through the agent runtime's background/non-blocking command facility and immediately return to the user; do not wait on or poll the background session unless the user asks. In Claude Code, use Bash with `run_in_background: true`. In Codex, run it as a foreground shell command with `yield_time_ms=1000`; if Codex returns a session id, save it for optional later polling.
 - It emits machine-readable JSONL progress events on stderr by default. Use `--progress-format text --verbose` only when you explicitly want human-readable logs.
-- Writes `$ROOT/$NAME/.boltz-run.json` containing the cursor (`cursor_after_id`), status, idempotency key, and timing.
+- Writes `<output-root>/<run-name>/.boltz-run.json` containing the cursor (`cursor_after_id`), status, idempotency key, and timing.
 - On re-run with the same `--root-dir` + `--name`, reuses `.boltz-run.json` and only pulls results past the recorded cursor. Idempotent.
 - If the run dir exists and `.boltz-run.json` has the ID, `--id` can be omitted.
 - If `--name` is not passed, the CLI generates a random petname dir — use `--name` for cross-session resume.
@@ -187,7 +181,7 @@ Behavior:
 ### Directory layout
 
 ```
-$ROOT/$NAME/
+<output-root>/<run-name>/
 ├── .boltz-run.json                       # cursor, status, idem key, timing
 ├── outputs/                              # SAB only
 │   └── archive.tar.gz                    # unpacks to prediction/{metrics.json, *.cif, *.pae.npz}
@@ -208,31 +202,21 @@ $ROOT/$NAME/
 ```bash
 # just re-run; CLI reads .boltz-run.json and resumes
 boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
-  --root-dir "$ROOT"
+  --id "<job-id>" --name "<run-name>" \
+  --root-dir "<output-root>"
 ```
 
 ### "My session died — I only have the job ID"
 
 ```bash
-# 1. use the ID prefix to pick the retrieve endpoint and get the slug
-case "$ID" in
-  pred_*)     R="predictions:structure-and-binding" ;;
-  prot_des_*) R="protein:design" ;;
-  prot_scr_*) R="protein:library-screen" ;;
-  sm_des_*)   R="small-molecule:design" ;;
-  sm_scr_*)   R="small-molecule:library-screen" ;;
-  *)          echo "Unknown ID prefix; inspect manually" >&2; exit 1 ;;
-esac
+# 1. Use the ID prefix to pick one retrieve endpoint and get idempotency_key.
+boltz-api protein:design retrieve --id "<job-id>" --format json
 
-RECORD=$(boltz-api "$R" retrieve --id "$ID" --format json)
-IDEM=$(echo "$RECORD" | jq -r '.idempotency_key // empty')
-
-# 2. resume with the recovered slug (or pick a fresh one if IDEM is empty)
-IDEM="${IDEM:-recover-$ID}"
+# 2. Resume with the recovered idempotency_key as the run name.
+# If idempotency_key is empty, pick a fresh recovery slug.
 boltz-api download-results \
-  --id "$ID" --name "$IDEM" \
-  --root-dir "$ROOT"
+  --id "<job-id>" --name "<run-name-or-recovery-slug>" \
+  --root-dir "<output-root>"
 ```
 
 ## Escape hatch

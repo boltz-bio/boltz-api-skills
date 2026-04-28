@@ -6,8 +6,10 @@ Minimal CLI pattern:
 
 ```bash
 boltz-api small-molecule:library-screen estimate-cost --input @yaml://payload.yaml
-ID=$(boltz-api small-molecule:library-screen start --idempotency-key "$IDEM" --input @yaml://payload.yaml --raw-output --transform id)
+boltz-api small-molecule:library-screen start --idempotency-key "<run-name>" --input @yaml://payload.yaml --raw-output --transform id
 ```
+
+In permission-gated agents, keep the submit command as a top-level `boltz-api ... start` invocation. Read the printed job ID from stdout and paste it into the later `download-results` command.
 
 Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml://target.yaml`, `--molecule-filters @json://filters.json`, or repeated `--molecule @json://mol-1.json` entries. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
 
@@ -190,7 +192,7 @@ Cost is quoted by `estimate-cost` on the exact payload. For small targets it is 
 
 ## Outputs (after `download-results`)
 
-Under `$ROOT/$IDEM/`:
+Under `<output-root>/<run-name>/`:
 
 - `.boltz-run.json`
 - `results/<pres_*>/archive.tar.gz` — one dir per scored molecule

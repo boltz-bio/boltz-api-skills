@@ -28,7 +28,7 @@ Enumerate recent jobs across all five resources, merge, and sort by `created_at`
 
 If a returned ID doesn't match any of these prefixes, fall through to the all-resources probe — the mapping is observational, not guaranteed.
 
-### Mode 2 — "how's job $ID doing?" (ID provided)
+### Mode 2 — "how's this job doing?" (ID provided)
 
 Use the job ID prefix to select the right `retrieve` endpoint. Only fall back to probing all five if the prefix is unfamiliar. Report `status`, progress counters for pipeline jobs (`num_molecules_screened` / `num_proteins_generated` / etc.), and the `error` if present. For pipeline endpoints, `stopped` is terminal and means the run was stopped early; partial results may be available. SAB predictions do not use `stopped`. **Capture `idempotency_key` from the response**; you'll need it in Mode 3.
 
@@ -36,7 +36,7 @@ Use the job ID prefix to select the right `retrieve` endpoint. Only fall back to
 
 This is the crash-recovery path. Two sub-cases:
 
-**3a. User knows the original slug** (or the dir at `$ROOT/$RUN_NAME/` still exists):
+**3a. User knows the original slug** (or the local run directory still exists):
 
 ```bash
 # Launch this command in the agent runtime's background/non-blocking mode.
@@ -44,14 +44,14 @@ This is the crash-recovery path. Two sub-cases:
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$RUN_NAME" \
-  --root-dir "$ROOT" \
+  --id "<job-id>" --name "<run-name>" \
+  --root-dir "<output-root>" \
   --poll-interval-seconds 30
 ```
 
 CLI reuses the existing `.boltz-run.json` and only pulls results past the last recorded cursor. If the run dir exists, `--id` can be omitted because the CLI can read the ID from metadata. Re-run in background mode the same as a fresh submit.
 
-**3b. User has only the `$ID`:**
+**3b. User has only the job ID:**
 
 Run Mode 2 first to get `idempotency_key` from the retrieve response, then use it as `--name` in the 3a command. If the original submit didn't pass `idempotency_key`, pick a fresh slug and `download-results` from scratch — server-side the job is fine; only incremental-resume is lost.
 
@@ -60,69 +60,29 @@ Never run `start` again "to resume" — that creates a new job.
 ## Command Pattern
 
 ```bash
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
-RUN_NAME="<original-run-slug>"
+# Replace placeholders with concrete values before running; do not keep angle brackets.
 
 # Local helper: inspect local checkpoint state without API calls.
 boltz-api --format json download-status \
-  --name "$RUN_NAME" \
-  --root-dir "$ROOT"
+  --name "<run-name>" \
+  --root-dir "<output-root>"
 
 # Mode 1: list recent jobs across all 5 resources.
 # NB: the CLI emits one JSON object per record (streamed, no {data:[]} wrapper).
-# --limit is per-page and the CLI auto-paginates, so cap output with head.
-for R in predictions:structure-and-binding \
-         small-molecule:library-screen small-molecule:design \
-         protein:library-screen protein:design; do
-  boltz-api "$R" list --limit 20 --format jsonl 2>/dev/null \
-    | head -20 \
-    | jq -c --arg r "$R" '
-        . as $row
-        | ($row.id // "") as $id
-        | $row + {
-            resource: $r,
-            resource_type:
-              (if $id | startswith("sab_pred_") then "prediction"
-               elif $id | startswith("prot_des_") then "protein_design_ppi"
-               elif $id | startswith("prot_scr_") then "protein_library_screen_ppi"
-               elif $id | startswith("sm_des_") then "boltz_sm_design"
-               elif $id | startswith("sm_scr_") then "boltz_sm_screen"
-               else "unknown" end),
-            resource_prefix:
-              (if $id | startswith("sab_pred_") then "sab_pred"
-               elif $id | startswith("prot_des_") then "prot_des"
-               elif $id | startswith("prot_scr_") then "prot_scr"
-               elif $id | startswith("sm_des_") then "sm_des"
-               elif $id | startswith("sm_scr_") then "sm_scr"
-               else "unknown" end)
-          }
-        | {id, resource, resource_type, resource_prefix, status, created_at, completed_at, idempotency_key}'
-done | jq -s 'sort_by(.created_at) | reverse | .[0:20]'
+# --limit is per-page and the CLI auto-paginates, so cap each explicit command with head.
+boltz-api predictions:structure-and-binding list --limit 20 --format jsonl | head -20
+boltz-api small-molecule:library-screen list --limit 20 --format jsonl | head -20
+boltz-api small-molecule:design list --limit 20 --format jsonl | head -20
+boltz-api protein:library-screen list --limit 20 --format jsonl | head -20
+boltz-api protein:design list --limit 20 --format jsonl | head -20
 
-# Mode 2: route retrieve from the ID prefix; probe all 5 only if unknown
-case "$ID" in
-  sab_pred_*) R="predictions:structure-and-binding" ;;
-  prot_des_*) R="protein:design" ;;
-  prot_scr_*) R="protein:library-screen" ;;
-  sm_des_*)   R="small-molecule:design" ;;
-  sm_scr_*)   R="small-molecule:library-screen" ;;
-  *)
-    for R in predictions:structure-and-binding \
-             small-molecule:library-screen small-molecule:design \
-             protein:library-screen protein:design; do
-      if RECORD=$(boltz-api "$R" retrieve --id "$ID" --format json 2>/dev/null); then
-        echo "$RECORD" | jq --arg r "$R" '{id, resource:$r, status, idempotency_key, progress, error}'
-        break
-      fi
-    done
-    unset R
-    ;;
-esac
-
-if [ -n "${R:-}" ]; then
-  boltz-api "$R" retrieve --id "$ID" --format json \
-    | jq --arg r "$R" '{id, resource:$r, status, idempotency_key, progress, error}'
-fi
+# Mode 2: retrieve by ID. Pick the resource from the ID prefix in the workflow
+# notes above. If the prefix is unknown, run these one at a time until one succeeds.
+boltz-api predictions:structure-and-binding retrieve --id "<job-id>" --format json
+boltz-api small-molecule:library-screen retrieve --id "<job-id>" --format json
+boltz-api small-molecule:design retrieve --id "<job-id>" --format json
+boltz-api protein:library-screen retrieve --id "<job-id>" --format json
+boltz-api protein:design retrieve --id "<job-id>" --format json
 
 # Mode 3: resume download.
 # Launch this command in the agent runtime's background/non-blocking mode.
@@ -130,16 +90,17 @@ fi
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$RUN_NAME" \
-  --root-dir "$ROOT" \
+  --id "<job-id>" --name "<run-name>" \
+  --root-dir "<output-root>" \
   --poll-interval-seconds 30
 ```
 
 ## Always Do This
 
 - If the user has a run name / slug or run dir and only wants local downloader state, prefer `download-status` before `retrieve`.
-- On an unfamiliar `$ID`, run Mode 2 (retrieve) before Mode 3 (download) so you capture `idempotency_key`.
-- Prefer the original `$RUN_NAME` slug over `$ID` as `--name` — it resumes into the existing dir with cursor.
+- On an unfamiliar job ID, run Mode 2 (retrieve) before Mode 3 (download) so you capture `idempotency_key`.
+- Prefer the original run-name slug over the job ID as `--name` — it resumes into the existing dir with cursor.
+- In permission-gated agents such as Claude Code, keep each Boltz call as a top-level command that starts with `boltz-api`. Avoid `sh -c`, inline environment assignments, aliases, wrapper scripts, `for`/`while` loops, command substitutions, or dynamically generated pipelines unless the user already allowed that exact wrapper. Prefer running the five `list` / `retrieve` commands explicitly over generating them from a shell loop; a fixed `| head -20` cap is okay when listing to avoid runaway streamed output.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - `download-results` now emits machine-readable JSONL progress on stderr by default. Add `--progress-format text --verbose` only when you explicitly want human-readable logs.
@@ -158,4 +119,4 @@ Read [references/api.md](references/api.md) for per-resource `list` columns, `re
 ## Outputs
 
 - Local helper / Mode 1 / Mode 2 print structured data to stdout; present as a table.
-- Mode 3 writes recovered artifacts under `$ROOT/$RUN_NAME/` — same layout as a fresh run: `.boltz-run.json`, `outputs/` (SAB) or `results/<pres_*>/` (screens and designs).
+- Mode 3 writes recovered artifacts under `<output-root>/<run-name>/` — same layout as a fresh run: `.boltz-run.json`, `outputs/` (SAB) or `results/<pres_*>/` (screens and designs).

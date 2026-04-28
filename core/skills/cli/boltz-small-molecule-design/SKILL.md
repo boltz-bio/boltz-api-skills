@@ -22,26 +22,27 @@ Use this skill when the user wants de novo small-molecule binders (no existing l
 ## Command Pattern
 
 ```bash
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
-RUN_NAME="sm-design-<target>-<batch>-v1"
+# Replace placeholders with concrete values before running; do not keep angle brackets.
+# Use a short descriptive run name, for example: sm-design-<target>-<batch>-v1
 
 boltz-api small-molecule:design estimate-cost \
   --input @yaml://payload.yaml
 
-ID=$(boltz-api small-molecule:design start \
-       --idempotency-key "$RUN_NAME" \
+boltz-api small-molecule:design start \
+       --idempotency-key "<run-name>" \
        --input @yaml://payload.yaml \
-       --raw-output --transform id)
+       --raw-output --transform id
 
-# Launch this command in the agent runtime's background/non-blocking mode.
+# Copy the printed job ID into this command, then launch it in the agent
+# runtime's background/non-blocking mode.
 # Claude Code: Bash with run_in_background=true.
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$RUN_NAME" \
-  --root-dir "$ROOT" \
+  --id "<job-id-from-start>" --name "<run-name>" \
+  --root-dir "<output-root>" \
   --poll-interval-seconds 60
-# → $ROOT/$RUN_NAME/results/<pres_*>/...
+# -> <output-root>/<run-name>/results/<pres_*>/...
 ```
 
 Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters` — the API body field names.
@@ -55,10 +56,11 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 - Prefer one merged top-level payload via `--input @yaml://payload.yaml` or `@json://payload.json` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
 - Direct object flags still work as overrides: for example `--target @yaml://target.yaml` or `--molecule-filters @json://filters.json`. Piped YAML / JSON on stdin also works, but it must use API body field names. Never use `@file://`.
 - Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results`.
+- In permission-gated agents such as Claude Code, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines around the `boltz-api` invocation unless the user already allowed that exact command form. Use `--raw-output --transform id`, read the printed ID, then paste that literal ID into the next `download-results` command.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. Design jobs can run 30 min to a few hours — `--poll-interval-seconds 60` is a sensible default. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
-- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "$RUN_NAME" --root-dir "$ROOT"` for structured local checkpoint state. Never run a manual poll loop.
-- If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "$RUN_NAME"` and the same `--root-dir`.
+- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "<output-root>"` for structured local checkpoint state. Never run a manual poll loop.
+- If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Do not invent filters; only add `molecule_filters` on user request.
 
 ## Escape Hatch
@@ -71,7 +73,7 @@ Read [references/api.md](references/api.md) for the `target`, `chemical_space`, 
 
 ## Outputs
 
-Under `$ROOT/$RUN_NAME/`:
+Under `<output-root>/<run-name>/`:
 
 - `.boltz-run.json`
 - `results/<pres_*>/archive.tar.gz` — one dir per generated candidate
