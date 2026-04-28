@@ -15,13 +15,14 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
 2. Pick the `binder_specification` variant:
    - `structure_template` — redesign motifs in an existing binder scaffold (CIF + `design_motifs` with `replacement` / `insertion` segments).
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
-3. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein`.
-4. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
-5. Add `rules` only on request (`excluded_amino_acids`, `excluded_sequence_motifs` with `X` wildcards, `max_hydrophobic_fraction`).
-6. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure from `estimate-cost`.
-7. `start` to submit. Capture the ID.
-8. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-9. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:design` — do not sort by it. Report top 5–10 designs with sequence, key metrics, and structure path.
+3. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein`. **`modality` only changes generation behavior — it does not load a scaffold.**
+4. **If the user wants antibody (Fab) or nanobody, read [references/antibody-nanobody-design.md](references/antibody-nanobody-design.md) before authoring the payload.** It covers the scaffold-required gotcha, the bail path when the user has a CIF but no CDR indices, and the 3 Fab + 3 nanobody scaffolds we ship with API-ready 0-based CDR `design_motifs`.
+5. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
+6. Add `rules` only on request (`excluded_amino_acids`, `excluded_sequence_motifs` with `X` wildcards, `max_hydrophobic_fraction`).
+7. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure from `estimate-cost`.
+8. `start` to submit. Capture the ID.
+9. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
+10. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:design` — do not sort by it. Report top 5–10 designs with sequence, key metrics, and structure path.
 
 ## Command Pattern
 
@@ -53,7 +54,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 ## Always Do This
 
 - Enforce `num_proteins >= 10` before calling `estimate-cost`. Server rejects anything lower.
-- Cost scales with total complex length (target + binder). Do not quote a flat `num_proteins * $0.025` formula; always quote `estimated_cost_usd` from `estimate-cost`. Empirically: minimal peptide + small target ≈$0.025/design; GFP-sized target + 20-mer binder ≈$0.05/design.
+- Cost scales with total complex length (target + binder). Always quote `estimated_cost_usd` from `estimate-cost`. 
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
