@@ -6,8 +6,10 @@ Minimal CLI pattern:
 
 ```bash
 boltz-api protein:design estimate-cost --input @yaml:///absolute/path/payload.yaml
-ID=$(boltz-api protein:design start --idempotency-key "$IDEM" --input @yaml:///absolute/path/payload.yaml --raw-output --transform id)
+boltz-api protein:design start --idempotency-key "<run-name>" --input @yaml:///absolute/path/payload.yaml --raw-output --transform id
 ```
+
+In permission-gated agents, keep the submit command as a top-level `boltz-api ... start` invocation. Read the printed job ID from stdout and paste it into the later `download-results` command.
 
 Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml` or `--binder-specification @json:///absolute/path/binder.json`. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
 
@@ -255,7 +257,7 @@ Same as the structure-and-binding skill — see `references/api.md` of that skil
 
 ## Outputs (after `download-results`)
 
-Under `$ROOT/$IDEM/`:
+Under `<output-root>/<run-name>/`:
 
 - `.boltz-run.json`
 - `run.json` — sanitized remote run record

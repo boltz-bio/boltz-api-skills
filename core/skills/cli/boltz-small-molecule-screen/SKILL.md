@@ -17,35 +17,34 @@ Use this skill when the user already has candidate molecules.
 4. Author the payload YAML or JSON, run `estimate-cost`, show the user the USD cost, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility — it polls, paginates `list-results`, downloads every per-hit structure, and exits when terminal. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-7. When done, rank from `$ROOT/$RUN_NAME/results/index.jsonl`. `download-results` builds this local manifest from `list-results` and adds local artifact paths, so it has `external_id`, `smiles`, `metrics`, and `paths` together per scored molecule. Sort by `binding_confidence` for hit discovery or `optimization_score` for lead optimization; these are parallel intents, not a fallback hierarchy. Report the top 5-10 hits with `smiles`, the chosen ranking metric, key confidence metrics, and structure path. Use `boltz-api small-molecule:library-screen list-results --id "$ID" --format jsonl` only when no local download manifest is available or the user asks for fresh remote results.
+7. When done, rank from `<output-root>/<run-name>/results/index.jsonl`. `download-results` builds this local manifest from `list-results` and adds local artifact paths, so it has `external_id`, `smiles`, `metrics`, and `paths` together per scored molecule. Sort by `binding_confidence` for hit discovery or `optimization_score` for lead optimization; these are parallel intents, not a fallback hierarchy. Report the top 5-10 hits with `smiles`, the chosen ranking metric, key confidence metrics, and structure path. Use `boltz-api small-molecule:library-screen list-results --id "<job-id>" --format jsonl` only when no local download manifest is available or the user asks for fresh remote results.
 
 **Heads-up: the `results/<pres_*>/` directory count is usually less than `len(molecules)`.** Default server-side `molecule_filters` (SMARTS catalog at level `recommended`) can drop candidates before scoring. The drop is not logged in `.boltz-run.json` or surfaced by `download-status`; `run.json` may include `progress.rejection_summary` after `download-results` refreshes remote run metadata. `results/index.jsonl` is the authoritative local scored list after download; if the user needs to know which input IDs were dropped, compute `input_ids - seen(external_id)` from that manifest.
 
 ## Command Pattern
 
 ```bash
-WORKDIR="$(pwd)"
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-$WORKDIR/boltz-experiments}"
-RUN_NAME="sm-screen-<target>-<library>-v1"
-PAYLOAD="$WORKDIR/payload.yaml"
+# Replace placeholders with concrete absolute paths before running.
+# Use a short descriptive run name, for example: sm-screen-<target>-<library>-v1
 
 boltz-api small-molecule:library-screen estimate-cost \
-  --input "@yaml://$PAYLOAD"
+  --input @yaml:///absolute/path/payload.yaml
 
-ID=$(boltz-api small-molecule:library-screen start \
-       --idempotency-key "$RUN_NAME" \
-       --input "@yaml://$PAYLOAD" \
-       --raw-output --transform id)
+boltz-api small-molecule:library-screen start \
+       --idempotency-key "<run-name>" \
+       --input @yaml:///absolute/path/payload.yaml \
+       --raw-output --transform id
 
-# Launch this command in the agent runtime's background/non-blocking mode.
+# Copy the printed job ID into this command, then launch it in the agent
+# runtime's background/non-blocking mode.
 # Claude Code: Bash with run_in_background=true.
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$RUN_NAME" \
-  --root-dir "$ROOT" \
+  --id "<job-id-from-start>" --name "<run-name>" \
+  --root-dir "/absolute/path/boltz-experiments" \
   --poll-interval-seconds 30
-# → $ROOT/$RUN_NAME/results/<pres_*>/...
+# -> /absolute/path/boltz-experiments/<run-name>/results/<pres_*>/...
 ```
 
 Payload keys are `molecules`, `target`, `molecule_filters` — the API body field names, not the direct CLI flag names `--molecule` / `--target` / `--molecule-filters`.
@@ -53,16 +52,17 @@ Payload keys are `molecules`, `target`, `molecule_filters` — the API body fiel
 ## Always Do This
 
 - Keep payload field names exactly as the API body names shown in `references/api.md`.
-- Use absolute paths for `ROOT`, payload files, and embedded target files. Do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` and use absolute paths so later relative paths do not drift.
+- Use absolute paths for the output root, payload files, and embedded target files. Do not `cd` into the run directory for follow-up commands; pass the same `--root-dir` and use absolute paths so later relative paths do not drift.
 - Prefer one merged top-level payload via `--input @yaml:///absolute/path/payload.yaml` or `@json:///absolute/path/payload.json` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
 - Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml`, `--molecule-filters @json:///absolute/path/filters.json`, or repeated `--molecule @json:///absolute/path/mol-1.json` entries. Piped YAML / JSON on stdin also works, but it must use API body field names. Never use `@file://` or `@./`.
 - Treat pocket residue indices as 0-based.
 - Do not invent medicinal-chemistry filters. Only add `molecule_filters` if the user asks; mention the catalog as an option.
 - Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results` so re-runs resume via `.boltz-run.json`.
+- In permission-gated agents such as Claude Code, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines around the `boltz-api` invocation unless the user already allowed that exact command form. Use `--raw-output --transform id`, read the printed ID, then paste that literal ID into the next `download-results` command.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
-- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "$RUN_NAME" --root-dir "$ROOT"` for structured local checkpoint state. Never run a manual poll loop.
-- If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "$RUN_NAME"` and the same `--root-dir`.
+- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. Never run a manual poll loop.
+- If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Cost is approximately $0.025 per molecule for small targets (may scale with complex size). `estimate-cost` returns the authoritative quote — always use it.
 - Poll interval: `--poll-interval-seconds 30` is a reasonable default; libraries can run 10–60 min depending on size.
 
@@ -76,7 +76,7 @@ Read [references/api.md](references/api.md) for the `molecules`, `target`, and `
 
 ## Outputs
 
-Under `$ROOT/$RUN_NAME/`:
+Under `<output-root>/<run-name>/`:
 
 - `.boltz-run.json` — run metadata
 - `run.json` — sanitized remote run record; check `progress.rejection_summary` for filtered/invalid counts when present

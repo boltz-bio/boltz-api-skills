@@ -21,31 +21,30 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
 6. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure from `estimate-cost`.
 7. `start` to submit. Capture the ID.
 8. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-9. Rank from `$ROOT/$RUN_NAME/results/index.jsonl` by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:design` — do not sort by it. Report top 5–10 designs with sequence, key metrics, and structure path.
+9. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:design` — do not sort by it. Report top 5–10 designs with sequence, key metrics, and structure path.
 
 ## Command Pattern
 
 ```bash
-WORKDIR="$(pwd)"
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-$WORKDIR/boltz-experiments}"
-RUN_NAME="protein-design-<modality>-<target>-v1"
-PAYLOAD="$WORKDIR/payload.yaml"
+# Replace placeholders with concrete absolute paths before running.
+# Use a short descriptive run name, for example: protein-design-<modality>-<target>-v1
 
 boltz-api protein:design estimate-cost \
-  --input "@yaml://$PAYLOAD"
+  --input @yaml:///absolute/path/payload.yaml
 
-ID=$(boltz-api protein:design start \
-       --idempotency-key "$RUN_NAME" \
-       --input "@yaml://$PAYLOAD" \
-       --raw-output --transform id)
+boltz-api protein:design start \
+       --idempotency-key "<run-name>" \
+       --input @yaml:///absolute/path/payload.yaml \
+       --raw-output --transform id
 
-# Launch this command in the agent runtime's background/non-blocking mode.
+# Copy the printed job ID into this command, then launch it in the agent
+# runtime's background/non-blocking mode.
 # Claude Code: Bash with run_in_background=true.
 # Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
 # Do not append "&" or use nohup in Codex.
 boltz-api download-results \
-  --id "$ID" --name "$RUN_NAME" \
-  --root-dir "$ROOT" \
+  --id "<job-id-from-start>" --name "<run-name>" \
+  --root-dir "/absolute/path/boltz-experiments" \
   --poll-interval-seconds 60
 ```
 
@@ -59,13 +58,14 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
 - Keep payload field names exactly as the API body names shown in `references/api.md`.
-- Use absolute paths for `ROOT`, payload files, and embedded target files. Do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` and use absolute paths so later relative paths do not drift.
+- Use absolute paths for the output root, payload files, and embedded target files. Do not `cd` into the run directory for follow-up commands; pass the same `--root-dir` and use absolute paths so later relative paths do not drift.
 - Prefer one merged top-level payload via `--input @yaml:///absolute/path/payload.yaml` or `@json:///absolute/path/payload.json` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
 - Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml` or `--binder-specification @json:///absolute/path/binder.json`. Piped YAML / JSON on stdin also works, but it must use API body field names. Use the same slug for both `--idempotency-key` and `--name`.
+- In permission-gated agents such as Claude Code, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines around the `boltz-api` invocation unless the user already allowed that exact command form. Use `--raw-output --transform id`, read the printed ID, then paste that literal ID into the next `download-results` command.
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. Design jobs can take 30 min to several hours — `--poll-interval-seconds 60` is a sensible default. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
-- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "$RUN_NAME" --root-dir "$ROOT"` for structured local checkpoint state. Never run a manual poll loop.
-- If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "$RUN_NAME"` and the same `--root-dir`.
+- Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. Never run a manual poll loop.
+- If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Only add `rules` on explicit user request.
 
 ## Escape Hatch
@@ -78,7 +78,7 @@ Read [references/api.md](references/api.md) for both `binder_specification` vari
 
 ## Outputs
 
-Under `$ROOT/$RUN_NAME/`:
+Under `<output-root>/<run-name>/`:
 
 - `.boltz-run.json`
 - `run.json` — sanitized remote run record

@@ -233,7 +233,7 @@ Alternatively, use `{type: url, url: "https://..."}` to point at a presigned CIF
 
 ## Outputs (after `download-results`)
 
-Under `$ROOT/$IDEM/`:
+Under `<output-root>/<run-name>/`:
 
 - `.boltz-run.json` — run metadata, cursor, idempotency key, timing
 - `outputs/archive.tar.gz` — contains `prediction/metrics.json`, `prediction/sample_*_predicted_structure.cif`, `prediction/sample_*_pae.npz`
