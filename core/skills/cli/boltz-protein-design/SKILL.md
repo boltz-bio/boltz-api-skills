@@ -70,8 +70,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 
 ## Escape Hatch
 
-- Payload reference: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/design/methods/start>
 - CLI flag names: `boltz-api protein:design start --help`
 
 Read [references/api.md](references/api.md) for both `binder_specification` variants, the motif shapes, the sequence DSL, and the `target` variants.
