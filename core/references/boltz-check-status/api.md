@@ -221,6 +221,5 @@ boltz-api download-results \
 
 ## Escape hatch
 
-- Upstream: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Python SDK reference: <https://boltz-compute-api.stldocs.app/api/python>
 - `boltz-api <resource> list --help` / `retrieve --help` / `boltz-api download-results --help` / `boltz-api download-status --help`

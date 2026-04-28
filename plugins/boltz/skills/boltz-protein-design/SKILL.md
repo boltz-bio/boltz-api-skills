@@ -53,7 +53,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 ## Always Do This
 
 - Enforce `num_proteins >= 10` before calling `estimate-cost`. Server rejects anything lower.
-- Cost scales with total complex length (target + binder). Do not quote a flat `num_proteins * $0.025` formula; always quote `estimated_cost_usd` from `estimate-cost`. Empirically: minimal peptide + small target ≈$0.025/design; GFP-sized target + 20-mer binder ≈$0.05/design.
+- Cost scales with total complex length (target + binder). Always quote `estimated_cost_usd` from `estimate-cost`. 
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
@@ -70,8 +70,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 
 ## Escape Hatch
 
-- Payload reference: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/design/methods/start>
 - CLI flag names: `boltz-api protein:design start --help`
 
 Read [references/api.md](references/api.md) for both `binder_specification` variants, the motif shapes, the sequence DSL, and the `target` variants.

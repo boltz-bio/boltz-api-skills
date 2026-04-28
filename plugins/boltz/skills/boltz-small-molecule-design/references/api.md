@@ -203,6 +203,5 @@ Rank from `results/index.jsonl` after `download-results`. `binding_confidence` a
 
 ## Escape hatch
 
-- <https://docs.boltz.bio/api-reference/api-input-format.md>
-- <https://docs.boltz.bio/api-reference/openapi.json>
+- <https://boltz-compute-api.stldocs.app/api/python/resources/small_molecule/subresources/design/methods/start>
 - `boltz-api small-molecule:design start --help`

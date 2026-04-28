@@ -112,8 +112,7 @@ boltz-api download-results \
 
 ## Escape Hatch
 
-- Upstream reference: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Python SDK reference (per-resource `list` / `retrieve` methods): <https://boltz-compute-api.stldocs.app/api/python>
 - CLI flag names: `boltz-api <resource> list --help`, `boltz-api <resource> retrieve --help`, `boltz-api download-results --help`, `boltz-api download-status --help`
 
 Read [references/api.md](references/api.md) for per-resource `list` columns, `retrieve` record fields, and `download-results` resume semantics.
