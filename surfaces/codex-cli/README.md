@@ -6,9 +6,10 @@ Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-refer
 
 - `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.7.0`)
 - Authentication via `boltz-api auth login --device-code`, or `BOLTZ_COMPUTE_API_KEY` exported in the environment
-- Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land (default: `./boltz-experiments/`)
+- Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments/` from the command's starting directory.
 
 The skills assume the CLI is already configured. If a command fails because auth is missing or expired, the agent should run `boltz-api auth login --device-code` on the user's behalf before retrying.
+If the host sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-api-cli`. Request the host sandbox bypass only if workspace-local state still cannot access the network, temp files, credentials, or install path.
 
 Verify the CLI is installed:
 
@@ -67,13 +68,13 @@ Each `start`-family skill follows the same flow:
 1. Agent normalizes your inputs and authors a YAML or JSON payload.
 2. `boltz-api <resource> estimate-cost` — shows you the USD cost.
 3. You confirm.
-4. Submit with `boltz-api <resource> start --input @yaml://payload.yaml ...`. For the four design/screen endpoints, prefer one merged `--input` payload and keep `--idempotency-key` / `--workspace-id` top-level. Piping YAML / JSON on stdin still works, but the body must use API field names such as `molecules`, `proteins`, `target`, or `binder_specification`.
+4. Submit with `boltz-api <resource> start --input @yaml:///absolute/path/payload.yaml ...`. For the four design/screen endpoints, prefer one merged `--input` payload and keep `--idempotency-key` / `--workspace-id` top-level. Piping YAML / JSON on stdin still works, but the body must use API field names such as `molecules`, `proteins`, `target`, or `binder_specification`.
 5. `boltz-api download-results --id $ID --name $RUN_NAME --root-dir $ROOT ...` — run as a foreground Codex shell command with `yield_time_ms=1000`. If Codex returns a session id, keep it and return to the user; the CLI keeps polling + downloading in that managed session. It emits machine-readable JSONL progress events on stderr by default and checkpoints local state in `.boltz-run.json`.
 6. Agent answers "how's it going?" either by polling the saved Codex session for JSONL output or by calling `boltz-api --format json download-status --name $RUN_NAME --root-dir $ROOT` for a local-only checkpoint snapshot.
 
 Do not use shell `&`, terminal backgrounding, or `nohup` for `download-results` in Codex. Those detach mechanisms can be cleaned up by the tool runner before `.boltz-run.json` is fully written. Use Codex's managed long-running shell session instead.
 
-Results land in `$ROOT/$RUN_NAME/` where `$ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}` and `$RUN_NAME` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
+Results land in `$ROOT/$RUN_NAME/` where `$ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-$PWD/boltz-experiments}` and `$RUN_NAME` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). Keep `$ROOT` absolute and do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` instead. Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
 
 ## Why use the CLI variant
 

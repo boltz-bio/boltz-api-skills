@@ -7,6 +7,7 @@ description: Predict the 3D structure of a protein, RNA, DNA, or ligand complex 
 
 If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
 If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
 
 Use this skill for one defined complex, not a library workflow.
 
@@ -17,7 +18,23 @@ Use this skill for one defined complex, not a library workflow.
    ```
 
    `type` is one of `protein | rna | dna | ligand_smiles | ligand_ccd`. Chain IDs go in entity order (`A`, `B`, `C`, …) unless the user specifies otherwise. Read `references/api.md` for per-type field variants (`cyclic`, `modifications`, ligand CCD codes, etc.) **before** authoring your first payload — agent guesses like `sequence:` or `chain_id: "A"` (singular) fail with opaque 400s.
-2. If the user wants binding metrics, add a `binding` block and pick the right variant (`ligand_protein_binding` for a single ligand binder chain, otherwise `protein_protein_binding`).
+2. If the user wants binding metrics, add a flat `binding` block with an explicit `type` field. For ligand-protein binding use:
+
+   ```yaml
+   binding:
+     type: ligand_protein_binding
+     binder_chain_id: B
+   ```
+
+   For protein-protein binding use:
+
+   ```yaml
+   binding:
+     type: protein_protein_binding
+     binder_chain_ids: [B]
+   ```
+
+   Do not nest the variant name under `binding` (for example, no `binding.ligand_protein_binding` object).
 3. Only add `constraints` / `bonds` / `modifications` / `model_options` if the user asks.
 4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
@@ -26,19 +43,21 @@ Use this skill for one defined complex, not a library workflow.
 ## Command Pattern
 
 ```bash
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
+WORKDIR="$(pwd)"
+ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-$WORKDIR/boltz-experiments}"
 RUN_NAME="sab-<target>-<ligand>-v1"    # short descriptive slug
+PAYLOAD="$WORKDIR/payload.yaml"
 
 # 1. estimate
 boltz-api predictions:structure-and-binding estimate-cost \
   --model boltz-2.1 \
-  --input @yaml://payload.yaml
+  --input "@yaml://$PAYLOAD"
 
 # 2. confirm with user, then submit
 ID=$(boltz-api predictions:structure-and-binding start \
        --model boltz-2.1 \
        --idempotency-key "$RUN_NAME" \
-       --input @yaml://payload.yaml \
+       --input "@yaml://$PAYLOAD" \
        --raw-output --transform id)
 
 # 3. Launch this command in the agent runtime's background/non-blocking mode.
@@ -54,7 +73,8 @@ boltz-api download-results \
 
 ## Always Do This
 
-- Keep payload field names exactly as the API body names shown in `references/api.md`; then pass the merged payload with `--input @yaml://payload.yaml` or `@json://payload.json`. Never use `@./payload.yaml` or `@file://` for object-typed payloads.
+- Keep payload field names exactly as the API body names shown in `references/api.md`; then pass the merged payload with `--input @yaml:///absolute/path/payload.yaml` or `@json:///absolute/path/payload.json`. Never use `@./payload.yaml` or `@file://` for object-typed payloads.
+- Use absolute paths for `ROOT`, payload files, and embedded structure files. Do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` and use absolute paths so later relative paths do not drift.
 - Residue indices are 0-based wherever the payload asks for residue positions (constraints, modifications, contact tokens).
 - For CIF/PDB bytes embedded in `--target` / `structure.data`, use `@data:///absolute/path/file.cif` — it sniffs binary and base64-encodes. Don't use bare `@path` for binary data.
 - Use the same slug as both `--idempotency-key` at submit time and `--name` at download time so re-runs are idempotent and resume from `.boltz-run.json`.

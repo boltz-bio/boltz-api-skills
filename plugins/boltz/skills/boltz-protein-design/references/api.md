@@ -5,11 +5,11 @@ Covers the `protein:design` endpoint. Prefer a single merged top-level `--input`
 Minimal CLI pattern:
 
 ```bash
-boltz-api protein:design estimate-cost --input @yaml://payload.yaml
-ID=$(boltz-api protein:design start --idempotency-key "$IDEM" --input @yaml://payload.yaml --raw-output --transform id)
+boltz-api protein:design estimate-cost --input @yaml:///absolute/path/payload.yaml
+ID=$(boltz-api protein:design start --idempotency-key "$IDEM" --input @yaml:///absolute/path/payload.yaml --raw-output --transform id)
 ```
 
-Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml://target.yaml` or `--binder-specification @json://binder.json`. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
+Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win. Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml` or `--binder-specification @json:///absolute/path/binder.json`. Piped YAML / JSON on stdin remains supported when you need it, but the body must use API field names.
 
 ## Contents
 
@@ -258,10 +258,13 @@ Same as the structure-and-binding skill — see `references/api.md` of that skil
 Under `$ROOT/$IDEM/`:
 
 - `.boltz-run.json`
+- `run.json` — sanitized remote run record
+- `results/index.jsonl` — one generated design per line, copied from list-results metadata plus local artifact paths
+- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
 - `results/<pres_*>/archive.tar.gz` — one dir per generated design
 - `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
 
-Per-result fields:
+Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadata.json`, and the `list-results` stream):
 
 - `id` — server-assigned `pres_*` ID
 - `entities` — generated designs. **Type-flip gotcha:** the binder entity comes back as `type: "protein"` (not `"designed_protein"`), with the DSL resolved to a real AA sequence in `value`. Select the binder by `chain_ids` (the ID assigned at submit time), **not** by `type == "designed_protein"` — the latter match returns zero results.
@@ -274,7 +277,7 @@ Per-result fields:
 
 `optimization_score` is **not emitted** for `protein:design`. Sorting by it yields an empty list.
 
-Rank by `binding_confidence` descending. Use `iptm` (higher better) and `min_interaction_pae` (lower better) as tiebreakers.
+Rank from `results/index.jsonl` after `download-results` by `binding_confidence` descending. Use `iptm` (higher better) and `min_interaction_pae` (lower better) as tiebreakers.
 
 ## Escape hatch
 

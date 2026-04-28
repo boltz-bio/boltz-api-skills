@@ -31,6 +31,20 @@ irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scrip
 
 The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Add that directory to `PATH` if `boltz-api --version` is still not found after install. Set `BOLTZ_API_INSTALL_DIR` before running the installer to choose a different install directory.
 
+In a filesystem sandbox, prefer workspace-local temp, install, config, and cache paths before requesting a sandbox bypass:
+
+```sh
+mkdir -p "$PWD/.boltz-cli/bin" "$PWD/.boltz-cli/tmp" "$PWD/.boltz-cli/home"
+export BOLTZ_API_INSTALL_DIR="$PWD/.boltz-cli/bin"
+export TMPDIR="$PWD/.boltz-cli/tmp"
+export HOME="$PWD/.boltz-cli/home"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+export PATH="$BOLTZ_API_INSTALL_DIR:$PATH"
+```
+
+Run install/auth/API commands with the same environment so OAuth config, session cache, and file-backed refresh token storage all stay inside the workspace. Only request the host's sandbox bypass (for example `dangerouslyDisableSandbox: true` where supported) if this workspace-local state setup still cannot access the network, keychain fallback, temp files, or target install path.
+
 ## Authenticate
 
 Check the current auth state with:
@@ -47,7 +61,7 @@ boltz-api auth login --device-code
 
 Do not ask the user for permission before starting device-code login; relaying the login URL/code and waiting for the CLI to complete is part of auth recovery.
 
-Prefer device-code login in agent or sandboxed environments. Even with device-code login, sandboxing can prevent network access or browser auto-open from working reliably. If the agent host exposes a way to run the command outside the network/browser sandbox, request that bypass for `boltz-api auth login --device-code` so the CLI can open the user's browser. If the bypass is not allowed, or if the browser still does not open, continue in the sandbox and relay the CLI's verification URL and user code to the user so they can complete login manually.
+Prefer device-code login in agent or sandboxed environments. Use `--device-code --no-browser` when browser auto-open is likely to be blocked; relay the verification URL and user code to the user. Keep the workspace-local environment above active for later `boltz-api` calls, because every API command resolves auth from the same config/cache/credential locations. If token access is still blocked after using workspace-local state, request the host's sandbox bypass for auth recovery and subsequent API calls.
 
 For automation where a key is already available, an API key is still supported:
 

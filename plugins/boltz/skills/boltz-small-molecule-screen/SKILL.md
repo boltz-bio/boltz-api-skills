@@ -7,6 +7,7 @@ description: Score a user-supplied SMILES library against a protein target with 
 
 If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
 If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
 
 Use this skill when the user already has candidate molecules.
 
@@ -16,22 +17,24 @@ Use this skill when the user already has candidate molecules.
 4. Author the payload YAML or JSON, run `estimate-cost`, show the user the USD cost, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility — it polls, paginates `list-results`, downloads every per-hit structure, and exits when terminal. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-7. When done, rank via `boltz-api small-molecule:library-screen list-results --id "$ID" --format jsonl`. **Do not** try to rank from the per-hit `metrics.json` files on disk: they currently carry `external_id: null` / `smiles: null`, so you can't map scores back to your input library from disk alone. `list-results` returns `external_id`, `smiles`, and metrics together per hit. Sort by `binding_confidence` for hit discovery or `optimization_score` for lead optimization; these are parallel intents, not a fallback hierarchy. Report the top 5-10 hits with `smiles`, the chosen ranking metric, and key confidence metrics, then point the user at `$ROOT/$RUN_NAME/results/`.
+7. When done, rank from `$ROOT/$RUN_NAME/results/index.jsonl`. `download-results` builds this local manifest from `list-results` and adds local artifact paths, so it has `external_id`, `smiles`, `metrics`, and `paths` together per scored molecule. Sort by `binding_confidence` for hit discovery or `optimization_score` for lead optimization; these are parallel intents, not a fallback hierarchy. Report the top 5-10 hits with `smiles`, the chosen ranking metric, key confidence metrics, and structure path. Use `boltz-api small-molecule:library-screen list-results --id "$ID" --format jsonl` only when no local download manifest is available or the user asks for fresh remote results.
 
-**Heads-up: the `results/<pres_*>/` directory count is usually less than `len(molecules)`.** Default server-side `molecule_filters` (SMARTS catalog at level `recommended`) silently drops candidates — the drop is not logged in `.boltz-run.json` or surfaced by `download-status`. Typical drop rate is 20–30% on generic drug libraries. `list-results` is the authoritative filtered list; if the user needs to know which input IDs were dropped, compute `input_ids - seen(external_id)` from the list-results output.
+**Heads-up: the `results/<pres_*>/` directory count is usually less than `len(molecules)`.** Default server-side `molecule_filters` (SMARTS catalog at level `recommended`) can drop candidates before scoring. The drop is not logged in `.boltz-run.json` or surfaced by `download-status`; `run.json` may include `progress.rejection_summary` after `download-results` refreshes remote run metadata. `results/index.jsonl` is the authoritative local scored list after download; if the user needs to know which input IDs were dropped, compute `input_ids - seen(external_id)` from that manifest.
 
 ## Command Pattern
 
 ```bash
-ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}"
+WORKDIR="$(pwd)"
+ROOT="${BOLTZ_COMPUTE_OUTPUT_DIR:-$WORKDIR/boltz-experiments}"
 RUN_NAME="sm-screen-<target>-<library>-v1"
+PAYLOAD="$WORKDIR/payload.yaml"
 
 boltz-api small-molecule:library-screen estimate-cost \
-  --input @yaml://payload.yaml
+  --input "@yaml://$PAYLOAD"
 
 ID=$(boltz-api small-molecule:library-screen start \
        --idempotency-key "$RUN_NAME" \
-       --input @yaml://payload.yaml \
+       --input "@yaml://$PAYLOAD" \
        --raw-output --transform id)
 
 # Launch this command in the agent runtime's background/non-blocking mode.
@@ -50,8 +53,9 @@ Payload keys are `molecules`, `target`, `molecule_filters` — the API body fiel
 ## Always Do This
 
 - Keep payload field names exactly as the API body names shown in `references/api.md`.
-- Prefer one merged top-level payload via `--input @yaml://payload.yaml` or `@json://payload.json` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
-- Direct object flags still work as overrides, such as `--target @yaml://target.yaml`, `--molecule-filters @json://filters.json`, or repeated `--molecule @json://mol-1.json` entries. Piped YAML / JSON on stdin also works, but it must use API body field names. Never use `@file://` or `@./`.
+- Use absolute paths for `ROOT`, payload files, and embedded target files. Do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` and use absolute paths so later relative paths do not drift.
+- Prefer one merged top-level payload via `--input @yaml:///absolute/path/payload.yaml` or `@json:///absolute/path/payload.json` for `estimate-cost` and `start`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
+- Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml`, `--molecule-filters @json:///absolute/path/filters.json`, or repeated `--molecule @json:///absolute/path/mol-1.json` entries. Piped YAML / JSON on stdin also works, but it must use API body field names. Never use `@file://` or `@./`.
 - Treat pocket residue indices as 0-based.
 - Do not invent medicinal-chemistry filters. Only add `molecule_filters` if the user asks; mention the catalog as an option.
 - Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results` so re-runs resume via `.boltz-run.json`.
@@ -75,8 +79,11 @@ Read [references/api.md](references/api.md) for the `molecules`, `target`, and `
 Under `$ROOT/$RUN_NAME/`:
 
 - `.boltz-run.json` — run metadata
-- `results/<pres_*>/archive.tar.gz` and `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}` — one per scored molecule
+- `run.json` — sanitized remote run record; check `progress.rejection_summary` for filtered/invalid counts when present
+- `results/index.jsonl` — one scored molecule per line, with `external_id`, `smiles`, `metrics`, and local `paths`
+- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
+- `results/<pres_*>/archive.tar.gz` and `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}` — per-scored-molecule artifacts
 
-Rank via `boltz-api small-molecule:library-screen list-results --id "$ID" --format jsonl` — it returns `external_id`, `smiles`, and metrics together per hit. The per-hit `metrics.json` files on disk have `external_id: null` / `smiles: null`, so ranking from on-disk files alone loses the input-library mapping.
+Rank from `results/index.jsonl` after `download-results`. The extracted per-hit `files/result/metrics.json` files are engine metrics only and do not include input-library mapping fields; use `results/index.jsonl` or `results/<pres_*>/metadata.json` for `external_id` and `smiles`.
 
 Per-result metrics (all 7 always present for sm:library-screen): `binding_confidence` — primary metric for **hit discovery**; `optimization_score` — for **lead-optimization** ranking (binding strength). These are parallel intents, not a primary/fallback hierarchy. Sort by whichever matches the user's goal. Also available: `structure_confidence`, `complex_plddt`, `complex_iplddt`, `iptm`, `ptm`.
