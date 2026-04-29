@@ -100,13 +100,13 @@ If `boltz-api` is not installed, install or update it from the official CLI repo
 macOS and Linux:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | sh
+curl -fsSL https://install.boltz.bio/boltz-api/install.sh | sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+irm https://install.boltz.bio/boltz-api/install.ps1 | iex
 ```
 
 ## Directory submissions
