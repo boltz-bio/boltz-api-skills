@@ -1,6 +1,6 @@
 # boltz-compute-cli (Codex plugin)
 
-Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz Compute API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-api-cli` covers CLI setup.
+Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-cli-setup` covers CLI setup.
 
 ## Prerequisites
 
@@ -9,7 +9,7 @@ Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-refer
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments/` from the command's starting directory.
 
 The skills assume the CLI is already configured. If a command fails because auth is missing or expired, the agent should run `boltz-api auth login --device-code` on the user's behalf before retrying.
-If the host sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-api-cli`. Request the host sandbox bypass only if workspace-local state still cannot access the network, temp files, credentials, or install path.
+If the host sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-cli-setup`. Request the host sandbox bypass only if workspace-local state still cannot access the network, temp files, credentials, or install path.
 
 Verify the CLI is installed:
 
@@ -43,7 +43,7 @@ Important version note:
 
 | Skill | Use when… |
 |---|---|
-| `boltz-api-cli` | install, update, verify, or authenticate the `boltz-api` CLI |
+| `boltz-cli-setup` | install, update, verify, or authenticate the `boltz-api` CLI |
 | `boltz-structure-and-binding` | fold one defined complex; dock one ligand; get pTM/ipTM/binding_confidence for one system |
 | `boltz-small-molecule-screen` | rank an existing SMILES library against a target |
 | `boltz-small-molecule-design` | generate novel small-molecule binders for a target (no library yet) |
@@ -89,7 +89,3 @@ If an agent hits a schema it doesn't recognize, the canonical upstream refs are:
 - Payload shapes: <https://docs.boltz.bio/api-reference/api-input-format.md>
 - Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
 - CLI flags: `boltz-api <resource> start --help` (flag names only — the help text is not a schema source)
-
-## Differences from `codex-plugin-python/`
-
-The Python version shipped a ~300-line `scripts/query.py` wrapper per skill that handled polling, download, and payload assembly via the `boltz-compute` Python SDK. The CLI now does all of that natively, so this plugin drops the wrappers entirely. Frontmatter / descriptions are retained verbatim — the trigger matching is already tuned.

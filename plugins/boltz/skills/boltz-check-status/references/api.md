@@ -1,6 +1,6 @@
 # Check Status — Reference
 
-This skill covers all five Boltz Compute resources via `list`, `retrieve`, and `download-results`:
+This skill covers all five Boltz resources via `list`, `retrieve`, and `download-results`:
 
 - `predictions:structure-and-binding`
 - `small-molecule:library-screen`

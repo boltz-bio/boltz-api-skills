@@ -1,24 +1,24 @@
 ---
 name: boltz-small-molecule-design
-description: Generate novel small-molecule binders for a protein target with the Boltz Compute API and return ranked candidate SMILES with predicted complex structures. TRIGGER when the user wants to design, generate, or propose new ligands or hits for a target and does not already have a compound library. Not for screening user-supplied molecules.
+description: Design new small-molecule binders with Boltz. Use when generating novel ligands or hits for a target without a fixed compound library. Not for screening existing molecules or one-off docking.
 ---
 
 ## Workflow
 
-If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
-If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
-If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
+If `boltz-api` is missing from `PATH`, use `boltz-cli-setup` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-cli-setup` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-cli-setup` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
 
 Use this skill when the user wants de novo small-molecule binders (no existing library).
 
 1. Normalize the target: one or more protein sequences into `target.entities`, plus optional `pocket_residues` (0-based) and/or `reference_ligands` (known binders to seed pocket detection).
 2. Pick `num_molecules` — minimum **10**, server rejects anything lower. If the user says a smaller number, explain the floor and propose 10.
 3. Only add `chemical_space` (e.g. `"enamine_real"`) if the user explicitly wants synthesis-aware generation within that library.
-4. Only add `molecule_filters` on explicit request — the default filtering is usually fine.
+4. Supported optional features include `chemical_space` and `molecule_filters`; only add them on explicit request. Read [references/api.md](references/api.md) for exact shapes and filter options.
 5. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. Cost is approximately $0.025 per molecule for small targets (may scale with complex size); always quote `estimated_cost_usd` from the response rather than a hardcoded formula.
 6. `start` to submit (synchronous). Capture the ID.
 7. Launch `download-results` with the agent runtime's background/non-blocking command facility; it polls, paginates, downloads per-hit structures, and exits when terminal. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-8. Rank hits from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` (for **hit discovery**) or `optimization_score` (for **lead optimization**, binding strength) — these are parallel intents, not a primary/fallback hierarchy. Sort by whichever matches the user's goal. Report top 5–10 with `smiles`, the chosen ranking metric, and structure path.
+8. Rank hits from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` for hit discovery or `optimization_score` for lead optimization. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Command Pattern
 
@@ -70,17 +70,8 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 - Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/small_molecule/subresources/design/methods/start>
 - CLI flag names: `boltz-api small-molecule:design start --help`
 
-Read [references/api.md](references/api.md) for the `target`, `chemical_space`, and `molecule_filters` shapes (filter catalog matches the screen endpoint).
+Read [references/api.md](references/api.md) for the `target`, `chemical_space`, and `molecule_filters` shapes (filter catalog matches the screen endpoint). Read [references/results.md](references/results.md) after download when ranking generated molecules or explaining outputs.
 
 ## Outputs
 
-Under `<output-root>/<run-name>/`:
-
-- `.boltz-run.json`
-- `run.json` — sanitized remote run record
-- `results/index.jsonl` — one generated candidate per line, with `smiles`, `metrics`, and local `paths`
-- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
-- `results/<pres_*>/archive.tar.gz` — one dir per generated candidate
-- `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
-
-Rank from `results/index.jsonl` after `download-results`. Per-result fields: `smiles`, `metrics.binding_confidence` (primary for **hit discovery**), `metrics.optimization_score` (for **lead optimization**, binding strength — parallel intent, not fallback), `metrics.structure_confidence`, `metrics.complex_plddt`, `metrics.complex_iplddt`, `metrics.iptm`, `metrics.ptm`.
+Rank from `results/index.jsonl` after `download-results`; use [references/results.md](references/results.md) for local file layout and metric meanings.

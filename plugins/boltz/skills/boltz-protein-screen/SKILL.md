@@ -1,13 +1,13 @@
 ---
 name: boltz-protein-screen
-description: Score a user-supplied library of protein sequences against a target with the Boltz Compute API and return ranked binding and structure metrics with per-hit complex structures. TRIGGER when the user wants to rank an existing set of proteins, peptides, antibodies, nanobodies, or binders against a target. Not for designing new proteins and not for small molecules.
+description: Screen existing protein binders with Boltz. Use when ranking a supplied protein, peptide, antibody, nanobody, or binder library against a target. Not for designing new proteins or screening small molecules.
 ---
 
 ## Workflow
 
-If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
-If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
-If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
+If `boltz-api` is missing from `PATH`, use `boltz-cli-setup` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-cli-setup` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-cli-setup` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
 
 Use this skill when the user already has candidate proteins / peptides / antibodies / nanobodies.
 
@@ -19,7 +19,7 @@ Use this skill when the user already has candidate proteins / peptides / antibod
 4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
 5. `start` to submit. Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-7. Rank hits from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:library-screen` — do not sort by it. Report top 5–10 with the sequence identifier, key metrics, and structure path.
+7. Rank hits from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Command Pattern
 
@@ -69,17 +69,8 @@ Payload keys are `proteins`, `target` — API body field names.
 - Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/library_screen/methods/start>
 - CLI flag names: `boltz-api protein:library-screen start --help`
 
-Read [references/api.md](references/api.md) for the `proteins` list shape and both `target` variants (structure_template with `chain_selection`, and no_template with epitope hints).
+Read [references/api.md](references/api.md) for the `proteins` list shape and both `target` variants (structure_template with `chain_selection`, and no_template with epitope hints). Read [references/results.md](references/results.md) after download when ranking screened binders or explaining outputs.
 
 ## Outputs
 
-Under `<output-root>/<run-name>/`:
-
-- `.boltz-run.json`
-- `run.json` — sanitized remote run record
-- `results/index.jsonl` — one scored binder per line, with `external_id`/`entities`, `metrics`, and local `paths`
-- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
-- `results/<pres_*>/archive.tar.gz` — one dir per scored binder
-- `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
-
-Rank from `results/index.jsonl` after `download-results`. Per-result metrics: `binding_confidence` (primary), `structure_confidence`, `iptm` (higher better), `min_interaction_pae` (lower better), `helix_fraction`, `sheet_fraction`, `loop_fraction`. **No `optimization_score`** on this endpoint — sorting by it returns an empty list.
+Rank from `results/index.jsonl` after `download-results`; use [references/results.md](references/results.md) for local file layout and metric meanings.

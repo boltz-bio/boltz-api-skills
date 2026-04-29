@@ -37,7 +37,7 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 
 ### 3. Endpoint workflows + CLI setup, not one omnibus
 
-**Chose:** six separate workflow `SKILL.md` files with tight per-endpoint `description` triggers (lifted verbatim from the Python plugin — those triggers are tuned), plus one small `boltz-api-cli` setup skill for install/auth guidance.
+**Chose:** six separate workflow `SKILL.md` files with tight per-endpoint `description` triggers (lifted verbatim from the Python plugin — those triggers are tuned), plus one small `boltz-cli-setup` setup skill for install/auth guidance.
 
 **Trade:** small prose duplication of the "estimate → confirm → submit → background download" lifecycle across five skills. **Gain:** precise trigger matching (Codex selects the right skill from "design a nanobody" vs "screen these SMILES" without loose overlap); each SKILL.md stays short enough that agents read past the first 30%.
 
@@ -80,7 +80,7 @@ Alternative considered: use the server-assigned job ID as `--name`. Rejected bec
 
 ### 8. No install preflight; reactive auth recovery
 
-**Chose:** skills assume `boltz-api` is on PATH and don't run a preflight auth check before every command. If the CLI reports missing or expired auth, the agent uses the `boltz-api-cli` skill to start `boltz-api auth login --device-code` on the user's behalf, without a separate permission prompt.
+**Chose:** skills assume `boltz-api` is on PATH and don't run a preflight auth check before every command. If the CLI reports missing or expired auth, the agent uses the `boltz-cli-setup` skill to start `boltz-api auth login --device-code` on the user's behalf, without a separate permission prompt.
 
 **Trade:** the first real command may still be the thing that discovers missing install/auth state. **Gain:** zero ceremony per invocation while keeping auth recovery actionable; errors from the CLI are readable enough for the agent to route to install guidance or device-code login.
 

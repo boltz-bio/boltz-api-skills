@@ -1,13 +1,13 @@
 ---
 name: boltz-structure-and-binding
-description: Predict the 3D structure of a protein, RNA, DNA, or ligand complex with the Boltz Compute API and optionally score binding. TRIGGER when the user asks to fold a complex, dock a ligand, predict an interface, generate a CIF or PDB for a defined system, or get structure and binding metrics for one specified complex. Not for screening libraries or designing new molecules.
+description: Predict structures and binding for one defined complex with Boltz. Use when folding a protein, RNA, DNA, or ligand complex, docking one ligand, predicting an interface, or scoring binding. Not for screening libraries or design.
 ---
 
 ## Workflow
 
-If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
-If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
-If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
+If `boltz-api` is missing from `PATH`, use `boltz-cli-setup` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-cli-setup` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-cli-setup` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
 
 Use this skill for one defined complex, not a library workflow.
 
@@ -35,7 +35,7 @@ Use this skill for one defined complex, not a library workflow.
    ```
 
    Do not nest the variant name under `binding` (for example, no `binding.ligand_protein_binding` object).
-3. Only add `constraints` / `bonds` / `modifications` / `model_options` if the user asks.
+3. Supported optional features include `constraints`, `bonds`, `modifications`, `model_options`, and binding metrics; only add them if the user asks. Read [references/api.md](references/api.md) for exact shapes and examples.
 4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility so polling + download continue without blocking the agent session. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
@@ -91,22 +91,12 @@ For anything not covered in `references/api.md`:
 - Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/predictions/subresources/structure_and_binding/methods/start>
 - CLI flag names: `boltz-api predictions:structure-and-binding start --help` (schema details aren't there — just flag names and types)
 
-Read [references/api.md](references/api.md) for entity shapes, binding variants, bonds, constraints, model options, and output metrics.
+Read [references/api.md](references/api.md) for entity shapes, binding variants, bonds, constraints, model options, and input examples. Read [references/results.md](references/results.md) when summarizing downloaded outputs, metrics, or validation quirks.
 
 ## Outputs
 
-Under `<output-root>/<run-name>/`:
-
-- `.boltz-run.json` — run metadata, cursor, idempotency key
-- `outputs/archive.tar.gz` — unpacks to `prediction/{metrics.json, sample_*_predicted_structure.cif, sample_*_pae.npz}`
-
-Metrics in `metrics.json` are **nested, not flat**:
-
-- `best_sample.metrics` and each `all_sample_results[].metrics` contain nine lowercase keys: `structure_confidence`, `ptm`, `iptm`, `ligand_iptm` (only when ligands present), `protein_iptm` (only for multi-protein complexes), `complex_plddt`, `complex_iplddt`, `complex_pde`, `complex_ipde`.
-- `binding_metrics` is a **separate top-level object** present only when `binding` was requested. Shape depends on the binding variant: `ligand_protein_binding` → `{binding_confidence, optimization_score}`; `protein_protein_binding` → `{binding_confidence}` only (no `optimization_score`).
-
-Summarize these for the user and point them at the CIF path.
+Summarize `metrics.json` and point the user at the downloaded CIF path. Read [references/results.md](references/results.md) for the local layout, nested metrics, binding metric variants, and SAB validation quirks.
 
 ## SAB 400 validation quirk
 
-If the server rejects the payload with only `{"code": "VALIDATION_ERROR", "message": "Request validation failed"}` and no field-level details, inspect the `entities`, `binding`, and `constraints` blocks carefully — `predictions:structure-and-binding` is the one endpoint that currently omits `details`. The other four endpoints return specific field paths.
+If the server rejects a payload with only `{"code":"VALIDATION_ERROR","message":"Request validation failed"}`, inspect `entities`, `binding`, and `constraints`; read [references/results.md](references/results.md) for details.

@@ -1,12 +1,12 @@
 # boltz (Claude Code plugin)
 
-Seven skills for the Boltz Compute API, executed by shelling out to the `boltz-api` Go CLI directly from Claude Code. Six workflow skills run Boltz Compute jobs, and `boltz-api-cli` covers install/auth guidance.
+Seven skills for the Boltz API, executed by shelling out to the `boltz-api` Go CLI directly from Claude Code. Six workflow skills run Boltz jobs, and `boltz-cli-setup` covers install/auth guidance.
 
 ## Skills
 
 | Skill | What it does |
 |---|---|
-| `boltz-api-cli` | Install, update, verify, and authenticate the `boltz-api` CLI. |
+| `boltz-cli-setup` | Install, update, verify, and authenticate the `boltz-api` CLI. |
 | `boltz-structure-and-binding` | Predict 3D structure of one defined complex; optionally score binding. |
 | `boltz-small-molecule-screen` | Rank a user-supplied SMILES library against a target. |
 | `boltz-small-molecule-design` | Generate novel small-molecule binders. |
@@ -20,7 +20,7 @@ Seven skills for the Boltz Compute API, executed by shelling out to the `boltz-a
 - `BOLTZ_COMPUTE_API_KEY` exported in your shell environment.
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR`. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
 
-If the Claude Code sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-api-cli`. Use `dangerouslyDisableSandbox: true` only if workspace-local state still cannot access the network, temp files, credentials, or install path.
+If the Claude Code sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-cli-setup`. Use `dangerouslyDisableSandbox: true` only if workspace-local state still cannot access the network, temp files, credentials, or install path.
 
 Verify the CLI is installed:
 
