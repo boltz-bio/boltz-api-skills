@@ -1,13 +1,13 @@
 ---
 name: boltz-small-molecule-screen
-description: Score a user-supplied SMILES library against a protein target with the Boltz Compute API and return ranked binding and structure metrics with per-hit structures. TRIGGER when the user wants to virtually screen, dock, or rank an existing compound library against a target. Not for designing new molecules and not for a single one-off docking pose.
+description: Screen existing small-molecule libraries with Boltz. Use when docking, scoring, or ranking a supplied SMILES or compound library against a target. Not for de novo molecule design or one-off docking.
 ---
 
 ## Workflow
 
-If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
-If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
-If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
+If `boltz-api` is missing from `PATH`, use `boltz-cli-setup` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-cli-setup` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-cli-setup` to request the host sandbox bypass/escalation needed for user-wide CLI install, browser login, credential storage, temp files, or API access before retrying.
 
 Use this skill when the user already has candidate molecules.
 
@@ -17,9 +17,7 @@ Use this skill when the user already has candidate molecules.
 4. Author the payload YAML or JSON, run `estimate-cost`, show the user the USD cost, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility — it polls, paginates `list-results`, downloads every per-hit structure, and exits when terminal. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-7. When done, rank from `<output-root>/<run-name>/results/index.jsonl`. `download-results` builds this local manifest from `list-results` and adds local artifact paths, so it has `external_id`, `smiles`, `metrics`, and `paths` together per scored molecule. Sort by `binding_confidence` for hit discovery or `optimization_score` for lead optimization; these are parallel intents, not a fallback hierarchy. Report the top 5-10 hits with `smiles`, the chosen ranking metric, key confidence metrics, and structure path. Use `boltz-api small-molecule:library-screen list-results --id "<job-id>" --format jsonl` only when no local download manifest is available or the user asks for fresh remote results.
-
-**Heads-up: the `results/<pres_*>/` directory count is usually less than `len(molecules)`.** Default server-side `molecule_filters` (SMARTS catalog at level `recommended`) can drop candidates before scoring. The drop is not logged in `.boltz-run.json` or surfaced by `download-status`; `run.json` may include `progress.rejection_summary` after `download-results` refreshes remote run metadata. `results/index.jsonl` is the authoritative local scored list after download; if the user needs to know which input IDs were dropped, compute `input_ids - seen(external_id)` from that manifest.
+7. When done, rank from `<output-root>/<run-name>/results/index.jsonl`. Sort by `binding_confidence` for hit discovery or `optimization_score` for lead optimization; these are parallel intents, not a fallback hierarchy. Report the top 5-10 hits with `smiles`, the chosen ranking metric, key confidence metrics, and structure path. Read [references/results.md](references/results.md) for output layout, metrics, and filtered-input accounting.
 
 ## Command Pattern
 
@@ -71,18 +69,8 @@ Payload keys are `molecules`, `target`, `molecule_filters` — the API body fiel
 - Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/small_molecule/subresources/library_screen/methods/start>
 - CLI flag names: `boltz-api small-molecule:library-screen start --help`
 
-Read [references/api.md](references/api.md) for the `molecules`, `target`, and `molecule_filters` shapes, including the catalog of built-in SMARTS filters and RDKit descriptor ranges.
+Read [references/api.md](references/api.md) for the `molecules`, `target`, and `molecule_filters` shapes, including the built-in SMARTS filters and RDKit descriptor ranges. Read [references/results.md](references/results.md) after download when ranking hits or explaining missing/filtered inputs.
 
 ## Outputs
 
-Under `<output-root>/<run-name>/`:
-
-- `.boltz-run.json` — run metadata
-- `run.json` — sanitized remote run record; check `progress.rejection_summary` for filtered/invalid counts when present
-- `results/index.jsonl` — one scored molecule per line, with `external_id`, `smiles`, `metrics`, and local `paths`
-- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
-- `results/<pres_*>/archive.tar.gz` and `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}` — per-scored-molecule artifacts
-
-Rank from `results/index.jsonl` after `download-results`. The extracted per-hit `files/result/metrics.json` files are engine metrics only and do not include input-library mapping fields; use `results/index.jsonl` or `results/<pres_*>/metadata.json` for `external_id` and `smiles`.
-
-Per-result metrics (all 7 always present for sm:library-screen): `binding_confidence` — primary metric for **hit discovery**; `optimization_score` — for **lead-optimization** ranking (binding strength). These are parallel intents, not a primary/fallback hierarchy. Sort by whichever matches the user's goal. Also available: `structure_confidence`, `complex_plddt`, `complex_iplddt`, `iptm`, `ptm`.
+Rank from `results/index.jsonl` after `download-results`; use [references/results.md](references/results.md) for the local file layout, metric meanings, and filtered-input accounting.

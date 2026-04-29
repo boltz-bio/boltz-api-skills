@@ -6,19 +6,19 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-before="$(git -C "$REPO_ROOT" status --porcelain -- plugins/boltz)"
+before="$(git -C "$REPO_ROOT" status --porcelain -- plugins/boltz plugins/boltz-compute-cli)"
 
 "$SCRIPT_DIR/generate-surfaces.sh"
 
-after="$(git -C "$REPO_ROOT" status --porcelain -- plugins/boltz)"
+after="$(git -C "$REPO_ROOT" status --porcelain -- plugins/boltz plugins/boltz-compute-cli)"
 
 if [[ "$before" != "$after" ]]; then
-  echo "error: generated Claude plugin copy is out of sync." >&2
-  echo "Edit core/ or surfaces/claude-code-cli/, then run:" >&2
+  echo "error: generated plugin copies are out of sync." >&2
+  echo "Edit core/ or surfaces/<surface>/, then run:" >&2
   echo "  scripts/generate-surfaces.sh" >&2
   echo >&2
-  git -C "$REPO_ROOT" diff --stat -- plugins/boltz >&2
-  git -C "$REPO_ROOT" status --short -- plugins/boltz >&2
+  git -C "$REPO_ROOT" diff --stat -- plugins/boltz plugins/boltz-compute-cli >&2
+  git -C "$REPO_ROOT" status --short -- plugins/boltz plugins/boltz-compute-cli >&2
   exit 1
 fi
 

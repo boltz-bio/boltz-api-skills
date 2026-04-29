@@ -28,7 +28,9 @@ jobs:
           jq empty plugins/boltz/.claude-plugin/plugin.json
           jq empty surfaces/claude-code-cli/.claude-plugin/plugin.json
       - name: JSON syntax for Codex plugins
-        run: jq empty surfaces/codex-cli/.codex-plugin/plugin.json
+        run: |
+          jq empty surfaces/codex-cli/.codex-plugin/plugin.json
+          jq empty plugins/boltz-compute-cli/.codex-plugin/plugin.json
 
   verify-symlinks:
     name: Verify skill symlinks resolve
@@ -39,6 +41,10 @@ jobs:
         run: |
           set -euo pipefail
           for surface in claude-code-cli codex-cli; do
+            [[ -f "surfaces/$surface/skills/boltz-cli-setup/references/sandbox.md" ]] || {
+              echo "::error::missing or broken symlink: surfaces/$surface/skills/boltz-cli-setup/references/sandbox.md"
+              exit 1
+            }
             for skill in boltz-structure-and-binding boltz-small-molecule-screen \
                          boltz-small-molecule-design boltz-protein-screen \
                          boltz-protein-design boltz-check-status; do
@@ -50,9 +56,18 @@ jobs:
                 echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/references/api.md"
                 exit 1
               }
+              if [[ "$skill" == "boltz-check-status" ]]; then
+                extra_ref="resume.md"
+              else
+                extra_ref="results.md"
+              fi
+              [[ -f "surfaces/$surface/skills/$skill/references/$extra_ref" ]] || {
+                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/references/$extra_ref"
+                exit 1
+              }
             done
           done
-          echo "All 2 surfaces × 6 skills × 2 files = 24 symlinks resolved."
+          echo "All skill and reference symlinks resolved."
 
   verify-claude-plugin-copy:
     name: Verify generated distribution surfaces
@@ -77,3 +92,9 @@ jobs:
           test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
           test ! -L "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
           test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/references/api.md"
+          unzip -q "dist/boltz-compute-cli-"*.zip -d "$TMPDIR_CHECK/boltz-compute-cli"
+          test -f "$TMPDIR_CHECK/boltz-compute-cli/.codex-plugin/plugin.json"
+          test -f "$TMPDIR_CHECK/boltz-compute-cli/assets/app-icon.png"
+          test -f "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/SKILL.md"
+          test ! -L "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/SKILL.md"
+          test -f "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/references/api.md"

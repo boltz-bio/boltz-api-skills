@@ -5,14 +5,14 @@
     "email": "support@boltz.bio"
   },
   "metadata": {
-    "description": "Claude Code plugins for Boltz Compute workflows.",
+    "description": "Claude Code plugins for Boltz biomolecular modeling workflows.",
     "version": "0.1.0"
   },
   "plugins": [
     {
       "name": "boltz",
       "source": "./plugins/boltz",
-      "description": "Run Boltz Compute structure prediction, screening, and design workflows from Claude Code.",
+      "description": "Predict structures, screen molecules and proteins, and design binders with Boltz from Claude Code.",
       "category": "Computational Biology",
       "tags": [
         "boltz",

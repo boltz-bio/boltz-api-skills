@@ -1,27 +1,27 @@
 ---
 name: boltz-protein-design
-description: Generate novel protein binders (peptide, antibody, nanobody, or custom protein) for a target with the Boltz Compute API and return ranked designed sequences with predicted complex structures. TRIGGER when the user wants to design, generate, propose, or invent new proteins/peptides/antibodies/nanobodies/binders for a target. Not for screening user-supplied proteins and not for small molecules.
+description: Design new protein binders with Boltz. Use when generating protein, peptide, antibody, nanobody, or custom binder candidates for a target. Not for screening existing proteins or small molecules.
 ---
 
 ## Workflow
 
-If `boltz-api` is missing from `PATH`, use `boltz-api-cli` for install/update guidance before retrying.
-If a command reports missing or expired authentication, use `boltz-api-cli` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
-If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-api-cli` to set workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` before retrying. Request the host sandbox bypass only if workspace-local state still fails.
+If `boltz-api` is missing from `PATH`, use `boltz-cli-setup` for install/update guidance before retrying.
+If a command reports missing or expired authentication, use `boltz-cli-setup` to start `boltz-api auth login --device-code` before retrying; do not ask permission first.
+If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-cli-setup` to request the host sandbox bypass/escalation needed for user-wide CLI install, browser login, credential storage, temp files, or API access before retrying.
 
 Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
 
 1. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.
-2. Pick the `binder_specification` variant:
+2. Pick the `binder_specification` variant. Supported variants include:
    - `structure_template` — redesign motifs in an existing binder scaffold (CIF + `design_motifs` with `replacement` / `insertion` segments).
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
 3. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein`.
 4. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
-5. Add `rules` only on request (`excluded_amino_acids`, `excluded_sequence_motifs` with `X` wildcards, `max_hydrophobic_fraction`).
+5. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
 6. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure from `estimate-cost`.
 7. `start` to submit. Capture the ID.
 8. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-9. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending (primary). Use `iptm` (higher is better) and `min_interaction_pae` (lower is better) as tiebreakers. `optimization_score` is **not emitted** for `protein:design` — do not sort by it. Report top 5–10 designs with sequence, key metrics, and structure path.
+9. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Command Pattern
 
@@ -73,27 +73,8 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 - Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/design/methods/start>
 - CLI flag names: `boltz-api protein:design start --help`
 
-Read [references/api.md](references/api.md) for both `binder_specification` variants, the motif shapes, the sequence DSL, and the `target` variants.
+Read [references/api.md](references/api.md) for both `binder_specification` variants, motif shapes, sequence DSL, rules, modalities, and `target` variants. Read [references/results.md](references/results.md) after download when ranking designed binders or explaining outputs.
 
 ## Outputs
 
-Under `<output-root>/<run-name>/`:
-
-- `.boltz-run.json`
-- `run.json` — sanitized remote run record
-- `results/index.jsonl` — one generated design per line, with `entities`, `metrics`, and local `paths`
-- `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
-- `results/<pres_*>/archive.tar.gz` — one dir per generated design
-- `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
-
-Rank from `results/index.jsonl` after `download-results`. Per-result fields:
-
-- `id`, `artifacts.{structure, archive}`
-- `entities` — the generated designs. **Type-flip gotcha:** the binder entity comes back as `type: "protein"` (not `"designed_protein"`), with the DSL resolved to a real AA sequence in `value`. Select the binder by `chain_ids` (the ID you assigned at submit time), **not** by `type == "designed_protein"`.
-- `metrics.binding_confidence` — **primary ranking metric**
-- `metrics.structure_confidence`
-- `metrics.iptm` (higher is better)
-- `metrics.min_interaction_pae` (lower is better)
-- `metrics.helix_fraction` / `sheet_fraction` / `loop_fraction`
-
-**No `optimization_score` on this endpoint.** Sorting by it returns an empty list.
+Rank from `results/index.jsonl` after `download-results`; use [references/results.md](references/results.md) for local file layout, metric meanings, and the designed-binder entity type gotcha.

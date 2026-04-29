@@ -1,1 +1,0 @@
-../../../../core/skills/cli/boltz-api-cli/SKILL.md

@@ -8,7 +8,7 @@
 #
 # Produces:
 #   dist/claude-code-cli-<version>.zip
-#   dist/codex-cli-<version>.zip
+#   dist/<codex-plugin-name>-<version>.zip
 
 set -euo pipefail
 
@@ -30,6 +30,10 @@ copy_surface_tree() {
   rsync -aL \
     --exclude='.DS_Store' \
     --exclude='.gitkeep' \
+    --exclude='README.md' \
+    --exclude='DESIGN.md' \
+    --exclude='GOTCHAS.md' \
+    --exclude='GENERATED.md' \
     "$REPO_ROOT/surfaces/$surface/" "$stage_dir/"
 }
 
@@ -40,10 +44,10 @@ zip_stage_dir() {
 }
 
 pack_cli_plugin() {
-  local surface="$1" manifest_path="$2"
+  local surface="$1" manifest_path="$2" output_name="${3:-$1}"
   local version
   version=$(jq -r .version "$REPO_ROOT/surfaces/$surface/$manifest_path")
-  local out="$DIST/${surface}-${version}.zip"
+  local out="$DIST/${output_name}-${version}.zip"
   local stage_dir="$TMP_ROOT/${surface}"
 
   echo "Packing $surface (v$version)..."
@@ -53,8 +57,10 @@ pack_cli_plugin() {
   echo "  → $out"
 }
 
+codex_plugin_name="$(jq -r .name "$REPO_ROOT/surfaces/codex-cli/.codex-plugin/plugin.json")"
+
 pack_cli_plugin claude-code-cli ".claude-plugin/plugin.json"
-pack_cli_plugin codex-cli       ".codex-plugin/plugin.json"
+pack_cli_plugin codex-cli       ".codex-plugin/plugin.json" "$codex_plugin_name"
 
 echo
 echo "Packaged surfaces:"

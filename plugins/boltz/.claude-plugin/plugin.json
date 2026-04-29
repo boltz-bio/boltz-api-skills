@@ -1,13 +1,13 @@
 {
   "name": "boltz",
   "version": "0.1.0",
-  "description": "Run Boltz Compute CLI setup, structure prediction, screening, and de novo design workflows from Claude Code by shelling out to the boltz-api CLI.",
+  "description": "Predict structures, screen molecules and proteins, and design binders with Boltz from Claude Code.",
   "author": {
     "name": "Boltz",
     "email": "support@boltz.bio",
     "url": "https://boltz.bio"
   },
-  "homepage": "https://docs.boltz.bio",
+  "homepage": "https://boltz.bio",
   "repository": "https://github.com/boltz-bio/boltz-compute-skills",
   "license": "MIT",
   "keywords": [
