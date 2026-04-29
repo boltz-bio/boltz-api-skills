@@ -29,21 +29,11 @@ Windows PowerShell:
 irm https://install.boltz.bio/boltz-api/install.ps1 | iex
 ```
 
-The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Add that directory to `PATH` if `boltz-api --version` is still not found after install. Set `BOLTZ_API_INSTALL_DIR` before running the installer to choose a different install directory.
+The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to a user-local bin directory. Add the installed binary to `PATH` if `boltz-api --version` is still not found after install.
 
-Sandbox avoidance is critical because it can block browser login, OAuth callbacks, temp files, and credential storage. In a filesystem sandbox, prefer workspace-local CLI state before requesting a sandbox bypass:
+Sandbox avoidance is critical because it can block browser login, OAuth callbacks, temp files, credential storage, and user-wide install paths. If the user asks for a normal install, install or authenticate `boltz-api` in the user's real environment. In a filesystem sandbox, request the host sandbox bypass/escalation needed for the install or auth flow.
 
-```sh
-mkdir -p "$PWD/.boltz-cli/bin" "$PWD/.boltz-cli/tmp" "$PWD/.boltz-cli/home"
-export BOLTZ_API_INSTALL_DIR="$PWD/.boltz-cli/bin"
-export TMPDIR="$PWD/.boltz-cli/tmp"
-export HOME="$PWD/.boltz-cli/home"
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_CACHE_HOME="$HOME/.cache"
-export PATH="$BOLTZ_API_INSTALL_DIR:$PATH"
-```
-
-Run install/auth/API commands with the same environment. Read [references/sandbox.md](references/sandbox.md) when workspace-local state still cannot access the network, browser, OAuth callback, credentials, temp files, or target install path.
+Read [references/sandbox.md](references/sandbox.md) when an agent sandbox blocks the installer, browser auto-open, OAuth callback, credential storage, temp files, or global install path.
 
 ## Authenticate
 
@@ -61,7 +51,7 @@ boltz-api auth login --device-code
 
 Do not ask the user for permission before starting device-code login; relaying the login URL/code and waiting for the CLI to complete is part of auth recovery. When sharing the authentication login URL/code, tell the user to use exactly `boltz-api auth login --device-code`.
 
-For auth recovery, assume the CLI can auto-open the browser and run the exact command above. In sandboxed environments, first use workspace-local state as shown above; read [references/sandbox.md](references/sandbox.md) before requesting a host sandbox bypass for browser auto-open, OAuth callbacks, credential storage, or temp files.
+For auth recovery, assume the CLI can auto-open the browser and run the exact command above. In sandboxed environments, request the host sandbox bypass/escalation needed for browser auto-open, OAuth callbacks, credential storage, or temp files.
 
 For automation where a key is already available, an API key is still supported:
 

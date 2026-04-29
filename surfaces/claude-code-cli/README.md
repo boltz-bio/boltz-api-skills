@@ -20,7 +20,7 @@ Seven skills for the Boltz API, executed by shelling out to the `boltz-api` Go C
 - `BOLTZ_COMPUTE_API_KEY` exported in your shell environment.
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR`. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
 
-If the Claude Code sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-cli-setup`. Use `dangerouslyDisableSandbox: true` only if workspace-local state still cannot access the network, temp files, credentials, or install path.
+If the Claude Code sandbox blocks installer temp files, OAuth browser login, credential storage, or the user-wide install path, request or configure the sandbox bypass needed to install and authenticate `boltz-api` in the user's real environment. Use `dangerouslyDisableSandbox: true` for this setup flow when needed.
 
 Verify the CLI is installed:
 
@@ -42,7 +42,7 @@ Windows PowerShell:
 irm https://install.boltz.bio/boltz-api/install.ps1 | iex
 ```
 
-The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Add that directory to `PATH` if `boltz-api --version` is still not found after install. Set `BOLTZ_API_INSTALL_DIR` before running the installer to choose a different install directory.
+The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to a user-local bin directory. Add the installed binary to `PATH` if `boltz-api --version` is still not found after install.
 
 ## Agent-friendly command style
 

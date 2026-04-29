@@ -119,7 +119,7 @@ All surfaces need:
 - `BOLTZ_COMPUTE_OUTPUT_DIR` optional. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
 - `boltz-api` on `PATH`
 
-If an agent sandbox blocks installer temp files or OAuth token access, first run the CLI with workspace-local `HOME`, `TMPDIR`, `BOLTZ_API_INSTALL_DIR`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` as described in `boltz-cli-setup`. Request the host sandbox bypass only if workspace-local state still cannot access the network, temp files, credentials, or install path.
+If an agent sandbox blocks installer temp files, OAuth browser login, credential storage, or the user-wide install path, request the host sandbox bypass/escalation needed to install and authenticate `boltz-api` in the user's real environment.
 
 Verify the CLI is installed:
 
