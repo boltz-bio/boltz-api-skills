@@ -7,6 +7,7 @@ import {
   buildRetrieveArgs,
   buildWorkflowCommands,
   downloadResults,
+  extractAuthURL,
   resolvePollInterval,
   workflowSpecs
 } from "../server/boltz.js";
@@ -135,6 +136,13 @@ test("download result startup reports immediate spawn errors", async () => {
 
 test("input refs use file-url style json references", () => {
   assert.equal(buildInputRef("/tmp/boltz payload.json"), "@json:///tmp/boltz%20payload.json");
+});
+
+test("auth URL is extracted from OAuth login output", () => {
+  assert.equal(
+    extractAuthURL("Open this URL to authenticate:\nhttps://auth.boltz.bio/authorize?state=abc\n"),
+    "https://auth.boltz.bio/authorize?state=abc"
+  );
 });
 
 test("remote job status passes workspace id to retrieve", () => {

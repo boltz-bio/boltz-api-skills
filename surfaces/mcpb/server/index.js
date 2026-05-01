@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { UrlElicitationRequiredError } from "@modelcontextprotocol/sdk/types.js";
 import { formatResult, toolDefinitions } from "./tools.js";
 
 const server = new McpServer({
@@ -21,6 +22,9 @@ for (const tool of toolDefinitions) {
       try {
         return formatResult(await tool.handler(args));
       } catch (error) {
+        if (error instanceof UrlElicitationRequiredError) {
+          throw error;
+        }
         return formatResult({
           ok: false,
           error: error instanceof Error ? error.message : String(error),
