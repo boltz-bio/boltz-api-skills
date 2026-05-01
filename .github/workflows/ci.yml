@@ -31,6 +31,28 @@ jobs:
         run: |
           jq empty surfaces/codex-cli/.codex-plugin/plugin.json
           jq empty plugins/boltz-compute-cli/.codex-plugin/plugin.json
+      - name: JSON syntax for MCPB manifests
+        run: |
+          jq empty surfaces/mcpb/manifest.json
+          jq empty plugins/boltz-mcpb/manifest.json
+
+  test-mcpb:
+    name: Test MCPB server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install MCPB dependencies
+        run: npm ci
+        working-directory: surfaces/mcpb
+      - name: Test MCPB server
+        run: npm test
+        working-directory: surfaces/mcpb
+      - name: Validate MCPB manifest
+        run: npx --yes @anthropic-ai/mcpb@2.1.2 validate manifest.json
+        working-directory: surfaces/mcpb
 
   verify-symlinks:
     name: Verify skill symlinks resolve
@@ -78,11 +100,14 @@ jobs:
         run: scripts/verify-generated.sh
 
   package-plugins:
-    name: Package plugin zips
+    name: Package plugin artifacts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Package plugin zips
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Package plugin artifacts
         run: scripts/package-plugins.sh
       - name: Verify packaged skills are self-contained
         run: |
@@ -98,3 +123,8 @@ jobs:
           test -f "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/SKILL.md"
           test ! -L "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/SKILL.md"
           test -f "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/references/api.md"
+      - name: Verify MCPB artifact
+        run: |
+          set -euo pipefail
+          test -f dist/boltz-mcpb-*.mcpb
+          npx --yes @anthropic-ai/mcpb@2.1.2 info dist/boltz-mcpb-*.mcpb

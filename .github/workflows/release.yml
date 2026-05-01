@@ -20,12 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - name: Pack each surface
         run: scripts/package-plugins.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: plugin-zips
-          path: dist/*.zip
+          name: plugin-artifacts
+          path: |
+            dist/*.zip
+            dist/*.mcpb
           if-no-files-found: error
 
   release:
@@ -40,5 +45,6 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/plugin-zips/*.zip
+            dist/plugin-artifacts/*.zip
+            dist/plugin-artifacts/*.mcpb
           generate_release_notes: true
