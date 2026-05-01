@@ -1,10 +1,10 @@
 {
   "manifest_version": "0.3",
-  "name": "boltz-mcpb",
+  "name": "boltz",
   "display_name": "Boltz",
   "version": "0.1.0",
   "description": "Predict structures, screen molecules and proteins, and design binders.",
-  "long_description": "Use Boltz from Claude Desktop for biomolecular modeling workflows: predict structure and binding for protein, RNA, DNA, and ligand complexes; rank small-molecule or protein libraries against targets; and design novel small molecules, peptides, antibodies, nanobodies, or custom protein binders with structures and confidence metrics.",
+  "long_description": "Use Boltz for biomolecular modeling workflows: predict structure and binding for protein, RNA, DNA, and ligand complexes; rank small-molecule or protein libraries against targets; and design novel small molecules, peptides, antibodies, nanobodies, or custom protein binders with structures and confidence metrics.",
   "author": {
     "name": "Boltz",
     "email": "support@boltz.bio",
@@ -27,10 +27,7 @@
         "${__dirname}/server/index.js"
       ],
       "env": {
-        "BOLTZ_MCPB_CLI_PATH": "${user_config.boltz_api_path}",
-        "BOLTZ_MCPB_OUTPUT_ROOT": "${user_config.output_root}",
-        "BOLTZ_MCPB_API_KEY": "${user_config.api_key}",
-        "BOLTZ_MCPB_DEFAULT_POLL_INTERVAL_SECONDS": "${user_config.default_poll_interval_seconds}"
+        "BOLTZ_MCPB_OUTPUT_ROOT": "${HOME}/boltz-experiments"
       }
     }
   },
@@ -41,7 +38,7 @@
     },
     {
       "name": "boltz_install_cli",
-      "description": "Install or update the local Boltz app components required to run workflows from Claude Desktop."
+      "description": "Install or update the local Boltz components required to run workflows."
     },
     {
       "name": "boltz_auth_login",
@@ -100,36 +97,5 @@
       "node": ">=18.0.0"
     }
   },
-  "user_config": {
-    "boltz_api_path": {
-      "type": "string",
-      "title": "Boltz executable",
-      "description": "Advanced: local Boltz runner to use.",
-      "default": "boltz-api",
-      "required": true
-    },
-    "output_root": {
-      "type": "directory",
-      "title": "Boltz output directory",
-      "description": "Directory where downloaded Boltz run artifacts are stored.",
-      "default": "${HOME}/boltz-experiments",
-      "required": true
-    },
-    "api_key": {
-      "type": "string",
-      "title": "Boltz API key",
-      "description": "Optional API key fallback. Leave blank to sign in interactively.",
-      "sensitive": true,
-      "required": false
-    },
-    "default_poll_interval_seconds": {
-      "type": "number",
-      "title": "Default download poll interval",
-      "description": "Seconds between result-download status checks when a workflow does not specify one.",
-      "default": 30,
-      "min": 5,
-      "max": 300,
-      "required": false
-    }
-  }
+  "user_config": {}
 }

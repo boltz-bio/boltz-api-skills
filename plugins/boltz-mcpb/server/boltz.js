@@ -36,12 +36,12 @@ const downloaderProcesses = new Map();
 
 export function getConfig(env = process.env) {
   return {
-    cliPath: env.BOLTZ_MCPB_CLI_PATH || "boltz-api",
+    cliPath: env.BOLTZ_MCPB_CLI_PATH || env.BOLTZ_API_PATH || "boltz-api",
     outputRoot: env.BOLTZ_MCPB_OUTPUT_ROOT || path.join(env.HOME || process.cwd(), "boltz-experiments"),
     defaultPollIntervalSeconds: env.BOLTZ_MCPB_DEFAULT_POLL_INTERVAL_SECONDS
       ? parseNumber(env.BOLTZ_MCPB_DEFAULT_POLL_INTERVAL_SECONDS, 30)
       : undefined,
-    apiKey: env.BOLTZ_MCPB_API_KEY || ""
+    apiKey: env.BOLTZ_MCPB_API_KEY || env.BOLTZ_COMPUTE_API_KEY || ""
   };
 }
 

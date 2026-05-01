@@ -42,7 +42,7 @@ export const toolDefinitions = [
   {
     name: "boltz_install_cli",
     title: "Install Boltz",
-    description: "Install or update the local Boltz app components required to run workflows from Claude Desktop.",
+    description: "Install or update the local Boltz components required to run workflows.",
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
