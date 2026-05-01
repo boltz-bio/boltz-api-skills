@@ -3,8 +3,8 @@
   "name": "boltz-mcpb",
   "display_name": "Boltz",
   "version": "0.1.0",
-  "description": "Run Boltz biomolecular modeling workflows from Claude Desktop through the local boltz-api CLI.",
-  "long_description": "Boltz wraps the local boltz-api CLI for structure prediction, molecular screening, binder design, result recovery, setup, and authentication. Workflow tools follow the same estimate-cost, start, and download-results flow as the Boltz Claude Code and Codex skill plugins.",
+  "description": "Predict structures, screen molecules and proteins, and design binders.",
+  "long_description": "Use Boltz from Claude Desktop for biomolecular modeling workflows: predict structure and binding for protein, RNA, DNA, and ligand complexes; rank small-molecule or protein libraries against targets; and design novel small molecules, peptides, antibodies, nanobodies, or custom protein binders with structures and confidence metrics.",
   "author": {
     "name": "Boltz",
     "email": "support@boltz.bio",
@@ -37,15 +37,15 @@
   "tools": [
     {
       "name": "boltz_check_setup",
-      "description": "Check boltz-api availability, version, auth status, and output directory configuration."
+      "description": "Check whether Boltz is ready to run jobs, including access, authentication, and output directory configuration."
     },
     {
       "name": "boltz_install_cli",
-      "description": "Install or update boltz-api using the official Boltz installer as an explicit setup action."
+      "description": "Install or update the local Boltz app components required to run workflows from Claude Desktop."
     },
     {
       "name": "boltz_auth_login",
-      "description": "Start boltz-api device-code authentication and return the login instructions from the CLI."
+      "description": "Start Boltz sign-in and return the login instructions needed to connect your account."
     },
     {
       "name": "boltz_structure_and_binding",
@@ -69,11 +69,11 @@
     },
     {
       "name": "boltz_download_results",
-      "description": "Start or resume boltz-api download-results for an existing job/run name."
+      "description": "Start or resume downloading results for an existing Boltz job."
     },
     {
       "name": "boltz_job_status",
-      "description": "Inspect local download-status, retrieve remote job status, or read a running downloader tail."
+      "description": "Check Boltz job progress, local result download state, or recent downloader activity."
     }
   ],
   "keywords": [
@@ -103,8 +103,8 @@
   "user_config": {
     "boltz_api_path": {
       "type": "string",
-      "title": "boltz-api executable",
-      "description": "Path or command name for the Boltz CLI.",
+      "title": "Boltz executable",
+      "description": "Advanced: local Boltz runner to use.",
       "default": "boltz-api",
       "required": true
     },
@@ -118,14 +118,14 @@
     "api_key": {
       "type": "string",
       "title": "Boltz API key",
-      "description": "Optional API key fallback. Leave blank to use boltz-api device-code authentication.",
+      "description": "Optional API key fallback. Leave blank to sign in interactively.",
       "sensitive": true,
       "required": false
     },
     "default_poll_interval_seconds": {
       "type": "number",
       "title": "Default download poll interval",
-      "description": "Seconds between download-results status checks when a workflow does not specify one.",
+      "description": "Seconds between result-download status checks when a workflow does not specify one.",
       "default": 30,
       "min": 5,
       "max": 300,
