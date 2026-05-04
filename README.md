@@ -8,8 +8,10 @@ Agent tooling for running Boltz workflows (structure prediction, molecular scree
 |---|---|---|---|
 | [`surfaces/claude-code-cli/`](surfaces/claude-code-cli) | Claude Code | Skills shell out to `boltz-api` CLI | Active |
 | [`surfaces/codex-cli/`](surfaces/codex-cli) | Codex | Skills shell out to `boltz-api` CLI | Ships today |
+| [`surfaces/mcpb/`](surfaces/mcpb) | Claude Desktop | Local MCP server shells out to `boltz-api` CLI | Active |
 
-MCP-backed surfaces were removed for now so development can focus on one CLI-backed distribution path.
+The MCPB surface complements the skill plugins: Claude Code/Codex get workflow
+skills, while Claude Desktop gets local MCP tools that run the same CLI flow.
 
 ## Shared core
 
@@ -107,10 +109,28 @@ For the full development lifecycle, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 ## Release builds
 
 ```bash
-./scripts/package-plugins.sh         # Zips the Claude Code and Codex CLI plugin surfaces into dist/
+./scripts/package-plugins.sh         # Writes Claude/Codex zips and boltz-mcpb-<version>.mcpb into dist/
 ```
 
 CI (`.github/workflows/release.yml`) runs these on every tagged release and attaches artifacts to the GitHub Release.
+
+## Claude Desktop MCPB
+
+The MCPB distribution packages a local Node.js MCP server for Claude Desktop.
+It exposes setup/auth tools plus workflow tools that call `boltz-api`
+`estimate-cost`, `start`, `download-results`, `download-status`, and `retrieve`.
+
+```bash
+cd surfaces/mcpb
+npm install
+npm test
+cd ../..
+scripts/generate-surfaces.sh
+scripts/package-plugins.sh
+```
+
+Install `dist/boltz-mcpb-<version>.mcpb` in Claude Desktop via Settings ->
+Extensions -> Advanced settings -> Install Extension.
 
 ## Prerequisites for users
 
