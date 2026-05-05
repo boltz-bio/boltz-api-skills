@@ -8,7 +8,7 @@
   "author": {
     "name": "Boltz",
     "email": "support@boltz.bio",
-    "url": "https://boltz.bio"
+    "url": "https://github.com/boltz-bio"
   },
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
   },
   "homepage": "https://boltz.bio",
   "documentation": "https://docs.boltz.bio",
-  "support": "https://github.com/boltz-bio/boltz-compute-skills/issues",
+  "support": "https://github.com/boltz-bio/boltz-mcpb/issues",
   "icon": "icon.png",
   "server": {
     "type": "node",
