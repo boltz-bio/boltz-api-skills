@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -36,13 +37,45 @@ const downloaderProcesses = new Map();
 
 export function getConfig(env = process.env) {
   return {
-    cliPath: env.BOLTZ_MCPB_CLI_PATH || "boltz-api",
+    cliPath: resolveCliPath(env),
     outputRoot: env.BOLTZ_MCPB_OUTPUT_ROOT || path.join(env.HOME || process.cwd(), "boltz-experiments"),
     defaultPollIntervalSeconds: env.BOLTZ_MCPB_DEFAULT_POLL_INTERVAL_SECONDS
       ? parseNumber(env.BOLTZ_MCPB_DEFAULT_POLL_INTERVAL_SECONDS, 30)
       : undefined,
-    apiKey: env.BOLTZ_MCPB_API_KEY || ""
+    apiKey: env.BOLTZ_MCPB_API_KEY || env.BOLTZ_API_KEY || ""
   };
+}
+
+export function resolveCliPath(env = process.env) {
+  const override = env.BOLTZ_MCPB_CLI_PATH || env.BOLTZ_API_PATH;
+  if (override) return override;
+
+  const executableName = process.platform === "win32" ? "boltz-api.exe" : "boltz-api";
+  const pathMatch = findOnPath(executableName, env.PATH || "");
+  if (pathMatch) return pathMatch;
+
+  for (const candidate of defaultCliCandidates(env, executableName)) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return "boltz-api";
+}
+
+export function defaultCliCandidates(env = process.env, executableName = process.platform === "win32" ? "boltz-api.exe" : "boltz-api") {
+  const homes = [env.HOME, env.USERPROFILE].filter(Boolean);
+  return homes.flatMap((home) => [
+    path.join(home, ".local", "bin", executableName),
+    path.join(home, "bin", executableName)
+  ]);
+}
+
+function findOnPath(executableName, pathValue) {
+  const separator = process.platform === "win32" ? ";" : ":";
+  for (const directory of String(pathValue || "").split(separator)) {
+    if (!directory) continue;
+    const candidate = path.join(directory, executableName);
+    if (existsSync(candidate)) return candidate;
+  }
+  return "";
 }
 
 function parseNumber(value, fallback) {
@@ -114,7 +147,7 @@ export async function runCommand(cliPath, args, options = {}) {
   const timeoutMs = options.timeoutMs ?? 120000;
   const env = { ...process.env, ...options.env };
   if (options.apiKey) {
-    env.BOLTZ_COMPUTE_API_KEY = options.apiKey;
+    env.BOLTZ_API_KEY = options.apiKey;
   }
   return new Promise((resolve) => {
     const child = spawn(cliPath, args, {
@@ -161,7 +194,7 @@ export async function writePayloadFile(payload, payloadText, workingDirectory = 
 }
 
 export async function checkSetup(args = {}, config = getConfig()) {
-  const cliPath = args.boltz_api_path || config.cliPath;
+  const cliPath = config.cliPath;
   const version = await runCommand(cliPath, ["--version"], { timeoutMs: 30000, apiKey: config.apiKey });
   const auth = version.ok
     ? await runCommand(cliPath, ["auth", "status"], { timeoutMs: 30000, apiKey: config.apiKey })
@@ -178,7 +211,7 @@ export async function checkSetup(args = {}, config = getConfig()) {
     next_step: version.ok
       ? auth.ok
         ? "Ready to run Boltz workflows."
-        : "Run boltz_auth_login or set BOLTZ_COMPUTE_API_KEY."
+        : "Run boltz_auth_login or set BOLTZ_API_KEY."
       : "Run boltz_install_cli or install boltz-api from https://install.boltz.bio/boltz-api/install.sh."
   };
 }
@@ -225,18 +258,19 @@ export function buildInstallPlan(args = {}, platform = process.platform) {
 
 export async function authLogin(args = {}, config = getConfig()) {
   const loginArgs = ["auth", "login", "--device-code"];
-  return startInteractiveCommand(args.boltz_api_path || config.cliPath, loginArgs, {
+  return startInteractiveCommand(config.cliPath, loginArgs, {
     timeoutMs: args.timeout_ms || 15000,
     cwd: args.working_directory || process.cwd(),
     apiKey: config.apiKey,
-    label: "boltz-api auth login --device-code"
+    label: "boltz-api auth login --device-code",
+    nextStep: "Complete the Boltz device-code sign-in, then call boltz_check_setup again."
   });
 }
 
 export function startInteractiveCommand(cliPath, args, options = {}) {
   const env = { ...process.env, ...options.env };
   if (options.apiKey) {
-    env.BOLTZ_COMPUTE_API_KEY = options.apiKey;
+    env.BOLTZ_API_KEY = options.apiKey;
   }
   return new Promise((resolve) => {
     const child = spawn(cliPath, args, {
@@ -250,7 +284,7 @@ export function startInteractiveCommand(cliPath, args, options = {}) {
       status: "running",
       stdout_tail: "",
       stderr_tail: "",
-      next_step: "Complete the device-code login in the browser, then call boltz_check_setup again."
+      next_step: options.nextStep || "Complete the interactive action, then call boltz_check_setup again."
     };
     const resolveOnce = () => resolve({ ...record });
     const timer = setTimeout(resolveOnce, options.timeoutMs || 15000);
@@ -362,7 +396,7 @@ export async function startDownloadProcess(args, config = getConfig()) {
   });
   const child = spawn(config.cliPath, downloadArgs, {
     cwd: args.working_directory || process.cwd(),
-    env: config.apiKey ? { ...process.env, BOLTZ_COMPUTE_API_KEY: config.apiKey } : process.env,
+    env: config.apiKey ? { ...process.env, BOLTZ_API_KEY: config.apiKey } : process.env,
     shell: false
   });
   const handle = `${args.run_name}:${Date.now()}`;

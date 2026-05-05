@@ -1,6 +1,6 @@
 {
   "manifest_version": "0.3",
-  "name": "boltz-mcpb",
+  "name": "boltz",
   "display_name": "Boltz",
   "version": "0.1.0",
   "description": "MCP server that enables interaction with Boltz protein structure prediction, molecular screening, and binder design APIs.",
@@ -27,25 +27,22 @@
         "${__dirname}/server/index.js"
       ],
       "env": {
-        "BOLTZ_MCPB_CLI_PATH": "${user_config.boltz_api_path}",
-        "BOLTZ_MCPB_OUTPUT_ROOT": "${user_config.output_root}",
-        "BOLTZ_MCPB_API_KEY": "${user_config.api_key}",
-        "BOLTZ_MCPB_DEFAULT_POLL_INTERVAL_SECONDS": "${user_config.default_poll_interval_seconds}"
+        "BOLTZ_MCPB_OUTPUT_ROOT": "${HOME}/boltz-experiments"
       }
     }
   },
   "tools": [
     {
       "name": "boltz_check_setup",
-      "description": "Check boltz-api availability, version, auth status, and output directory configuration."
+      "description": "Check whether Boltz is ready to run jobs, including access, authentication, and output directory configuration."
     },
     {
       "name": "boltz_install_cli",
-      "description": "Install or update boltz-api using the official Boltz installer as an explicit setup action."
+      "description": "Install or update the local Boltz components required to run workflows."
     },
     {
       "name": "boltz_auth_login",
-      "description": "Start boltz-api device-code authentication and return the login instructions from the CLI."
+      "description": "Start Boltz sign-in and return the login instructions needed to connect your account."
     },
     {
       "name": "boltz_structure_and_binding",
@@ -69,11 +66,11 @@
     },
     {
       "name": "boltz_download_results",
-      "description": "Start or resume boltz-api download-results for an existing job/run name."
+      "description": "Start or resume downloading results for an existing Boltz job."
     },
     {
       "name": "boltz_job_status",
-      "description": "Inspect local download-status, retrieve remote job status, or read a running downloader tail."
+      "description": "Check Boltz job progress, local result download state, or recent downloader activity."
     }
   ],
   "keywords": [
@@ -100,36 +97,5 @@
       "node": ">=18.0.0"
     }
   },
-  "user_config": {
-    "boltz_api_path": {
-      "type": "string",
-      "title": "boltz-api executable",
-      "description": "Path or command name for the Boltz CLI. Leave blank to use \"boltz-api\" from PATH.",
-      "default": "boltz-api",
-      "required": false
-    },
-    "output_root": {
-      "type": "directory",
-      "title": "Boltz output directory",
-      "description": "Directory where downloaded Boltz run artifacts are stored. Leave blank to use ~/boltz-experiments.",
-      "default": "${HOME}/boltz-experiments",
-      "required": false
-    },
-    "api_key": {
-      "type": "string",
-      "title": "Boltz API key",
-      "description": "Optional API key fallback. Leave blank to use boltz-api device-code authentication.",
-      "sensitive": true,
-      "required": false
-    },
-    "default_poll_interval_seconds": {
-      "type": "number",
-      "title": "Default download poll interval",
-      "description": "Seconds between download-results status checks when a workflow does not specify one.",
-      "default": 30,
-      "min": 5,
-      "max": 300,
-      "required": false
-    }
-  }
+  "user_config": {}
 }
