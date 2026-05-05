@@ -37,7 +37,14 @@ gh repo clone "$RELEASE_REPO" "$WORK_DIR/repo" -- --quiet
 cd "$WORK_DIR/repo"
 DEFAULT_BRANCH="$(gh repo view "$RELEASE_REPO" --json defaultBranchRef -q .defaultBranchRef.name)"
 git checkout -q "$DEFAULT_BRANCH"
-git checkout -q -B "$BRANCH"
+branch_exists=0
+if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+  branch_exists=1
+  git fetch -q origin "$BRANCH"
+  git checkout -q -B "$BRANCH" "origin/$BRANCH"
+else
+  git checkout -q -B "$BRANCH"
+fi
 
 echo "Mirroring Gemini extension from surfaces/gemini-cli/..."
 rsync -aL --delete \
@@ -49,26 +56,29 @@ rsync -aL --delete \
 
 git add -A
 if git diff --cached --quiet; then
-  echo "No changes to publish - release repo already up to date."
-  exit 0
+  if [[ "$branch_exists" != "1" ]]; then
+    echo "No changes to publish - release repo already up to date."
+    exit 0
+  fi
+  echo "No file changes on existing $BRANCH; ensuring PR exists."
+else
+  git -c user.name="boltz-gemini-release" -c user.email="release@boltz.bio" \
+    commit -q -m "sync: gemini extension v${VERSION} from boltz-compute-skills@${SOURCE_SHA}"
+
+  if [[ "$DRY_RUN" == "1" ]]; then
+    echo
+    echo "DRY_RUN=1 - staged commit at $WORK_DIR/repo on branch $BRANCH"
+    echo "Diff summary:"
+    git --no-pager show --stat HEAD
+    trap - EXIT
+    echo
+    echo "Working dir preserved: $WORK_DIR/repo"
+    exit 0
+  fi
+
+  echo "Pushing $BRANCH..."
+  git push -q --force-with-lease -u origin "$BRANCH"
 fi
-
-git -c user.name="boltz-gemini-release" -c user.email="release@boltz.bio" \
-  commit -q -m "sync: gemini extension v${VERSION} from boltz-compute-skills@${SOURCE_SHA}"
-
-if [[ "$DRY_RUN" == "1" ]]; then
-  echo
-  echo "DRY_RUN=1 - staged commit at $WORK_DIR/repo on branch $BRANCH"
-  echo "Diff summary:"
-  git --no-pager show --stat HEAD
-  trap - EXIT
-  echo
-  echo "Working dir preserved: $WORK_DIR/repo"
-  exit 0
-fi
-
-echo "Pushing $BRANCH..."
-git push -q -u origin "$BRANCH"
 
 PR_TITLE="Sync Gemini extension v${VERSION} (${SOURCE_SHA})"
 PR_BODY="Automated sync from \`boltz-bio/boltz-compute-skills@${SOURCE_SHA}\`.
@@ -76,6 +86,15 @@ PR_BODY="Automated sync from \`boltz-bio/boltz-compute-skills@${SOURCE_SHA}\`.
 This PR mirrors the Gemini CLI extension surface with symlinks dereferenced. The release repo keeps
 \`.github/\` and LICENSE managed directly, while extension runtime files are
 generated upstream from \`surfaces/gemini-cli/\` and shared \`core/\` skills."
+
+if [[ "$DRY_RUN" == "1" ]]; then
+  echo
+  echo "DRY_RUN=1 - would open or update PR for $BRANCH"
+  trap - EXIT
+  echo
+  echo "Working dir preserved: $WORK_DIR/repo"
+  exit 0
+fi
 
 if gh pr view "$BRANCH" --repo "$RELEASE_REPO" >/dev/null 2>&1; then
   echo "PR already exists for $BRANCH - updated branch in place."

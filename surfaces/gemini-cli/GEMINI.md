@@ -21,6 +21,6 @@ Use the bundled `boltz-*` skills for workflow details:
 - Prefer `boltz-api auth login --device-code` for interactive auth; `BOLTZ_API_KEY` is the API-key fallback.
 - Keep payloads, embedded input files, and output roots on absolute paths.
 - Use the same slug as `--idempotency-key` on `start` and `--name` on `download-results`.
-- When a skill says to use the agent runtime's background or non-blocking mode, use Gemini CLI background shell support for `boltz-api download-results`. Prefer `run_shell_command` with `is_background: true` when available. If the active shell interface only supports command text, append `&` as documented by Gemini CLI.
+- When a skill says to use the agent runtime's background or non-blocking mode, start `boltz-api download-results` through Gemini CLI's documented shell syntax: call `run_shell_command(command="... &", description="...", directory="...")` with `&` at the end of the command. Do not pass an `is_background` argument.
 - After starting a background download, report the job ID, run name, and output directory. Do not poll again unless the user asks.
 - For progress checks, prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "<absolute-root>"` before remote API calls.
