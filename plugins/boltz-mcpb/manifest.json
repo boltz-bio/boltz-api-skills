@@ -3,8 +3,8 @@
   "name": "boltz-mcpb",
   "display_name": "Boltz",
   "version": "0.1.0",
-  "description": "Run Boltz biomolecular modeling workflows from Claude Desktop through the local boltz-api CLI.",
-  "long_description": "Boltz wraps the local boltz-api CLI for structure prediction, molecular screening, binder design, result recovery, setup, and authentication. Workflow tools follow the same estimate-cost, start, and download-results flow as the Boltz Claude Code and Codex skill plugins.",
+  "description": "MCP server that enables interaction with Boltz protein structure prediction, molecular screening, and binder design APIs.",
+  "long_description": "Official Boltz Model Context Protocol (MCP) server that enables interaction with state-of-the-art biomolecular modeling APIs. This server allows MCP clients like Claude Desktop to predict protein structures and ligand binding, screen small-molecule and protein libraries against a target, design novel small molecules and protein binders, and recover results from prior runs — all from a natural-language conversation.",
   "author": {
     "name": "Boltz",
     "email": "support@boltz.bio",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/boltz-bio/boltz-compute-skills"
+    "url": "https://github.com/boltz-bio/boltz-mcpb"
   },
   "homepage": "https://boltz.bio",
   "documentation": "https://docs.boltz.bio",
@@ -104,16 +104,16 @@
     "boltz_api_path": {
       "type": "string",
       "title": "boltz-api executable",
-      "description": "Path or command name for the Boltz CLI.",
+      "description": "Path or command name for the Boltz CLI. Leave blank to use \"boltz-api\" from PATH.",
       "default": "boltz-api",
-      "required": true
+      "required": false
     },
     "output_root": {
       "type": "directory",
       "title": "Boltz output directory",
-      "description": "Directory where downloaded Boltz run artifacts are stored.",
+      "description": "Directory where downloaded Boltz run artifacts are stored. Leave blank to use ~/boltz-experiments.",
       "default": "${HOME}/boltz-experiments",
-      "required": true
+      "required": false
     },
     "api_key": {
       "type": "string",

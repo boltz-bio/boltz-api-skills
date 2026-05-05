@@ -45,7 +45,7 @@ export const toolDefinitions = [
     description: "Install or update boltz-api using the official Boltz installer. This is an explicit setup action.",
     annotations: {
       readOnlyHint: false,
-      destructiveHint: false,
+      destructiveHint: true,
       idempotentHint: false,
       openWorldHint: true
     },
@@ -76,7 +76,7 @@ export const toolDefinitions = [
   ...Object.entries(workflowSpecs).map(([name, spec]) => ({
     name,
     title: spec.title,
-    description: `Estimate and optionally start a Boltz ${spec.title.toLowerCase()} workflow using boltz-api, then optionally launch download-results.`,
+    description: `Estimate and optionally start a Boltz ${spec.title.toLowerCase()} workflow using boltz-api, then optionally launch download-results. When start=true this consumes Boltz credits.`,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
