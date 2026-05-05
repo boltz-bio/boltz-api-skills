@@ -29,18 +29,3 @@ it is available on `PATH`.
 - Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY`
   exported in the environment
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land
-
-## Local Development
-
-From the repository root:
-
-```sh
-gemini extensions link ./surfaces/gemini-cli
-```
-
-Restart Gemini CLI, then confirm the extension and skills are visible:
-
-```text
-/extensions list
-/skills list
-```
