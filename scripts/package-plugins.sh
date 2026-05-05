@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Package the Claude Code and Codex CLI plugin surfaces into zip archives for
+# Package the Claude Code, Codex CLI, and Gemini CLI plugin surfaces into zip archives for
 # release. Surface contents are staged through a dereferenced copy so published
 # archives are self-contained and do not depend on repo-relative symlinks
 # resolving after extraction.
@@ -9,6 +9,7 @@
 # Produces:
 #   dist/claude-code-cli-<version>.zip
 #   dist/<codex-plugin-name>-<version>.zip
+#   dist/<gemini-extension-name>-<version>.zip
 
 set -euo pipefail
 
@@ -57,10 +58,28 @@ pack_cli_plugin() {
   echo "  → $out"
 }
 
+pack_gemini_extension() {
+  local source="$REPO_ROOT/surfaces/gemini-cli"
+  local name version out stage_dir
+  name="$(jq -r .name "$source/gemini-extension.json")"
+  version="$(jq -r .version "$source/gemini-extension.json")"
+  out="$DIST/${name}-${version}.zip"
+  stage_dir="$TMP_ROOT/${name}"
+
+  echo "Packing $name (v$version)..."
+  mkdir -p "$stage_dir"
+  rsync -aL \
+    --exclude='.DS_Store' \
+    "$source/" "$stage_dir/"
+  zip_stage_dir "$stage_dir" "$out"
+  echo "  → $out"
+}
+
 codex_plugin_name="$(jq -r .name "$REPO_ROOT/surfaces/codex-cli/.codex-plugin/plugin.json")"
 
 pack_cli_plugin claude-code-cli ".claude-plugin/plugin.json"
 pack_cli_plugin codex-cli       ".codex-plugin/plugin.json" "$codex_plugin_name"
+pack_gemini_extension
 
 echo
 echo "Packaged surfaces:"

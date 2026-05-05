@@ -1,0 +1,6 @@
+{
+  "name": "boltz-gemini-cli",
+  "version": "0.1.0",
+  "description": "Run Boltz biomolecular modeling workflows from Gemini CLI.",
+  "contextFileName": "GEMINI.md"
+}
