@@ -1,0 +1,51 @@
+name: Sync mcpb to public repo
+
+# When the mcpb version on main changes, mirror plugins/boltz-mcpb into
+# boltz-bio/boltz-mcpb as a PR. Triggers off plugins/boltz-mcpb/manifest.json
+# changes and skips when .version did not change (so non-version edits do not
+# spam the public repo).
+#
+# Requires repository secret MCPB_DEPLOY_TOKEN: a fine-grained PAT with
+# Contents:Read+Write and Pull Requests:Read+Write on boltz-bio/boltz-mcpb.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/boltz-mcpb/manifest.json'
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect version change
+        id: ver
+        run: |
+          set -euo pipefail
+          current=$(jq -r .version plugins/boltz-mcpb/manifest.json)
+          previous=$(git show HEAD~1:plugins/boltz-mcpb/manifest.json 2>/dev/null | jq -r .version || echo "")
+          if [[ "$current" == "$previous" ]]; then
+            echo "Version unchanged ($current) — skipping public sync."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version changed: ${previous:-<none>} → ${current}"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "version=$current" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run release script
+        if: steps.ver.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.MCPB_DEPLOY_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global user.email "release@boltz.bio"
+          git config --global user.name "boltz-mcpb-release"
+          bash scripts/release-mcpb-repo.sh

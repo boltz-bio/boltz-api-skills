@@ -1,0 +1,106 @@
+name: Auto-bump mcpb version
+
+# When surfaces/mcpb/ changes on main, open a PR that bumps the mcpb version
+# (patch by default) and resyncs plugins/boltz-mcpb/. Merging that PR triggers
+# the public-sync workflow.
+#
+# Loop break: bump PR commits include a [skip-mcpb-bump] marker, and this
+# workflow short-circuits when the head commit contains it.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'surfaces/mcpb/**'
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options: [patch, minor, major]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip-mcpb-bump]') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: ver
+        run: |
+          set -euo pipefail
+          BUMP="${{ github.event.inputs.bump_type || 'patch' }}"
+          current=$(jq -r .version surfaces/mcpb/manifest.json)
+          IFS=. read -r major minor patch <<< "$current"
+          case "$BUMP" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+            *) echo "Unknown bump_type: $BUMP" >&2; exit 1 ;;
+          esac
+          next="${major}.${minor}.${patch}"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "branch=auto/mcpb-bump-v${next}" >> "$GITHUB_OUTPUT"
+          echo "Bumping $current -> $next ($BUMP)"
+
+      - name: Apply version bump
+        run: |
+          set -euo pipefail
+          NEXT="${{ steps.ver.outputs.next }}"
+          for f in surfaces/mcpb/manifest.json plugins/boltz-mcpb/manifest.json \
+                   surfaces/mcpb/package.json plugins/boltz-mcpb/package.json; do
+            tmp=$(mktemp)
+            jq --indent 2 --arg v "$NEXT" '.version = $v' "$f" > "$tmp"
+            mv "$tmp" "$f"
+          done
+
+      - name: Resync plugins/boltz-mcpb from surfaces/mcpb
+        run: bash scripts/sync-mcpb-plugin.sh
+
+      - name: Open bump PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="${{ steps.ver.outputs.branch }}"
+          NEXT="${{ steps.ver.outputs.next }}"
+          CURRENT="${{ steps.ver.outputs.current }}"
+
+          if git diff --quiet; then
+            echo "No effective changes after bump (already at v${NEXT}); nothing to do."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add surfaces/mcpb plugins/boltz-mcpb
+          git commit -m "chore(mcpb): bump to v${NEXT}
+
+Auto-bump after change to surfaces/mcpb/. Includes a fresh
+plugins/boltz-mcpb sync from surfaces/mcpb.
+
+[skip-mcpb-bump]"
+          git push -f origin "$BRANCH"
+
+          if gh pr view "$BRANCH" --json url -q .url 2>/dev/null; then
+            echo "Updated existing bump PR for $BRANCH."
+          else
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore(mcpb): bump to v${NEXT}" \
+              --body "Auto-bump from v${CURRENT} → v${NEXT} after changes under \`surfaces/mcpb/\` landed on main.
+
+When this PR merges, the public-sync workflow will mirror v${NEXT} into [boltz-bio/boltz-mcpb](https://github.com/boltz-bio/boltz-mcpb).
+
+To skip the bump on a particular merge, include \`[skip-mcpb-bump]\` in the merge-commit message."
+          fi
