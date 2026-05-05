@@ -56,7 +56,7 @@ For auth recovery, assume the CLI can auto-open the browser and run the exact co
 For automation where a key is already available, an API key is still supported:
 
 ```sh
-export BOLTZ_COMPUTE_API_KEY=<api-key>
+export BOLTZ_API_KEY=<api-key>
 ```
 
 ## Version Checks

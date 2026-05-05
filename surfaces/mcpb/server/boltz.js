@@ -42,7 +42,7 @@ export function getConfig(env = process.env) {
     defaultPollIntervalSeconds: env.BOLTZ_MCPB_DEFAULT_POLL_INTERVAL_SECONDS
       ? parseNumber(env.BOLTZ_MCPB_DEFAULT_POLL_INTERVAL_SECONDS, 30)
       : undefined,
-    apiKey: env.BOLTZ_MCPB_API_KEY || env.BOLTZ_COMPUTE_API_KEY || ""
+    apiKey: env.BOLTZ_MCPB_API_KEY || env.BOLTZ_API_KEY || ""
   };
 }
 
@@ -147,7 +147,7 @@ export async function runCommand(cliPath, args, options = {}) {
   const timeoutMs = options.timeoutMs ?? 120000;
   const env = { ...process.env, ...options.env };
   if (options.apiKey) {
-    env.BOLTZ_COMPUTE_API_KEY = options.apiKey;
+    env.BOLTZ_API_KEY = options.apiKey;
   }
   return new Promise((resolve) => {
     const child = spawn(cliPath, args, {
@@ -211,7 +211,7 @@ export async function checkSetup(args = {}, config = getConfig()) {
     next_step: version.ok
       ? auth.ok
         ? "Ready to run Boltz workflows."
-        : "Run boltz_auth_login or set BOLTZ_COMPUTE_API_KEY."
+        : "Run boltz_auth_login or set BOLTZ_API_KEY."
       : "Run boltz_install_cli or install boltz-api from https://install.boltz.bio/boltz-api/install.sh."
   };
 }
@@ -270,7 +270,7 @@ export async function authLogin(args = {}, config = getConfig()) {
 export function startInteractiveCommand(cliPath, args, options = {}) {
   const env = { ...process.env, ...options.env };
   if (options.apiKey) {
-    env.BOLTZ_COMPUTE_API_KEY = options.apiKey;
+    env.BOLTZ_API_KEY = options.apiKey;
   }
   return new Promise((resolve) => {
     const child = spawn(cliPath, args, {
@@ -396,7 +396,7 @@ export async function startDownloadProcess(args, config = getConfig()) {
   });
   const child = spawn(config.cliPath, downloadArgs, {
     cwd: args.working_directory || process.cwd(),
-    env: config.apiKey ? { ...process.env, BOLTZ_COMPUTE_API_KEY: config.apiKey } : process.env,
+    env: config.apiKey ? { ...process.env, BOLTZ_API_KEY: config.apiKey } : process.env,
     shell: false
   });
   const handle = `${args.run_name}:${Date.now()}`;

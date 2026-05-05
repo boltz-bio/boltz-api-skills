@@ -5,7 +5,7 @@ Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-refer
 ## Prerequisites
 
 - `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.7.0`)
-- Authentication via `boltz-api auth login --device-code`, or `BOLTZ_COMPUTE_API_KEY` exported in the environment
+- Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY` exported in the environment
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments/` from the command's starting directory.
 
 The skills assume the CLI is already configured. If a command fails because auth is missing or expired, the agent should run `boltz-api auth login --device-code` on the user's behalf before retrying.
