@@ -1,0 +1,45 @@
+name: Sync Gemini extension to public repo
+
+# When the Gemini CLI surface or its shared CLI skill sources change on main,
+# mirror surfaces/gemini-cli into boltz-bio/boltz-gemini-cli as a PR.
+#
+# Authentication: uses the boltz-mcpb-publisher GitHub App secrets from this
+# repo. The App installation must include boltz-gemini-cli.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'surfaces/gemini-cli/**'
+      - 'core/skills/cli/**'
+      - 'core/references/**'
+      - 'scripts/release-gemini-repo.sh'
+      - '.github/workflows/gemini-public-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mint App token (scoped to release repo)
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.MCPB_PUBLISHER_APP_ID }}
+          private-key: ${{ secrets.MCPB_PUBLISHER_APP_PRIVATE_KEY }}
+          owner: boltz-bio
+          repositories: boltz-gemini-cli
+
+      - name: Run release script
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config --global user.name "boltz-mcpb-publisher[bot]"
+          git config --global user.email "${{ secrets.MCPB_PUBLISHER_APP_ID }}+boltz-mcpb-publisher[bot]@users.noreply.github.com"
+          RELEASE_REPO=boltz-bio/boltz-gemini-cli bash scripts/release-gemini-repo.sh
