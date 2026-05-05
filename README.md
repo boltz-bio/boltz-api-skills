@@ -58,7 +58,7 @@ BOLTZ_CLAUDE_MARKETPLACE="$PWD" scripts/install-claude-code-plugin.sh
 
 Restart Claude Code after installing. The installed `boltz` plugin requires
 `boltz-api` on `PATH` and either device-code auth via
-`boltz-api auth login --device-code` or `BOLTZ_COMPUTE_API_KEY`.
+`boltz-api auth login --device-code` or `BOLTZ_API_KEY`.
 
 When editing the shared skill source under `core/` or Claude-specific files
 under `surfaces/claude-code-cli/`, refresh generated distribution surfaces:
@@ -135,7 +135,7 @@ Extensions -> Advanced settings -> Install Extension.
 ## Prerequisites for users
 
 All surfaces need:
-- Authentication via either `boltz-api auth login --device-code` or `BOLTZ_COMPUTE_API_KEY` as an API-key fallback.
+- Authentication via either `boltz-api auth login --device-code` or `BOLTZ_API_KEY` as an API-key fallback.
 - `BOLTZ_COMPUTE_OUTPUT_DIR` optional. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
 - `boltz-api` on `PATH`
 
