@@ -3,8 +3,8 @@
   "name": "boltz",
   "display_name": "Boltz",
   "version": "0.1.0",
-  "description": "Predict structures, screen molecules and proteins, and design binders.",
-  "long_description": "Use Boltz for biomolecular modeling workflows: predict structure and binding for protein, RNA, DNA, and ligand complexes; rank small-molecule or protein libraries against targets; and design novel small molecules, peptides, antibodies, nanobodies, or custom protein binders with structures and confidence metrics.",
+  "description": "MCP server that enables interaction with Boltz protein structure prediction, molecular screening, and binder design APIs.",
+  "long_description": "Official Boltz Model Context Protocol (MCP) server that enables interaction with state-of-the-art biomolecular modeling APIs. This server allows MCP clients like Claude Desktop to predict protein structures and ligand binding, screen small-molecule and protein libraries against a target, design novel small molecules and protein binders, and recover results from prior runs — all from a natural-language conversation.",
   "author": {
     "name": "Boltz",
     "email": "support@boltz.bio",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/boltz-bio/boltz-compute-skills"
+    "url": "https://github.com/boltz-bio/boltz-mcpb"
   },
   "homepage": "https://boltz.bio",
   "documentation": "https://docs.boltz.bio",

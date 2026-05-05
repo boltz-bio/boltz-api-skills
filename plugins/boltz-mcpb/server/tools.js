@@ -44,7 +44,7 @@ export const toolDefinitions = [
     description: "Install or update the local Boltz components required to run workflows.",
     annotations: {
       readOnlyHint: false,
-      destructiveHint: false,
+      destructiveHint: true,
       idempotentHint: false,
       openWorldHint: true
     },
