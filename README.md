@@ -1,6 +1,6 @@
 # Boltz Skills
 
-Agent tooling for running Boltz workflows (structure prediction, molecular screening, de novo design) from AI coding assistants. Distributed as CLI-backed Claude Code and Codex plugins that share one skill prose source.
+Agent tooling for running Boltz workflows (structure prediction, molecular screening, de novo design) from AI coding assistants. Distributed as CLI-backed Claude Code, Codex, and Gemini CLI skill surfaces plus a Claude Desktop MCPB surface.
 
 ## Surfaces
 
@@ -8,18 +8,20 @@ Agent tooling for running Boltz workflows (structure prediction, molecular scree
 |---|---|---|---|
 | [`surfaces/claude-code-cli/`](surfaces/claude-code-cli) | Claude Code | Skills shell out to `boltz-api` CLI | Active |
 | [`surfaces/codex-cli/`](surfaces/codex-cli) | Codex | Skills shell out to `boltz-api` CLI | Ships today |
+| [`surfaces/gemini-cli/`](surfaces/gemini-cli) | Gemini CLI | Skills shell out to `boltz-api` CLI | Local surface |
 | [`surfaces/mcpb/`](surfaces/mcpb) | Claude Desktop | Local MCP server shells out to `boltz-api` CLI | Active |
 
-The MCPB surface complements the skill plugins: Claude Code/Codex get workflow
-skills, while Claude Desktop gets local MCP tools that run the same CLI flow.
+The MCPB surface complements the skill plugins: Claude Code, Codex, and Gemini
+CLI get workflow skills, while Claude Desktop gets local MCP tools that run the
+same CLI flow.
 
 ## Shared core
 
-Every surface pulls from [`core/`](core/):
+The CLI skill surfaces pull from [`core/`](core/):
 
 | Directory | Purpose | Consumed by |
 |---|---|---|
-| `core/skills/cli/` | CLI-variant skill bodies (shell commands) | `claude-code-cli`, `codex-cli` |
+| `core/skills/cli/` | CLI-variant skill bodies (shell commands) | `claude-code-cli`, `codex-cli`, `gemini-cli` |
 | `core/references/` | Payload schema docs | All surfaces |
 
 Skill bodies and schema docs are **symlinked** into each surface, so editing in `core/` propagates everywhere. Confirmed working under Claude Code plugin caching.
@@ -69,7 +71,7 @@ scripts/generate-surfaces.sh
 
 Treat `plugins/boltz` as generated output. Make source changes under `core/` or
 `surfaces/claude-code-cli/`, then sync. CI verifies the generated copy, and a
-branch push workflow auto-commits regenerated `plugins/boltz` changes when a
+branch push workflow auto-commits regenerated plugin-copy changes when a
 development branch drifts.
 
 ## Codex official plugin submission
@@ -106,10 +108,36 @@ For an `openai/plugins` PR, copy `plugins/boltz-compute-cli/` into that repo's
 
 For the full development lifecycle, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+## Gemini CLI extension
+
+The Gemini CLI extension source lives under
+[`surfaces/gemini-cli/`](surfaces/gemini-cli). It bundles the same shared
+CLI-backed skills with a `gemini-extension.json` manifest and a concise
+`GEMINI.md` context file for Gemini-specific shell behavior.
+
+For local development:
+
+```bash
+gemini extensions link ./surfaces/gemini-cli
+```
+
+Restart Gemini CLI after linking, then verify with `/extensions list` and
+`/skills list`.
+
+For public distribution, mirror `surfaces/gemini-cli/` into a dedicated public
+install repo with symlinks dereferenced. In that repo, `gemini-extension.json`
+must live at the repo root.
+
+To open a sync PR against the public release repo:
+
+```bash
+RELEASE_REPO=boltz-bio/boltz-gemini-cli scripts/release-gemini-repo.sh
+```
+
 ## Release builds
 
 ```bash
-./scripts/package-plugins.sh         # Writes Claude/Codex zips and boltz-mcpb-<version>.mcpb into dist/
+./scripts/package-plugins.sh         # Writes Claude/Codex/Gemini zips and boltz-mcpb-<version>.mcpb into dist/
 ```
 
 CI (`.github/workflows/release.yml`) runs these on every tagged release and attaches artifacts to the GitHub Release.
@@ -166,6 +194,7 @@ irm https://install.boltz.bio/boltz-api/install.ps1 | iex
 Targets:
 - Claude Code `boltz` plugin → <https://claude.ai/settings/plugins/submit>
 - `codex-*` → Codex-side plugin directory (if applicable)
+- `boltz-gemini-cli` → public Gemini CLI extension repo with `gemini-extension.json` at root
 
 Pre-submission checklist (per surface): privacy policy URL, 512×512 icon, screenshots, support contact, verified metadata, license confirmation for any bundled binaries.
 

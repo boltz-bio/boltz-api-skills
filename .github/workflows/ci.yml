@@ -31,6 +31,9 @@ jobs:
         run: |
           jq empty surfaces/codex-cli/.codex-plugin/plugin.json
           jq empty plugins/boltz-compute-cli/.codex-plugin/plugin.json
+      - name: JSON syntax for Gemini extensions
+        run: |
+          jq empty surfaces/gemini-cli/gemini-extension.json
       - name: JSON syntax for MCPB manifests
         run: |
           jq empty surfaces/mcpb/manifest.json
@@ -62,7 +65,7 @@ jobs:
       - name: Check every surface's skill symlinks
         run: |
           set -euo pipefail
-          for surface in claude-code-cli codex-cli; do
+          for surface in claude-code-cli codex-cli gemini-cli; do
             [[ -f "surfaces/$surface/skills/boltz-cli-setup/references/sandbox.md" ]] || {
               echo "::error::missing or broken symlink: surfaces/$surface/skills/boltz-cli-setup/references/sandbox.md"
               exit 1
@@ -123,6 +126,12 @@ jobs:
           test -f "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/SKILL.md"
           test ! -L "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/SKILL.md"
           test -f "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/references/api.md"
+          unzip -q "dist/boltz-gemini-cli-"*.zip -d "$TMPDIR_CHECK/boltz-gemini-cli"
+          test -f "$TMPDIR_CHECK/boltz-gemini-cli/gemini-extension.json"
+          test -f "$TMPDIR_CHECK/boltz-gemini-cli/GEMINI.md"
+          test -f "$TMPDIR_CHECK/boltz-gemini-cli/skills/boltz-check-status/SKILL.md"
+          test ! -L "$TMPDIR_CHECK/boltz-gemini-cli/skills/boltz-check-status/SKILL.md"
+          test -f "$TMPDIR_CHECK/boltz-gemini-cli/skills/boltz-check-status/references/api.md"
       - name: Verify MCPB artifact
         run: |
           set -euo pipefail
