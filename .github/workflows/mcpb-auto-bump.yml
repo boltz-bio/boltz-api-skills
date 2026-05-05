@@ -4,6 +4,10 @@ name: Auto-bump mcpb version
 # (patch by default) and resyncs plugins/boltz-mcpb/. Merging that PR triggers
 # the public-sync workflow.
 #
+# Authentication: uses the boltz-mcpb-publisher GitHub App (not GITHUB_TOKEN)
+# so that PRs opened by this workflow trigger CI checks. The App is installed
+# on this repo and on boltz-bio/boltz-mcpb.
+#
 # Loop break: bump PR commits include a [skip-mcpb-bump] marker, and this
 # workflow short-circuits when the head commit contains it.
 
@@ -22,17 +26,25 @@ on:
         options: [patch, minor, major]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   bump:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip-mcpb-bump]') }}
     steps:
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.MCPB_PUBLISHER_APP_ID }}
+          private-key: ${{ secrets.MCPB_PUBLISHER_APP_PRIVATE_KEY }}
+          repositories: boltz-compute-skills
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Compute next version
         id: ver
@@ -69,7 +81,7 @@ jobs:
 
       - name: Open bump PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           BRANCH="${{ steps.ver.outputs.branch }}"
@@ -81,8 +93,8 @@ jobs:
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "boltz-mcpb-publisher[bot]"
+          git config user.email "${{ secrets.MCPB_PUBLISHER_APP_ID }}+boltz-mcpb-publisher[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add surfaces/mcpb plugins/boltz-mcpb
           git commit -m "chore(mcpb): bump to v${NEXT}
@@ -104,3 +116,21 @@ When this PR merges, the public-sync workflow will mirror v${NEXT} into [boltz-b
 
 To skip the bump on a particular merge, include \`[skip-mcpb-bump]\` in the merge-commit message."
           fi
+
+      - name: Close stale bump PRs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Mirrors the cleanup in boltz-platform/promote.yml: keep the three
+          # newest auto/mcpb-bump-v* PRs open, close the rest with their
+          # branches deleted. Older bumps are superseded by newer ones.
+          set -euo pipefail
+          mapfile -t old_prs < <(
+            gh pr list --state open --search 'head:auto/mcpb-bump-v' \
+              --json number,headRefName \
+              --jq 'sort_by(.headRefName) | reverse | .[3:] | .[].number'
+          )
+          for n in "${old_prs[@]}"; do
+            echo "Closing stale bump PR #$n"
+            gh pr close "$n" --delete-branch --comment "Superseded by a newer mcpb bump PR."
+          done

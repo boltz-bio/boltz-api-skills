@@ -5,8 +5,8 @@ name: Sync mcpb to public repo
 # changes and skips when .version did not change (so non-version edits do not
 # spam the public repo).
 #
-# Requires repository secret MCPB_DEPLOY_TOKEN: a fine-grained PAT with
-# Contents:Read+Write and Pull Requests:Read+Write on boltz-bio/boltz-mcpb.
+# Authentication: uses the boltz-mcpb-publisher GitHub App, which must be
+# installed on both boltz-compute-skills and boltz-mcpb.
 
 on:
   push:
@@ -40,12 +40,22 @@ jobs:
             echo "version=$current" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Mint App token (scoped to release repo)
+        if: steps.ver.outputs.changed == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.MCPB_PUBLISHER_APP_ID }}
+          private-key: ${{ secrets.MCPB_PUBLISHER_APP_PRIVATE_KEY }}
+          owner: boltz-bio
+          repositories: boltz-mcpb
+
       - name: Run release script
         if: steps.ver.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.MCPB_DEPLOY_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-          git config --global user.email "release@boltz.bio"
-          git config --global user.name "boltz-mcpb-release"
+          git config --global user.name "boltz-mcpb-publisher[bot]"
+          git config --global user.email "${{ secrets.MCPB_PUBLISHER_APP_ID }}+boltz-mcpb-publisher[bot]@users.noreply.github.com"
           bash scripts/release-mcpb-repo.sh
