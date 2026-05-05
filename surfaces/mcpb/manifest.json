@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "boltz",
   "display_name": "Boltz",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server that enables interaction with Boltz protein structure prediction, molecular screening, and binder design APIs.",
   "long_description": "Official Boltz Model Context Protocol (MCP) server that enables interaction with state-of-the-art biomolecular modeling APIs. This server allows MCP clients like Claude Desktop to predict protein structures and ligand binding, screen small-molecule and protein libraries against a target, design novel small molecules and protein binders, and recover results from prior runs — all from a natural-language conversation.",
   "author": {
