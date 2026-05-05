@@ -1,11 +1,9 @@
 import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { UrlElicitationRequiredError } from "@modelcontextprotocol/sdk/types.js";
 
 export const workflowSpecs = {
   boltz_structure_and_binding: {
@@ -137,11 +135,6 @@ export function buildInputRef(filePath) {
   return pathToFileURL(filePath).href.replace(/^file:/, "@json:");
 }
 
-export function extractAuthURL(text) {
-  const match = String(text || "").match(/Open this URL to authenticate:\s*(https:\/\/\S+)/);
-  return match ? match[1] : "";
-}
-
 export function buildRetrieveArgs(args) {
   const retrieveArgs = [args.resource, "retrieve", "--id", args.id, "--format", "json"];
   if (args.workspace_id) {
@@ -264,25 +257,14 @@ export function buildInstallPlan(args = {}, platform = process.platform) {
 }
 
 export async function authLogin(args = {}, config = getConfig()) {
-  const loginArgs = ["auth", "login", "--no-browser"];
-  const result = await startInteractiveCommand(config.cliPath, loginArgs, {
+  const loginArgs = ["auth", "login", "--device-code"];
+  return startInteractiveCommand(config.cliPath, loginArgs, {
     timeoutMs: args.timeout_ms || 15000,
     cwd: args.working_directory || process.cwd(),
     apiKey: config.apiKey,
-    label: "boltz-api auth login --no-browser",
-    nextStep: "Open the returned Boltz sign-in URL, complete authentication, then call boltz_check_setup again."
+    label: "boltz-api auth login --device-code",
+    nextStep: "Complete the Boltz device-code sign-in, then call boltz_check_setup again."
   });
-  if (result.auth_url) {
-    throw new UrlElicitationRequiredError([
-      {
-        mode: "url",
-        message: "Open this Boltz sign-in link to connect your account.",
-        url: result.auth_url,
-        elicitationId: `boltz-auth-${randomUUID()}`
-      }
-    ]);
-  }
-  return result;
 }
 
 export function startInteractiveCommand(cliPath, args, options = {}) {
@@ -308,8 +290,6 @@ export function startInteractiveCommand(cliPath, args, options = {}) {
     const timer = setTimeout(resolveOnce, options.timeoutMs || 15000);
     child.stdout?.on("data", (chunk) => {
       record.stdout_tail = tail(record.stdout_tail + chunk.toString());
-      const authURL = extractAuthURL(record.stdout_tail);
-      if (authURL) record.auth_url = authURL;
     });
     child.stderr?.on("data", (chunk) => {
       record.stderr_tail = tail(record.stderr_tail + chunk.toString());
