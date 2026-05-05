@@ -34,7 +34,6 @@ export const toolDefinitions = [
       openWorldHint: true
     },
     inputSchema: {
-      boltz_api_path: z.string().optional(),
       output_root: z.string().optional()
     },
     handler: checkSetup
@@ -67,7 +66,6 @@ export const toolDefinitions = [
       openWorldHint: true
     },
     inputSchema: {
-      boltz_api_path: z.string().optional(),
       working_directory: z.string().optional(),
       timeout_ms: z.number().int().min(1000).max(900000).optional()
     },

@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { test } from "node:test";
 import {
   buildDownloadArgs,
@@ -6,9 +9,11 @@ import {
   buildInputRef,
   buildRetrieveArgs,
   buildWorkflowCommands,
+  defaultCliCandidates,
   downloadResults,
   extractAuthURL,
   resolvePollInterval,
+  resolveCliPath,
   workflowSpecs
 } from "../server/boltz.js";
 import { toolDefinitions } from "../server/tools.js";
@@ -97,6 +102,22 @@ test("poll interval precedence is explicit arg, user default, workflow default",
   assert.equal(resolvePollInterval({ poll_interval_seconds: 45 }, spec, { defaultPollIntervalSeconds: 17 }), 45);
   assert.equal(resolvePollInterval({}, spec, { defaultPollIntervalSeconds: 17 }), 17);
   assert.equal(resolvePollInterval({}, spec, {}), 10);
+});
+
+test("cli resolver checks PATH before local installer defaults", async () => {
+  const home = await mkdtemp(path.join(tmpdir(), "boltz-home-"));
+  const pathDir = await mkdtemp(path.join(tmpdir(), "boltz-path-"));
+  await mkdir(path.join(home, ".local", "bin"), { recursive: true });
+
+  const pathBinary = path.join(pathDir, process.platform === "win32" ? "boltz-api.exe" : "boltz-api");
+  const localBinary = path.join(home, ".local", "bin", process.platform === "win32" ? "boltz-api.exe" : "boltz-api");
+  await writeFile(pathBinary, "");
+  await writeFile(localBinary, "");
+
+  assert.deepEqual(defaultCliCandidates({ HOME: home }).slice(0, 1), [localBinary]);
+  assert.equal(resolveCliPath({ PATH: pathDir, HOME: home }), pathBinary);
+  assert.equal(resolveCliPath({ PATH: "", HOME: home }), localBinary);
+  assert.equal(resolveCliPath({ BOLTZ_API_PATH: "/custom/boltz-api", PATH: "", HOME: home }), "/custom/boltz-api");
 });
 
 test("install plan uses official platform installers", () => {
