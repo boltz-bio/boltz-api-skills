@@ -7,7 +7,7 @@ Gemini-specific context for background shell downloads.
 ## Prerequisites
 
 - `boltz-api` on `PATH`
-- Authentication via `boltz-api auth login --device-code`, or `BOLTZ_COMPUTE_API_KEY`
+- Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY`
   exported in the environment
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land
 

@@ -1,6 +1,6 @@
 # Boltz Skills
 
-Agent tooling for running Boltz workflows (structure prediction, molecular screening, de novo design) from AI coding assistants. Distributed as CLI-backed Claude Code, Codex, and Gemini CLI surfaces that share one skill prose source.
+Agent tooling for running Boltz workflows (structure prediction, molecular screening, de novo design) from AI coding assistants. Distributed as CLI-backed Claude Code, Codex, and Gemini CLI skill surfaces plus a Claude Desktop MCPB surface.
 
 ## Surfaces
 
@@ -9,12 +9,15 @@ Agent tooling for running Boltz workflows (structure prediction, molecular scree
 | [`surfaces/claude-code-cli/`](surfaces/claude-code-cli) | Claude Code | Skills shell out to `boltz-api` CLI | Active |
 | [`surfaces/codex-cli/`](surfaces/codex-cli) | Codex | Skills shell out to `boltz-api` CLI | Ships today |
 | [`surfaces/gemini-cli/`](surfaces/gemini-cli) | Gemini CLI | Skills shell out to `boltz-api` CLI | Local surface |
+| [`surfaces/mcpb/`](surfaces/mcpb) | Claude Desktop | Local MCP server shells out to `boltz-api` CLI | Active |
 
-MCP-backed surfaces were removed for now so development can focus on one CLI-backed distribution path.
+The MCPB surface complements the skill plugins: Claude Code, Codex, and Gemini
+CLI get workflow skills, while Claude Desktop gets local MCP tools that run the
+same CLI flow.
 
 ## Shared core
 
-Every surface pulls from [`core/`](core/):
+The CLI skill surfaces pull from [`core/`](core/):
 
 | Directory | Purpose | Consumed by |
 |---|---|---|
@@ -57,7 +60,7 @@ BOLTZ_CLAUDE_MARKETPLACE="$PWD" scripts/install-claude-code-plugin.sh
 
 Restart Claude Code after installing. The installed `boltz` plugin requires
 `boltz-api` on `PATH` and either device-code auth via
-`boltz-api auth login --device-code` or `BOLTZ_COMPUTE_API_KEY`.
+`boltz-api auth login --device-code` or `BOLTZ_API_KEY`.
 
 When editing the shared skill source under `core/` or Claude-specific files
 under `surfaces/claude-code-cli/`, refresh generated distribution surfaces:
@@ -134,15 +137,33 @@ RELEASE_REPO=boltz-bio/boltz-gemini-cli scripts/release-gemini-repo.sh
 ## Release builds
 
 ```bash
-./scripts/package-plugins.sh         # Zips the Claude Code, Codex CLI, and Gemini CLI surfaces into dist/
+./scripts/package-plugins.sh         # Writes Claude/Codex/Gemini zips and boltz-mcpb-<version>.mcpb into dist/
 ```
 
 CI (`.github/workflows/release.yml`) runs these on every tagged release and attaches artifacts to the GitHub Release.
 
+## Claude Desktop MCPB
+
+The MCPB distribution packages a local Node.js MCP server for Claude Desktop.
+It exposes setup/auth tools plus workflow tools that call `boltz-api`
+`estimate-cost`, `start`, `download-results`, `download-status`, and `retrieve`.
+
+```bash
+cd surfaces/mcpb
+npm install
+npm test
+cd ../..
+scripts/generate-surfaces.sh
+scripts/package-plugins.sh
+```
+
+Install `dist/boltz-mcpb-<version>.mcpb` in Claude Desktop via Settings ->
+Extensions -> Advanced settings -> Install Extension.
+
 ## Prerequisites for users
 
 All surfaces need:
-- Authentication via either `boltz-api auth login --device-code` or `BOLTZ_COMPUTE_API_KEY` as an API-key fallback.
+- Authentication via either `boltz-api auth login --device-code` or `BOLTZ_API_KEY` as an API-key fallback.
 - `BOLTZ_COMPUTE_OUTPUT_DIR` optional. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
 - `boltz-api` on `PATH`
 

@@ -1,0 +1,92 @@
+---
+name: boltz-structure-and-binding
+description: Predict structures and binding for one defined complex with Boltz. Use when folding a protein, RNA, DNA, or ligand complex, docking one ligand, predicting an interface, or scoring binding. Not for screening libraries or design.
+---
+
+## Workflow
+
+If `boltz-api` reports missing or expired authentication, surface the error to the user. Do not attempt to re-authenticate; the host environment must provide `BOLTZ_API_KEY`.
+
+Use this skill for one defined complex, not a library workflow.
+
+1. Normalize the inputs into `entities`. Each entity is **`{type, chain_ids, value}`** — note plural `chain_ids` (an array, even for one chain) and the field is `value`, **not** `sequence`:
+
+   ```json
+   {"entities": [{"type": "protein", "chain_ids": ["A"], "value": "MKTAYIAKQRQISFVKSHFSRQ"}]}
+   ```
+
+   `type` is one of `protein | rna | dna | ligand_smiles | ligand_ccd`. Chain IDs go in entity order (`A`, `B`, `C`, …) unless the user specifies otherwise. Read `references/api.md` for per-type field variants (`cyclic`, `modifications`, ligand CCD codes, etc.) **before** authoring your first payload — agent guesses like `sequence:` or `chain_id: "A"` (singular) fail with opaque 400s.
+2. If the user wants binding metrics, add a flat `binding` block with an explicit `type` field. For ligand-protein binding use:
+
+   ```yaml
+   binding:
+     type: ligand_protein_binding
+     binder_chain_id: B
+   ```
+
+   For protein-protein binding use:
+
+   ```yaml
+   binding:
+     type: protein_protein_binding
+     binder_chain_ids: [B]
+   ```
+
+   Do not nest the variant name under `binding` (for example, no `binding.ligand_protein_binding` object).
+3. Supported optional features include `constraints`, `bonds`, `modifications`, `model_options`, and binding metrics; only add them if the user asks. Read [references/api.md](references/api.md) for exact shapes and examples.
+4. Author the payload YAML or JSON.
+5. `start` to submit (synchronous). Capture the ID.
+6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides, so polling + download continue without blocking the agent session. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background job unless the user explicitly asks for progress.
+
+## Command Pattern
+
+```bash
+# Replace placeholders with concrete absolute paths before running.
+# Use a short descriptive run name, for example: sab-<target>-<ligand>-v1
+
+# 1. Submit.
+boltz-api predictions:structure-and-binding start \
+       --model boltz-2.1 \
+       --idempotency-key "<run-name>" \
+       --input @yaml:///absolute/path/payload.yaml \
+       --raw-output --transform id
+
+# 2. Copy the printed job ID into this command, then launch it as a
+#    long-running/background command via the host agent harness.
+boltz-api download-results \
+  --id "<job-id-from-start>" --name "<run-name>" \
+  --root-dir "/absolute/path/boltz-experiments" \
+  --poll-interval-seconds 10
+# -> /absolute/path/boltz-experiments/<run-name>/outputs/archive.tar.gz, .boltz-run.json
+```
+
+## Always Do This
+
+- Keep payload field names exactly as the API body names shown in `references/api.md`; then pass the merged payload with `--input @yaml:///absolute/path/payload.yaml` or `@json:///absolute/path/payload.json`. Never use `@./payload.yaml` or `@file://` for object-typed payloads.
+- Use absolute paths for the output root, payload files, and embedded structure files. Do not `cd` into the run directory for follow-up commands; pass the same `--root-dir` and use absolute paths so later relative paths do not drift.
+- Residue indices are 0-based wherever the payload asks for residue positions (constraints, modifications, contact tokens).
+- For CIF/PDB bytes embedded in `--target` / `structure.data`, use `@data:///absolute/path/file.cif` — it sniffs binary and base64-encodes. Don't use bare `@path` for binary data.
+- Use the same slug as both `--idempotency-key` at submit time and `--name` at download time so re-runs are idempotent and resume from `.boltz-run.json`.
+- In permission-gated agents, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines around the `boltz-api` invocation unless the user already allowed that exact command form. Use `--raw-output --transform id`, read the printed ID, then paste that literal ID into the next `download-results` command.
+- Run `download-results` through the host harness's long-running/background command facility. After it starts, do not wait on or poll it. Report the job ID, run name, and output directory and let the harness notify the user when the background command completes.
+- `download-results` emits machine-readable JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs.
+- Only check progress when the user asks. Prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state, or read the host's captured JSONL stderr if available. Do not loop `retrieve` yourself.
+- If a detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
+- Poll interval: keep `--poll-interval-seconds 10` for SAB — predictions usually finish in under a few minutes.
+
+## Escape Hatch
+
+For anything not covered in `references/api.md`:
+
+- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/predictions/subresources/structure_and_binding/methods/start>
+- CLI flag names: `boltz-api predictions:structure-and-binding start --help` (schema details aren't there — just flag names and types)
+
+Read [references/api.md](references/api.md) for entity shapes, binding variants, bonds, constraints, model options, and input examples. Read [references/results.md](references/results.md) when summarizing downloaded outputs, metrics, or validation quirks.
+
+## Outputs
+
+Summarize `metrics.json` and point the user at the downloaded CIF path. Read [references/results.md](references/results.md) for the local layout, nested metrics, binding metric variants, and SAB validation quirks.
+
+## SAB 400 validation quirk
+
+If the server rejects a payload with only `{"code":"VALIDATION_ERROR","message":"Request validation failed"}`, inspect `entities`, `binding`, and `constraints`; read [references/results.md](references/results.md) for details.

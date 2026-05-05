@@ -24,13 +24,13 @@ jobs:
       - name: Commit regenerated plugin copy
         run: |
           set -euo pipefail
-          if [[ -z "$(git status --porcelain -- plugins/boltz plugins/boltz-compute-cli)" ]]; then
+          if [[ -z "$(git status --porcelain -- plugins/boltz plugins/boltz-compute-cli plugins/boltz-mcpb)" ]]; then
             echo "Generated plugin copies are already in sync."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add plugins/boltz plugins/boltz-compute-cli
+          git add plugins/boltz plugins/boltz-compute-cli plugins/boltz-mcpb
           git commit -m "chore(plugins): sync generated plugin copies"
           git push origin "HEAD:${GITHUB_REF_NAME}"
