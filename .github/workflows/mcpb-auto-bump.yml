@@ -35,9 +35,10 @@ jobs:
     # body (so the [skip-mcpb-bump] marker we put there disappears), but
     # GitHub uses the PR title as the squash commit's subject — and our PR
     # title always starts with "chore(mcpb): bump to v". Match either signal.
-    if: ${{ github.event_name == 'workflow_dispatch' ||
-            (!contains(github.event.head_commit.message, '[skip-mcpb-bump]') &&
-             !startsWith(github.event.head_commit.message, 'chore(mcpb): bump to v')) }}
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (!contains(github.event.head_commit.message, '[skip-mcpb-bump]') &&
+           !startsWith(github.event.head_commit.message, 'chore(mcpb): bump to v')) }}
     steps:
       - name: Mint App token
         id: app-token
