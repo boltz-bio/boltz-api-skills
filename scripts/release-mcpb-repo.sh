@@ -38,6 +38,11 @@ BRANCH="sync/v${VERSION}-${SOURCE_SHA}"
 WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/boltz-mcpb-release.XXXXXX")"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
+# Register gh as git's credential helper so the later `git push` can
+# authenticate using GH_TOKEN. Locally this is usually a no-op (your
+# system git creds work); in CI it's required.
+gh auth setup-git >/dev/null
+
 echo "Cloning $RELEASE_REPO..."
 gh repo clone "$RELEASE_REPO" "$WORK_DIR/repo" -- --quiet
 
@@ -72,8 +77,14 @@ if git diff --cached --quiet; then
   echo "No changes to publish — release repo already up to date."
   exit 0
 fi
-git -c user.name="boltz-mcpb-release" -c user.email="release@boltz.bio" \
-  commit -q -m "sync: mcpb v${VERSION} from boltz-compute-skills@${SOURCE_SHA}"
+# Use whatever git identity the caller has configured (the workflow sets
+# the boltz-mcpb-publisher[bot] identity globally; locally git uses your
+# user.name/email). Fall back to a sensible default if nothing is set.
+if ! git config user.name >/dev/null; then
+  git config user.name "boltz-mcpb-release"
+  git config user.email "release@boltz.bio"
+fi
+git commit -q -m "sync: mcpb v${VERSION} from boltz-compute-skills@${SOURCE_SHA}"
 
 if [[ "$DRY_RUN" == "1" ]]; then
   echo
