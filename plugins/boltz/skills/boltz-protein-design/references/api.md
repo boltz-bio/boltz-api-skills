@@ -18,8 +18,9 @@ Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear ins
 - [Top-level request](#top-level-request)
 - [`num_proteins` minimum](#num_proteins-minimum)
 - [Cost](#cost)
-- [`binder_specification` — variant 1: `structure_template`](#binder_specification--variant-1-structure_template)
-- [`binder_specification` — variant 2: `no_template`](#binder_specification--variant-2-no_template)
+- [`binder_specification` — variant 1: `boltz_curated`](#binder_specification--variant-1-boltz_curated)
+- [`binder_specification` — variant 2: `structure_template`](#binder_specification--variant-2-structure_template)
+- [`binder_specification` — variant 3: `no_template`](#binder_specification--variant-3-no_template)
 - [Sequence DSL (`designed_protein.value`)](#sequence-dsl-designed_proteinvalue)
 - [`rules`](#rules)
 - [`target` — variant 1: `structure_template`](#target--variant-1-structure_template)
@@ -45,12 +46,8 @@ target:
       crop_residues: all
       epitope_residues: [42, 43, 44]
 binder_specification:
-  type: no_template
-  modality: nanobody
-  entities:
-    - type: designed_protein
-      chain_ids: [B]
-      value: "MKTAYI5..10VKSHFSRQ"
+  type: boltz_curated
+  binder: boltz_nanobody
   rules:
     max_hydrophobic_fraction: 0.5
 ```
@@ -59,7 +56,7 @@ Top-level fields:
 
 - `num_proteins` (required) — number to generate. **Minimum 10** (server rejects lower).
 - `target` (required) — discriminated union: `structure_template` or `no_template`. Identical shape to protein-screen.
-- `binder_specification` (required) — discriminated union: `structure_template` or `no_template`. See below.
+- `binder_specification` (required) — discriminated union: `boltz_curated`, `structure_template`, or `no_template`. See below.
 
 Also passed as separate `start` flags:
 
@@ -81,7 +78,21 @@ Cost scales with **total complex length** (target + binder), not flat per design
 
 Always quote `estimated_cost_usd` from the response. Do not hardcode a per-protein rate.
 
-## `binder_specification` — variant 1: `structure_template`
+## `binder_specification` — variant 1: `boltz_curated`
+
+Recommended default for antibody and nanobody design. Boltz chooses from maintained antibody/nanobody scaffold template lists during design. In the API docs this shape appears as `BoltzCuratedBinderSpec` on requests and `BoltzCuratedBinderSpecResponse` on retrieved run records. Before using it, ask the user to confirm they want the curated default rather than a custom scaffold with explicit CDR/motif control.
+
+Use `boltz_nanobody` for nanobody/VHH requests and `boltz_antibody` for antibody/Fab requests. Do not include `modality`, `entities`, `structure`, or `chain_selection` in this variant.
+
+```yaml
+binder_specification:
+  type: boltz_curated
+  binder: boltz_nanobody             # or boltz_antibody
+  rules:
+    excluded_sequence_motifs: [NXS]  # optional; only add rules on request
+```
+
+## `binder_specification` — variant 2: `structure_template`
 
 Use when redesigning regions of an existing binder scaffold.
 
@@ -164,9 +175,9 @@ Residues from `start_index` to `end_index` inclusive are replaced with a new des
 
 All residue indices are 0-based.
 
-## `binder_specification` — variant 2: `no_template`
+## `binder_specification` — variant 3: `no_template`
 
-Use when generating from sequence components + the DSL.
+Use when generating from sequence components + the DSL. For antibody or nanobody requests, prefer `boltz_curated` unless the user confirms they want direct sequence/scaffold control.
 
 ```yaml
 binder_specification:
@@ -209,7 +220,7 @@ Examples:
 
 ## `rules`
 
-Optional, applies to both `binder_specification` variants. Any of:
+Optional, applies to all `binder_specification` variants. Any of:
 
 - `excluded_amino_acids: [<one-letter codes>]` — never emit these residues in designed positions.
 - `excluded_sequence_motifs: [<motif strings>]` — reject designs containing these patterns. Use `X` as a single-position wildcard (e.g. `"XPX"`).
@@ -283,5 +294,5 @@ Rank from `results/index.jsonl` after `download-results` by `binding_confidence`
 
 ## Escape hatch
 
-- <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/design/methods/start>
+- <https://api.boltz.bio/docs/api/resources/protein/subresources/design/methods/start/>
 - `boltz-api protein:design start --help`

@@ -11,15 +11,17 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
 
 1. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.
 2. Pick the `binder_specification` variant. Supported variants include:
+   - `boltz_curated` — recommended default for antibody and nanobody design. Boltz selects from maintained scaffold/template lists (`binder: boltz_antibody` or `boltz_nanobody`).
    - `structure_template` — redesign motifs in an existing binder scaffold (CIF + `design_motifs` with `replacement` / `insertion` segments).
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
-3. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein`.
-4. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
-5. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
-6. Author the payload YAML or JSON.
-7. `start` to submit. Capture the ID.
-8. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background job unless the user explicitly asks for progress.
-9. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
+3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use `type: boltz_curated`; if they want custom scaffold control, use `type: structure_template`.
+4. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein` for `structure_template` and `no_template`. Do not include `modality` on `boltz_curated`; use `binder` instead.
+5. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
+6. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
+7. Author the payload YAML or JSON.
+8. `start` to submit. Capture the ID.
+9. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background job unless the user explicitly asks for progress.
+10. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Command Pattern
 
@@ -45,6 +47,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 ## Always Do This
 
 - Enforce `num_proteins >= 10` before submitting. Server rejects anything lower.
+- For antibody or nanobody design, recommend `binder_specification.type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
@@ -61,10 +64,10 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 
 ## Escape Hatch
 
-- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/design/methods/start>
+- Payload reference: <https://api.boltz.bio/docs/api/resources/protein/subresources/design/methods/start/>
 - CLI flag names: `boltz-api protein:design start --help`
 
-Read [references/api.md](references/api.md) for both `binder_specification` variants, motif shapes, sequence DSL, rules, modalities, and `target` variants. Read [references/results.md](references/results.md) after download when ranking designed binders or explaining outputs.
+Read [references/api.md](references/api.md) for all `binder_specification` variants, motif shapes, sequence DSL, rules, modalities, and `target` variants. Read [references/results.md](references/results.md) after download when ranking designed binders or explaining outputs.
 
 ## Outputs
 
