@@ -88,7 +88,7 @@ boltz-api download-results \
 
 For anything not covered in `references/api.md`:
 
-- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/predictions/subresources/structure_and_binding/methods/start>
+- Payload reference: <https://api.boltz.bio/docs/api/python/resources/predictions/subresources/structure_and_binding/methods/start>
 - CLI flag names: `boltz-api predictions:structure-and-binding start --help` (schema details aren't there — just flag names and types)
 
 Read [references/api.md](references/api.md) for entity shapes, binding variants, bonds, constraints, model options, and input examples. Read [references/results.md](references/results.md) when summarizing downloaded outputs, metrics, or validation quirks.

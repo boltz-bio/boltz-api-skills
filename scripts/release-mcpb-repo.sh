@@ -84,7 +84,7 @@ if ! git config user.name >/dev/null; then
   git config user.name "boltz-mcpb-release"
   git config user.email "release@boltz.bio"
 fi
-git commit -q -m "sync: mcpb v${VERSION} from boltz-compute-skills@${SOURCE_SHA}"
+git commit -q -m "sync: mcpb v${VERSION} from boltz-api-skills@${SOURCE_SHA}"
 
 if [[ "$DRY_RUN" == "1" ]]; then
   echo
@@ -101,7 +101,7 @@ echo "Pushing $BRANCH..."
 git push -q -u origin "$BRANCH"
 
 PR_TITLE="Sync mcpb v${VERSION} (${SOURCE_SHA})"
-PR_BODY="Automated sync from \`boltz-bio/boltz-compute-skills@${SOURCE_SHA}\`.
+PR_BODY="Automated sync from \`boltz-bio/boltz-api-skills@${SOURCE_SHA}\`.
 
 This PR mirrors the runtime assets of the MCPB extension. README, LICENSE,
 and \`.github/\` are managed directly in this repo and are not touched.

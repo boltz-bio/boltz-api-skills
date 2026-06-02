@@ -70,7 +70,7 @@ boltz-api download-results \
 
 ## Escape Hatch
 
-- Python SDK reference (per-resource `list` / `retrieve` methods): <https://boltz-compute-api.stldocs.app/api/python>
+- Python SDK reference (per-resource `list` / `retrieve` methods): <https://api.boltz.bio/docs/api/python>
 - CLI flag names: `boltz-api <resource> list --help`, `boltz-api <resource> retrieve --help`, `boltz-api download-results --help`, `boltz-api download-status --help`
 
 ## Outputs

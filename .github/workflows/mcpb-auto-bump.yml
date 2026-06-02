@@ -46,7 +46,7 @@ jobs:
         with:
           app-id: ${{ secrets.MCPB_PUBLISHER_APP_ID }}
           private-key: ${{ secrets.MCPB_PUBLISHER_APP_PRIVATE_KEY }}
-          repositories: boltz-compute-skills
+          repositories: boltz-api-skills
 
       - uses: actions/checkout@v4
         with:

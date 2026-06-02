@@ -216,5 +216,5 @@ For downloaded per-hit directories, do not rely on `files/result/metrics.json` t
 
 ## Escape hatch
 
-- <https://boltz-compute-api.stldocs.app/api/python/resources/small_molecule/subresources/library_screen/methods/start>
+- <https://api.boltz.bio/docs/api/python/resources/small_molecule/subresources/library_screen/methods/start>
 - `boltz-api small-molecule:library-screen start --help`

@@ -3,13 +3,13 @@
 #
 # Usage:
 #   scripts/install-claude-code-plugin.sh
-#   BOLTZ_CLAUDE_MARKETPLACE=/path/to/boltz-compute-skills scripts/install-claude-code-plugin.sh
+#   BOLTZ_CLAUDE_MARKETPLACE=/path/to/boltz-api-skills scripts/install-claude-code-plugin.sh
 #   BOLTZ_CLAUDE_SCOPE=local scripts/install-claude-code-plugin.sh
 
 set -euo pipefail
 
 MARKETPLACE_NAME="${BOLTZ_CLAUDE_MARKETPLACE_NAME:-boltz-marketplace}"
-MARKETPLACE_SOURCE="${BOLTZ_CLAUDE_MARKETPLACE:-boltz-bio/boltz-compute-skills}"
+MARKETPLACE_SOURCE="${BOLTZ_CLAUDE_MARKETPLACE:-boltz-bio/boltz-api-skills}"
 PLUGIN_ID="${BOLTZ_CLAUDE_PLUGIN:-boltz@${MARKETPLACE_NAME}}"
 SCOPE="${BOLTZ_CLAUDE_SCOPE:-user}"
 

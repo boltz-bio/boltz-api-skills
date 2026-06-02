@@ -234,7 +234,7 @@ Token variants: `polymer_contact {chain_id, residue_index}` or `ligand_contact {
 
 ## Cost
 
-Cost scales with total complex length (target + candidate). Typically ≈$0.025 per candidate for small complexes, more for larger ones (observed empirically — see `debugging_log.md` §4a for the protein:design tier behavior, which likely also applies here). `estimate-cost` on the full payload gives the authoritative quote — do not hardcode a flat per-candidate rate.
+Cost scales with total complex length (target + candidate). Typically ≈$0.025 per candidate for small complexes, more for larger ones. `estimate-cost` on the full payload gives the authoritative quote — do not hardcode a flat per-candidate rate.
 
 ## Outputs (after `download-results`)
 
@@ -265,5 +265,5 @@ Rank from `results/index.jsonl` after `download-results` by `binding_confidence`
 
 ## Escape hatch
 
-- <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/library_screen/methods/start>
+- <https://api.boltz.bio/docs/api/python/resources/protein/subresources/library_screen/methods/start>
 - `boltz-api protein:library-screen start --help`

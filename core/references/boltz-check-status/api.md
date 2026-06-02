@@ -221,5 +221,5 @@ boltz-api download-results \
 
 ## Escape hatch
 
-- Python SDK reference: <https://boltz-compute-api.stldocs.app/api/python>
+- Python SDK reference: <https://api.boltz.bio/docs/api/python>
 - `boltz-api <resource> list --help` / `retrieve --help` / `boltz-api download-results --help` / `boltz-api download-status --help`

@@ -73,7 +73,7 @@ else
     git config user.name "boltz-gemini-release"
     git config user.email "release@boltz.bio"
   fi
-  git commit -q -m "sync: gemini extension v${VERSION} from boltz-compute-skills@${SOURCE_SHA}"
+  git commit -q -m "sync: gemini extension v${VERSION} from boltz-api-skills@${SOURCE_SHA}"
 
   if [[ "$DRY_RUN" == "1" ]]; then
     echo
@@ -91,7 +91,7 @@ else
 fi
 
 PR_TITLE="Sync Gemini extension v${VERSION} (${SOURCE_SHA})"
-PR_BODY="Automated sync from \`boltz-bio/boltz-compute-skills@${SOURCE_SHA}\`.
+PR_BODY="Automated sync from \`boltz-bio/boltz-api-skills@${SOURCE_SHA}\`.
 
 This PR mirrors the Gemini CLI extension surface with symlinks dereferenced. The release repo keeps
 \`.github/\` and LICENSE managed directly, while extension runtime files are
