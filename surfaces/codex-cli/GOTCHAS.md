@@ -130,6 +130,6 @@ We document this layout in every screen/design `api.md` and `SKILL.md`. Verified
 
 ## Won't fix / accepted risk
 
-- **No auth preflight.** User chose this explicitly. If `BOLTZ_COMPUTE_API_KEY` is unset, the first CLI call fails with a readable auth error and the agent relays it. Ship as-is.
+- **No auth preflight.** User chose this explicitly. If `BOLTZ_API_KEY` is unset, the first CLI call fails with a readable auth error and the agent relays it. Ship as-is.
 - **No `boltz-api` install check.** Same reasoning. If the binary is missing, `command not found` surfaces immediately. Ship as-is.
 - **Schema drift.** Every `references/api.md` embeds schema that's canonically in Boltz's OpenAPI spec. It will drift. Mitigation: every `api.md` ends with a link to the upstream docs + `openapi.json` as the source of truth. When we bump CLI versions, skim for schema deltas and update. Acceptable maintenance cost.

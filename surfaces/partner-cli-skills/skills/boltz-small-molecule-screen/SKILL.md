@@ -57,7 +57,7 @@ Payload keys are `molecules`, `target`, `molecule_filters` — the API body fiel
 
 ## Escape Hatch
 
-- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/small_molecule/subresources/library_screen/methods/start>
+- Payload reference: <https://api.boltz.bio/docs/api/python/resources/small_molecule/subresources/library_screen/methods/start>
 - CLI flag names: `boltz-api small-molecule:library-screen start --help`
 
 Read [references/api.md](references/api.md) for the `molecules`, `target`, and `molecule_filters` shapes, including the built-in SMARTS filters and RDKit descriptor ranges. Read [references/results.md](references/results.md) after download when ranking hits or explaining missing/filtered inputs.

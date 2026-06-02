@@ -17,7 +17,7 @@ Seven skills for the Boltz API, executed by shelling out to the `boltz-api` Go C
 ## Prerequisites
 
 - `boltz-api` on `PATH`.
-- `BOLTZ_COMPUTE_API_KEY` exported in your shell environment.
+- `BOLTZ_API_KEY` exported in your shell environment.
 - Optional: `BOLTZ_COMPUTE_OUTPUT_DIR`. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
 
 If the Claude Code sandbox blocks installer temp files, OAuth browser login, credential storage, or the user-wide install path, request or configure the sandbox bypass needed to install and authenticate `boltz-api` in the user's real environment. Use `dangerouslyDisableSandbox: true` for this setup flow when needed.

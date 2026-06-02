@@ -267,5 +267,5 @@ Uppercase aliases like `pLDDT`, `pTM`, `ipTM`, `PDE`, `ipDE` are **not** what th
 
 For any field not listed here:
 
-- <https://boltz-compute-api.stldocs.app/api/python/resources/predictions/subresources/structure_and_binding/methods/start>
+- <https://api.boltz.bio/docs/api/python/resources/predictions/subresources/structure_and_binding/methods/start>
 - `boltz-api predictions:structure-and-binding start --help` — flag names only; schema is not in the CLI help.

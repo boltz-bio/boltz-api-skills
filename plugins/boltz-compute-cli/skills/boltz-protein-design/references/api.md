@@ -69,7 +69,7 @@ Server rejects `num_proteins < 10` with `VALIDATION_ERROR`. Validate client-side
 
 ## Cost
 
-Cost scales with **total complex length** (target + binder), not flat per design. The spec doesn't expose a formula; `estimate-cost` returns `breakdown.{application, cost_per_unit_usd, num_units}` where `num_units` may exceed `num_proteins` when total length crosses a ~256-token tier (observed empirically — see `debugging_log.md` §4a). Examples:
+Cost scales with **total complex length** (target + binder), not flat per design. The spec doesn't expose a formula; `estimate-cost` returns `breakdown.{application, cost_per_unit_usd, num_units}` where `num_units` may exceed `num_proteins` when total length crosses size tiers. Examples:
 
 | Target + binder | num_proteins | Empirical `estimated_cost_usd` |
 |---|---|---|
@@ -161,7 +161,7 @@ B:
     max: 8
 ```
 
-Residues from `start_index` to `end_index` inclusive are replaced with a new designed segment. Example: on a 17-mer scaffold with `start_index: 2, end_index: 15`, residues 2..15 (14 residues) are redesigned and residues 0..1 + 16 stay fixed. An empirical off-by-one has been seen at the boundary — verify sequence length on a test output before committing to a template (see `debugging_log.md` §4d).
+Residues from `start_index` to `end_index` inclusive are replaced with a new designed segment. Example: on a 17-mer scaffold with `start_index: 2, end_index: 15`, residues 2..15 (14 residues) are redesigned and residues 0..1 + 16 stay fixed. Verify sequence length on a test output before committing to a template.
 
 #### `insertion`
 

@@ -259,5 +259,5 @@ Rank from `results/index.jsonl` after `download-results` by `binding_confidence`
 
 ## Escape hatch
 
-- <https://boltz-compute-api.stldocs.app/api/python/resources/protein/subresources/library_screen/methods/start>
+- <https://api.boltz.bio/docs/api/python/resources/protein/subresources/library_screen/methods/start>
 - `boltz-api protein:library-screen start --help`

@@ -58,7 +58,7 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 
 ## Escape Hatch
 
-- Payload reference: <https://boltz-compute-api.stldocs.app/api/python/resources/small_molecule/subresources/design/methods/start>
+- Payload reference: <https://api.boltz.bio/docs/api/python/resources/small_molecule/subresources/design/methods/start>
 - CLI flag names: `boltz-api small-molecule:design start --help`
 
 Read [references/api.md](references/api.md) for the `target`, `chemical_space`, and `molecule_filters` shapes (filter catalog matches the screen endpoint). Read [references/results.md](references/results.md) after download when ranking generated molecules or explaining outputs.

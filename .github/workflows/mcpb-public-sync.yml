@@ -6,7 +6,7 @@ name: Sync mcpb to public repo
 # spam the public repo).
 #
 # Authentication: uses the boltz-mcpb-publisher GitHub App, which must be
-# installed on both boltz-compute-skills and boltz-mcpb.
+# installed on both boltz-api-skills and boltz-mcpb.
 
 on:
   push:
