@@ -254,3 +254,55 @@ test("an explicit BOLTZ_API_CLIENT overrides the MCP default", async () => {
   );
   assert.equal(result.stdout, "codex");
 });
+
+// A throwaway executable that stands in for the boltz-api CLI: exits 0 for every
+// command and prints a job id when invoked with `start`, so runWorkflow reaches its
+// success path deterministically without a network call.
+async function createFakeCli() {
+  const dir = await mkdtemp(path.join(tmpdir(), "boltz-fake-cli-"));
+  const cliPath = path.join(dir, "boltz-api");
+  const script = [
+    "#!/usr/bin/env node",
+    "const args = process.argv.slice(2);",
+    "if (args.includes('start')) process.stdout.write('job_test_123');",
+    "process.exit(0);",
+    ""
+  ].join("\n");
+  await writeFile(cliPath, script, { mode: 0o755 });
+  return cliPath;
+}
+
+test("structure-and-binding attaches propose-only follow-up suggestions after a successful start", async () => {
+  const outputRoot = await mkdtemp(path.join(tmpdir(), "boltz-output-root-"));
+  const cliPath = await createFakeCli();
+  const result = await runWorkflow("boltz_structure_and_binding", {
+    run_name: "sab-followup-v1",
+    payload: { entities: [{ type: "protein", chain_ids: ["A"], value: "MKT" }] },
+    start: true,
+    auto_download: false,
+    timeout_ms: 5000
+  }, { cliPath, outputRoot, defaultPollIntervalSeconds: 10, apiKey: "" });
+
+  assert.equal(result.started, true);
+  assert.equal(result.job_id, "job_test_123");
+  assert.ok(Array.isArray(result.suggested_next_steps));
+  assert.ok(result.suggested_next_steps.length > 0);
+  const joined = result.suggested_next_steps.join(" ").toLowerCase();
+  assert.match(joined, /design/);
+  assert.match(joined, /screen/);
+});
+
+test("other workflows do not attach follow-up suggestions (v1 scope is structure-and-binding only)", async () => {
+  const outputRoot = await mkdtemp(path.join(tmpdir(), "boltz-output-root-"));
+  const cliPath = await createFakeCli();
+  const result = await runWorkflow("boltz_small_molecule_design", {
+    run_name: "smd-v1",
+    payload: { target: { sequence: "MKT" }, num_molecules: 10 },
+    start: true,
+    auto_download: false,
+    timeout_ms: 5000
+  }, { cliPath, outputRoot, defaultPollIntervalSeconds: 10, apiKey: "" });
+
+  assert.equal(result.started, true);
+  assert.equal(result.suggested_next_steps, undefined);
+});

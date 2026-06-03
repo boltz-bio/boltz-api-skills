@@ -42,6 +42,19 @@ export const workflowSpecs = {
   }
 };
 
+// Propose-only follow-up experiments to offer after a workflow is submitted, keyed
+// by tool. These NAME the next tool to offer the user; they must never auto-run a
+// follow-up (design/screens cost compute + credits). v1 covers only
+// structure-and-binding. Keep in sync with the "## Follow-up suggestions" section in
+// core/skills/cli/boltz-structure-and-binding/SKILL.md.
+export const workflowFollowups = {
+  boltz_structure_and_binding: [
+    "If the target is a protein, offer to design binders for it (no library needed): boltz_small_molecule_design for novel small molecules, or boltz_protein_design for peptide/antibody/nanobody/protein binders. Reuse this target; for small-molecule design, derive the pocket from the predicted binding site or ask the user.",
+    "If the user has a compound or binder library, offer to virtually screen it against this target: boltz_small_molecule_screen (SMILES library) or boltz_protein_screen (binder library).",
+    "Propose only — do not start a follow-up without explicit confirmation; the chosen tool will estimate cost first.",
+  ],
+};
+
 const downloaderProcesses = new Map();
 
 export function getConfig(env = process.env) {
@@ -458,7 +471,8 @@ export async function runWorkflow(toolName, args, config = getConfig()) {
     estimate: sanitizeCommandResult(estimate, config),
     start: sanitizeCommandResult(start, config),
     started: true,
-    downloader
+    downloader,
+    ...(workflowFollowups[toolName] ? { suggested_next_steps: workflowFollowups[toolName] } : {})
   };
 }
 
