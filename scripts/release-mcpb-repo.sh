@@ -13,7 +13,7 @@
 # Requirements: git, rsync, jq, gh (authenticated).
 #
 # What gets mirrored (runtime + contributor assets):
-#   manifest.json, package.json, package-lock.json, icon.png, server/, test/, examples/
+#   manifest.json, package.json, package-lock.json, icon.png, server/, guidance/, test/, examples/
 #
 # What is left untouched in the release repo (managed there directly):
 #   README.md, LICENSE, .github/, .gitignore, .mcpbignore
@@ -53,11 +53,13 @@ git checkout -q -B "$BRANCH"
 
 echo "Mirroring runtime assets from plugins/boltz-mcpb/..."
 # Sync only the assets we own; preserve repo-local README/LICENSE/.github/etc.
-rsync -aL --delete \
-  --exclude='.DS_Store' \
-  --exclude='node_modules' \
-  --exclude='*.mcpb' \
-  "$SOURCE/server/" "./server/"
+for dir in server guidance; do
+  rsync -aL --delete \
+    --exclude='.DS_Store' \
+    --exclude='node_modules' \
+    --exclude='*.mcpb' \
+    "$SOURCE/$dir/" "./$dir/"
+done
 
 for f in manifest.json package.json package-lock.json icon.png; do
   cp "$SOURCE/$f" "./$f"
