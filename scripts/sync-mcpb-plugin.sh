@@ -15,4 +15,12 @@ rsync -aL --delete --delete-excluded \
   --exclude='*.mcpb' \
   "$SOURCE" "$TARGET"
 
+mkdir -p "$TARGET/guidance/skills" "$TARGET/guidance/references"
+rsync -aL --delete \
+  --exclude='.DS_Store' \
+  "$REPO_ROOT/core/skills/cli/" "$TARGET/guidance/skills/"
+rsync -aL --delete \
+  --exclude='.DS_Store' \
+  "$REPO_ROOT/core/references/" "$TARGET/guidance/references/"
+
 echo "Synced $TARGET"
