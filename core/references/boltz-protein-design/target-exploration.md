@@ -181,20 +181,11 @@ config's crop (and site, if it had one) becomes the framing for the full run.
 ## Step 5 — size and submit the full run
 
 Carry the winning config's `crop_residues`/`epitope_residues` into a full-run
-payload. Suggest a run size and explain the tiers (Boltz lab platform
-conventions):
-
-| Tier | `num_proteins` | Use when |
-|---|---|---|
-| Small screen | 20,000 | Quick look / tight budget |
-| **Medium (recommended)** | **50,000** | Default for a real campaign |
-| Large | 100,000 | Hard target / maximal coverage |
-
-Recommend **50,000** unless the user signals otherwise. **These are large, costly
-runs** — at ≈$0.03–0.05/design a 50k run is on the order of thousands of dollars,
-so always run `estimate-cost`, show the exact `estimated_cost_usd`, and get
-explicit confirmation before `start`. Then submit and download per the main
-skill.
+payload, then size it per the main skill's **Run sizing** section (20k / 50k /
+100k tiers, default 50k). At ≈$0.03–0.05/design a 50k run is on the order of
+thousands of dollars, so always run `estimate-cost`, show the exact
+`estimated_cost_usd`, and get explicit confirmation before `start`. Then submit
+and download per the main skill.
 
 ## Step 6 — post-run yield readout
 

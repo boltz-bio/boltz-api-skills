@@ -29,12 +29,24 @@ Do not force exploration — it is opt-in. Some users know their target well and
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
 3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use `type: boltz_curated`; if they want custom scaffold control, use `type: structure_template`.
 4. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein` for `structure_template` and `no_template`. Do not include `modality` on `boltz_curated`; use `binder` instead.
-5. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
+5. Pick `num_proteins` — see [Run sizing](#run-sizing). **10** is the hard floor (server rejects lower), but it is a test size, not a campaign. When the user has not given a count, propose a campaign tier (default **50,000**), not the floor.
 6. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
 7. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure from `estimate-cost`.
 8. `start` to submit. Capture the ID.
 9. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
 10. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
+
+## Run sizing
+
+De novo design is a generate-and-filter campaign: you make many binders and keep the rare good ones, so a real run is **large**. Do not anchor on the `num_proteins` floor of 10 — that is only useful for a quick setup test. When the user names a count, honor it (≥10). When they do not, explain the tiers and propose one:
+
+| Tier | `num_proteins` | When |
+|---|---|---|
+| Small screen | 20,000 | Quick look / tight budget |
+| **Medium (recommended)** | **50,000** | Default for a real campaign |
+| Large | 100,000 | Hard target / maximal coverage |
+
+These are large, costly runs (cost scales with total complex length × count), so always run `estimate-cost`, show the exact `estimated_cost_usd`, and get explicit confirmation before `start` — never submit a campaign-size run on an assumed cost. If the setup is unproven, suggest validating it with a small test run (tens of designs) first, or the full [target-exploration](references/target-exploration.md) pass.
 
 ## Command Pattern
 
@@ -65,7 +77,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 
 ## Always Do This
 
-- Enforce `num_proteins >= 10` before calling `estimate-cost`. Server rejects anything lower.
+- Enforce `num_proteins >= 10` before calling `estimate-cost` (server rejects lower), but 10 is the floor, not a campaign — see [Run sizing](#run-sizing) and propose a tier (default 50,000) when the user gives no count.
 - Cost scales with total complex length (target + binder). Always quote `estimated_cost_usd` from `estimate-cost`. 
 - For antibody or nanobody design, recommend `binder_specification.type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
