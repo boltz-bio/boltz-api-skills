@@ -11,6 +11,17 @@ If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-
 
 Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
 
+### Offer target exploration first (new targets)
+
+Before authoring a payload, decide whether the user would benefit from scouting the target. If this is a **new target** and the user has **not** already fixed the crop, binding site, and binder spec, offer it:
+
+> "I can run a target-exploration pass first — it cheaply scouts a few framings of the target (≈50 designs each) and picks the best one before you commit to a full run. Or if you already know your target, site, and crop, we can design directly. Want the exploration pass?"
+
+- If the user opts in, read [references/target-exploration.md](references/target-exploration.md) and follow it. It returns a chosen framing (crop + optional epitope) and a recommended `num_proteins`; then resume at step 6 below to author and submit the full-run payload.
+- If the user already knows their setup or wants to move fast, skip exploration and continue with the steps below.
+
+Do not force exploration — it is opt-in. Some users know their target well and just want to design.
+
 1. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.
 2. Pick the `binder_specification` variant. Supported variants include:
    - `boltz_curated` — recommended default for antibody and nanobody design. Boltz selects from maintained scaffold/template lists (`binder: boltz_antibody` or `boltz_nanobody`).
