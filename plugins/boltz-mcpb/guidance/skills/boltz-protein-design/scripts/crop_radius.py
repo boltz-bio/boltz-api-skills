@@ -31,6 +31,21 @@ def parse_float_list(s):
     return [float(x) for x in s.replace(" ", "").split(",") if x != ""]
 
 
+def crop_within(pairs, site, radius):
+    """Indices kept within `radius` (all-atom) of any site residue; site always
+    kept. `pairs` is [(api_index, residue), ...]; `site` is a set of api indices.
+    """
+    by_idx = {idx: res for idx, res in pairs}
+    site_atoms = np.vstack([atom_coords(by_idx[s]) for s in site])
+    keep = []
+    for idx, res in pairs:
+        coords = atom_coords(res)
+        d2 = ((coords[:, None, :] - site_atoms[None, :, :]) ** 2).sum(-1)
+        if np.sqrt(d2.min()) < radius:
+            keep.append(idx)
+    return sorted(set(keep) | set(site))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -56,16 +71,8 @@ def main():
     if missing:
         sys.exit(f"error: site indices not present in chain {args.chain}: {missing}")
 
-    site_atoms = np.vstack([atom_coords(by_idx[s]) for s in site])
-    res_atoms = [(idx, atom_coords(res)) for idx, res in pairs]
-
     for r in radii:
-        keep = []
-        for idx, coords in res_atoms:
-            d2 = ((coords[:, None, :] - site_atoms[None, :, :]) ** 2).sum(-1)
-            if np.sqrt(d2.min()) < r:
-                keep.append(idx)
-        keep = sorted(set(keep) | site)
+        keep = crop_within(pairs, site, r)
         print(f"# radius {r:g} A: {len(keep)} residues kept")
         print(json.dumps(keep))
 

@@ -38,6 +38,19 @@ def load_bc(run_dir):
     return bc
 
 
+def summarize(bc):
+    """Yield-readout summary for a list of binding_confidence values."""
+    bc = sorted(bc, reverse=True)
+    n = len(bc)
+    return {
+        "n_designs": n,
+        "max_bc": bc[0],
+        "bc_10th": bc[9] if n >= 10 else None,
+        "frac_gt_0.01": sum(v > 0.01 for v in bc) / n,
+        "frac_gt_0.05": sum(v > 0.05 for v in bc) / n,
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -45,15 +58,8 @@ def main():
     ap.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     args = ap.parse_args()
 
-    bc = sorted(load_bc(args.run_dir), reverse=True)
-    n = len(bc)
-    summary = {
-        "n_designs": n,
-        "max_bc": bc[0],
-        "bc_10th": bc[9] if n >= 10 else None,
-        "frac_gt_0.01": sum(v > 0.01 for v in bc) / n,
-        "frac_gt_0.05": sum(v > 0.05 for v in bc) / n,
-    }
+    summary = summarize(load_bc(args.run_dir))
+    n = summary["n_designs"]
 
     if args.json:
         print(json.dumps(summary))

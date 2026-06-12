@@ -102,6 +102,19 @@ jobs:
       - name: Verify generated surfaces
         run: scripts/verify-generated.sh
 
+  test-exploration-scripts:
+    name: Test protein-design exploration scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install script dependencies
+        run: pip install -r core/skills/cli/boltz-protein-design/scripts/requirements.txt
+      - name: Run unit tests
+        run: python3 -m unittest discover -s core/skills/cli/boltz-protein-design/tests -v
+
   package-plugins:
     name: Package plugin artifacts
     runs-on: ubuntu-latest
