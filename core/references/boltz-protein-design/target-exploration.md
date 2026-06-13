@@ -21,8 +21,8 @@ run. If the user already knows their target, site, and crop, do **not** run this
 
 ## Mental model
 
-Hannes's procedure is best understood as a set of **axes** that frame the same
-target different ways. Each axis changes which target residues the model sees
+The exploration procedure is best understood as a set of **axes** that frame the
+same target different ways. Each axis changes which target residues the model sees
 and whether the binding site is pinned. We do **not** run the full Cartesian
 grid — that is wasteful. We trim termini once, then sample a sensible handful of
 framings, scout each cheaply at 50 designs, and let the yield pick the winner.
@@ -144,9 +144,10 @@ For large targets or unknown sites, discover where binders naturally dock:
    `A`; all other chains are treated as binder), greedily clusters footprints by
    Jaccard > 0.25, and prints a consensus site (0-based API indices) per
    cluster — the residues contacted by ≥2 designs in the cluster.
-3. For each discovered site, scout two configs: (a) site specified +
-   target cropped to ~35 Å around it, and (b) the same crop **without** the site
-   specified. Feed each consensus site back through `crop_radius.py`.
+3. For each discovered site, scout two configs **in parallel**: (a) site
+   specified + target cropped to ~35 Å around it, and (b) the same crop
+   **without** the site specified. Feed each consensus site back through
+   `crop_radius.py`.
 
 ## Step 3 — scout: 50 designs per config
 
@@ -159,8 +160,16 @@ Pattern**. Give each scout run a descriptive name, e.g.
 `scout-PD1-disorder`, `scout-PD1-baseline`), so the configs live together and
 are easy to compare.
 
-Submit the scout configs in parallel (each is its own background
-`download-results`, per the main skill). Do not block waiting on them.
+**Launch the scout configs in parallel** — do not finish one before starting the
+next. Submit each (`start`), then immediately background its `download-results`
+(per the main skill's Command Pattern) so every config runs on Boltz at the same
+time, and do not block waiting on any of them.
+
+The only ordering constraint is the scan: configs derived from `scan_sites.py`
+need the 200-design scan run's results first. So launch every independent config
+up front together — baseline, disorder cutout, radius crops, and the scan run
+itself — and once the scan downloads, launch its per-site configs in parallel
+too. Never run scouts one at a time.
 
 ## Step 4 — pick the winning config
 
