@@ -170,6 +170,14 @@ Pattern**. Give each scout run a descriptive name, e.g.
 `scout-PD1-disorder`, `scout-PD1-baseline`), so the configs live together and
 are easy to compare.
 
+Exploration spends money in **separate phases** (round-1 scouts, the scan, the
+post-scan per-site scouts, the full run), and each phase is its own submission.
+Apply the main skill's **spending gate to every phase**: show that phase's summed
+`estimate-cost` and get the user's explicit go-ahead before submitting it. Do
+**not** treat the overall plan you outlined, or an earlier phase's approval, as
+authorization for a later phase — and do not wave a phase through because it
+looks cheap. Outlining the phases is not the same as being told to run them.
+
 **Launch the scout configs in parallel** — do not finish one before starting the
 next. Submit each (`start`), then immediately background its `download-results`
 (per the main skill's Command Pattern) so every config runs on Boltz at the same
