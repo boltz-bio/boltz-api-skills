@@ -16,6 +16,7 @@ what kind of binder you design.
 - [Mental model: a grid we sample, not a full grid](#mental-model)
 - [Bundled scripts and dependency probe](#bundled-scripts-and-dependency-probe)
 - [Indexing contract (read before cropping)](#indexing-contract)
+- [Step 0 — what is the binder for?](#step-0--what-is-the-binder-for)
 - [Step 1 — trim unresolved N/C termini (always)](#step-1--trim-unresolved-nc-termini-always)
 - [Step 2 — choose which axes to scout](#step-2--choose-which-axes-to-scout)
 - [Step 3 — scout: 50 designs per config](#step-3--scout-50-designs-per-config)
@@ -81,6 +82,17 @@ into the payload with no offset arithmetic — do **not** reintroduce auth-numbe
 offsets. When in doubt, spot-check one or two mapped indices against the target
 sequence before submitting; viz confirmation is deferred to a later skill, so
 this sanity check is your guardrail.
+
+## Step 0 — what is the binder for?
+
+The user has engaged exploration, so first briefly establish **what they want the
+binder to do** — block a specific interaction/function, serve as a research or
+diagnostic tool, or just be any tractable binder against the target. This is a
+quick discussion (they know their biology), and it shapes the whole pass: which
+sites/domains are worth scouting, whether to specify a site, and how to weigh the
+winner later (a highly designable but off-purpose site may not be what they
+want). Carry that goal through to the
+[winner discussion](#step-4--pick-the-winning-config).
 
 ## Step 1 — trim unresolved N/C termini (always)
 
