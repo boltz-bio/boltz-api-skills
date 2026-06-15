@@ -135,6 +135,11 @@ batch.
 For large targets or unknown sites, discover where binders naturally dock:
 
 1. Submit **one 200-design run with no `epitope_residues`** (termini trimmed).
+   The scan uses 200 (not the 50 of a normal scout) because its job is to find
+   *where* binders dock and cluster those footprints reliably — too few designs
+   gives noisy clusters. A no-site full-target run is also the unbiased
+   **baseline**, so let this run serve both roles rather than paying for a
+   separate 50-design baseline.
 2. After download, cluster the top designs' contact footprints into candidate
    sites:
    ```bash
