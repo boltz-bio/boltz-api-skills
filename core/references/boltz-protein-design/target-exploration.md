@@ -142,9 +142,8 @@ fully — e.g. **every** domain, and with/without the site. Sensible defaults:
 
 Cover each applicable axis, but don't multiply axes into the full cross-product. Each config is 50 designs, but cost depends on the
 combined target+binder length and can differ per config as the crop changes
-size, so run `estimate-cost` on each config for the real number, sum the totals
-it returns, and confirm before submitting the batch. Don't estimate the cost
-yourself.
+size — `estimate-cost` each config, sum the totals, and apply the **spending
+gate** (main skill) before submitting the batch.
 
 ### scan
 
@@ -187,13 +186,10 @@ Pattern**. Give each scout run a descriptive name, e.g.
 `scout-PD1-disorder`, `scout-PD1-baseline`), so the configs live together and
 are easy to compare.
 
-Exploration spends money in **separate phases** (round-1 scouts, the scan, the
-post-scan per-site scouts, the full run), and each phase is its own submission.
-Apply the main skill's **spending gate to every phase**: show that phase's summed
-`estimate-cost` and get the user's explicit go-ahead before submitting it. Do
-**not** treat the overall plan you outlined, or an earlier phase's approval, as
-authorization for a later phase — and do not wave a phase through because it
-looks cheap. Outlining the phases is not the same as being told to run them.
+Exploration spends in **separate phases** — round-1 scouts, the scan, the
+post-scan scouts, the full run. Apply the main skill's **spending gate per
+phase**: an outlined plan or an earlier phase's approval is not authorization for
+the next.
 
 **Launch the scout configs in parallel** — do not finish one before starting the
 next. Submit each (`start`), then immediately background its `download-results`
@@ -236,11 +232,9 @@ discussion, not a recommendation either way.
 ## Step 5 — size and submit the full run
 
 Carry the winning config's `crop_residues`/`epitope_residues` into a full-run
-payload, then size it per the main skill's **Run sizing** section (20k / 50k /
-100k tiers, default 50k). A campaign-size run is a large spend, so run
-`estimate-cost`, show the exact `estimated_cost_usd` it returns (don't estimate
-it yourself), and get explicit confirmation before `start`. Then submit
-and download per the main skill.
+payload, then size it per the main skill's **Run sizing** (tiers as counts;
+`estimate-cost` the chosen tier — don't extrapolate across tiers) and apply the
+**spending gate** before `start`. Then submit and download per the main skill.
 
 ## Step 6 — post-run yield readout
 
