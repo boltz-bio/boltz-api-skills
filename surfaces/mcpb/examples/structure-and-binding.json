@@ -3,23 +3,26 @@
   "arguments": {
     "run_name": "example-structure-binding-v1",
     "payload": {
-      "entities": [
-        {
-          "type": "protein",
-          "chain_ids": ["A"],
-          "value": "MKTAYIAKQRQISFVKSHFSRQ"
+      "model": "boltz-2.1",
+      "input": {
+        "entities": [
+          {
+            "type": "protein",
+            "chain_ids": ["A"],
+            "value": "MKTAYIAKQRQISFVKSHFSRQ"
+          },
+          {
+            "type": "ligand_smiles",
+            "chain_ids": ["B"],
+            "value": "CCO"
+          }
+        ],
+        "binding": {
+          "type": "ligand_protein_binding",
+          "binder_chain_id": "B"
         },
-        {
-          "type": "ligand_smiles",
-          "chain_ids": ["B"],
-          "value": "CCO"
-        }
-      ],
-      "binding": {
-        "type": "ligand_protein_binding",
-        "binder_chain_id": "B"
-      },
-      "num_samples": 1
+        "num_samples": 1
+      }
     }
   }
 }
