@@ -233,11 +233,11 @@ to do, and let the user's goal drive the choice — they know their biology. Don
 crown a site on max bc alone.
 
 If **no** config clears ~0.55, say so honestly — but don't unilaterally call the
-target off, and don't switch the binder yourself. **Binder modality** (peptide /
-miniprotein / nanobody / antibody) is the user's call: if another modality might
-suit the target, raise it as an option, don't decide it. Lay out what you found
-and the choices — try a different site or modality, scale anyway, or stop — and
-let the user steer.
+target off. Like the site choice, **binder modality** (peptide / miniprotein /
+nanobody / antibody) is a discussion the user drives, not a switch you make
+yourself: suggest one if you have a view, but the call is theirs. Lay out what
+you found and the choices — try a different site or modality, scale anyway, or
+stop — and let the user steer.
 
 ## Step 5 — size and submit the full run
 
