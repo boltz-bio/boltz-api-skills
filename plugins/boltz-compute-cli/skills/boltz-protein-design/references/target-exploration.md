@@ -222,6 +222,17 @@ binding_confidence, and the fraction of designs with bc > 0.01 and > 0.05.
 Compare configs by max bc; report the others as supporting context. The winning
 config's crop (and site, if it had one) becomes the framing for the full run.
 
+Note that max binding_confidence ranks configs by **designability** — the
+framing the model finds easiest to bind — which is not always the
+**biologically useful** site: a non-functional domain or face can out-score the
+known functional epitope. When the top config isn't the functional / known-
+relevant site, don't just crown it — surface the tradeoff and **discuss it with
+the user**, who usually knows their target's biology. Lay the most-designable
+framing and the functional one side by side (max bc, yield, and what each site
+is) and let them steer; the right choice depends on their goal (a tractable
+binder anywhere vs. one that blocks a specific function). Present it as a
+discussion, not a recommendation either way.
+
 ## Step 5 — size and submit the full run
 
 Carry the winning config's `crop_residues`/`epitope_residues` into a full-run
