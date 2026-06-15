@@ -7,6 +7,10 @@ committing compute to a full design run, then hands back a chosen framing
 run. If the user already knows their target, site, and crop, do **not** run this
 — go straight back to authoring the full payload.
 
+These framing axes apply to **every binder modality** — peptide, miniprotein,
+nanobody, and antibody. The axes frame the *target*, so they are independent of
+what kind of binder you design.
+
 ## Contents
 
 - [Mental model: a grid we sample, not a full grid](#mental-model)
@@ -35,8 +39,8 @@ The axes:
 | **Disorder cutout** | Remove internal loopy/disordered stretches | `detect_disorder.py` |
 | **Crop radius** | Keep only residues near the site | `crop_radius.py` (10/15/25/30/35 Å) |
 | **Site specified or not** | Pin the epitope vs let the binder find it | include/omit `epitope_residues` |
-| **Domain** | Full target vs one domain at a time | ask the user → LLM fallback |
-| **Scan** (large/unknown site) | Discover where binders actually land | `scan_sites.py` |
+| **Domain** | Full target vs one domain at a time | fetch CATH/Pfam annotations online |
+| **Scan** (>300 aa **and** unknown site) | Discover where binders actually land | `scan_sites.py` |
 
 Why bother: unmodeled terminal residues add floppy overhang that hurts designs;
 binders frequently dock off-site and crop/epitope indices are easy to misread,
@@ -118,12 +122,12 @@ Pick a small set of framings — not the full grid. Sensible defaults:
    the site in `epitope_residues`, once **without** — pinning the site is not
    always better, so let the scout decide.
 4. **Domain** — if the site sits in one domain, or there is no site and the
-   target is multi-domain, scout individual domains as the target. Ask the user
-   for domain boundaries (or a CATH/Pfam reference) first; if they don't know,
-   propose boundaries from the target's identity and have them confirm. We do
-   not bundle a domain predictor — keep this axis manual.
-5. **Scan** — only if the target is **> 300 residues** or the binding site is
-   unknown. See [scan](#scan) below.
+   target is multi-domain, scout individual domains as the target. Try to fetch
+   domain annotations online — look the target up in CATH / Pfam / InterPro (by
+   its UniProt or PDB id) to get domain boundaries. If you cannot find domain
+   annotations, skip domain scouting unless the user explicitly asks for it.
+5. **Scan** — only if the target is **> 300 residues** **and** the binding site
+   is unknown. See [scan](#scan) below.
 
 Keep the config count modest. Each config is 50 designs; at ≈$0.03–0.05/design
 that is ≈$1.5–2.5 per config, so 4–6 configs is ≈$6–15 of scouting. Always run
@@ -132,10 +136,11 @@ batch.
 
 ### scan
 
-For large targets or unknown sites, discover where binders naturally dock:
+For a large target (> 300 residues) with an unknown binding site, discover where
+binders naturally dock:
 
-1. Submit **one 200-design run with no `epitope_residues`** (termini trimmed).
-   The scan uses 200 (not the 50 of a normal scout) because its job is to find
+1. Submit **one 100-design run with no `epitope_residues`** (termini trimmed).
+   The scan uses 100 (not the 50 of a normal scout) because its job is to find
    *where* binders dock and cluster those footprints reliably — too few designs
    gives noisy clusters. A no-site full-target run is also the unbiased
    **baseline**, so let this run serve both roles rather than paying for a
@@ -171,7 +176,7 @@ next. Submit each (`start`), then immediately background its `download-results`
 time, and do not block waiting on any of them.
 
 The only ordering constraint is the scan: configs derived from `scan_sites.py`
-need the 200-design scan run's results first. So launch every independent config
+need the 100-design scan run's results first. So launch every independent config
 up front together — baseline, disorder cutout, radius crops, and the scan run
 itself — and once the scan downloads, launch its per-site configs in parallel
 too. Never run scouts one at a time.

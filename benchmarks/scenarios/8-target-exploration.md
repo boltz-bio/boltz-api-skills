@@ -25,8 +25,8 @@ should bind. Help me set this up.
 1. **Offers** the target-exploration pass (new target, nothing pinned).
 2. On opt-in, reads `references/target-exploration.md` and follows it.
 3. Trims unresolved N/C termini before any crop.
-4. Recognizes target > 300 aa with unknown site → uses the **scan** path:
-   a no-site ~200-design run, then `scan_sites.py` to cluster footprints into
+4. Recognizes target > 300 aa **and** unknown site → uses the **scan** path:
+   a no-site ~100-design run, then `scan_sites.py` to cluster footprints into
    candidate sites, then per-site crop configs via `crop_radius.py`.
 5. Scouts each config at **50 designs**.
 6. Probes deps first (`python3 -c "import gemmi, numpy"`) and uses the bundled
