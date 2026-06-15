@@ -11,30 +11,24 @@ If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-
 
 Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
 
-### Offer target exploration first (new targets)
+1. **Decide on target exploration before anything else (new targets).** For a new target where the user has not already fixed the binding site and crop, your **first action is to offer the exploration pass** — do **not** jump ahead to authoring a payload, normalizing the target, or running `estimate-cost`. Committing a full run on a fresh target spends a lot on a single, unscouted framing that may steer binders to the wrong site; exploration scouts a few framings cheaply (≈50 designs each) and picks the best one first. Make the offer before continuing:
 
-Before authoring a payload, decide whether the user would benefit from scouting the target. If this is a **new target** and the user has **not** already fixed the crop, binding site, and binder spec, offer it:
+   > "I can run a target-exploration pass first — it cheaply scouts a few framings of the target (≈50 designs each) and picks the best one before committing to a full run. Or if you already know your target, site, and crop, we can design directly. Want the exploration pass?"
 
-> "I can run a target-exploration pass first — it cheaply scouts a few framings of the target (≈50 designs each) and picks the best one before you commit to a full run. Or if you already know your target, site, and crop, we can design directly. Want the exploration pass?"
-
-- If the user opts in, read [references/target-exploration.md](references/target-exploration.md) and follow it. It returns a chosen framing (crop + optional epitope) and a recommended `num_proteins`; then resume at step 6 below to author and submit the full-run payload.
-- If the user already knows their setup or wants to move fast, skip exploration and continue with the steps below.
-
-Do not force exploration — it is opt-in. Some users know their target well and just want to design.
-
-1. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.
-2. Pick the `binder_specification` variant. Supported variants include:
+   If the user opts in — **or has already said they want to explore / let the design find its own epitope** — read [references/target-exploration.md](references/target-exploration.md), follow it, then resume at step 8 with the chosen framing and recommended `num_proteins`. If they already know their setup or decline, continue below. Do not force exploration, but do not skip the offer either.
+2. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.
+3. Pick the `binder_specification` variant. Supported variants include:
    - `boltz_curated` — recommended default for antibody and nanobody design. Boltz selects from maintained scaffold/template lists (`binder: boltz_antibody` or `boltz_nanobody`).
    - `structure_template` — redesign motifs in an existing binder scaffold (CIF + `design_motifs` with `replacement` / `insertion` segments).
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
-3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use `type: boltz_curated`; if they want custom scaffold control, use `type: structure_template`.
-4. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein` for `structure_template` and `no_template`. Do not include `modality` on `boltz_curated`; use `binder` instead.
-5. Pick `num_proteins` — see [Run sizing](#run-sizing). **10** is the hard floor (server rejects lower), but it is a test size, not a campaign. When the user has not given a count, propose a campaign tier (default **50,000**), not the floor.
-6. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
-7. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure from `estimate-cost`.
-8. `start` to submit. Capture the ID.
-9. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
-10. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
+4. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use `type: boltz_curated`; if they want custom scaffold control, use `type: structure_template`.
+5. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein` for `structure_template` and `no_template`. Do not include `modality` on `boltz_curated`; use `binder` instead.
+6. Pick `num_proteins` — see [Run sizing](#run-sizing). **10** is the hard floor (server rejects lower), but it is a test size, not a campaign. When the user has not given a count, propose a campaign tier (default **50,000**), not the floor.
+7. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
+8. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. **Cost scales with total complex length** (target + binder), not just `num_proteins`. A small peptide + small target runs ≈$0.025 per design; larger complexes (e.g. GFP + 20-mer binder) run ≈$0.05 per design. Always quote the exact figure from `estimate-cost`.
+9. `start` to submit. Capture the ID.
+10. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
+11. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Run sizing
 
