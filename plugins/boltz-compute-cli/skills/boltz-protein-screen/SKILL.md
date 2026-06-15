@@ -62,7 +62,7 @@ Payload keys are `proteins`, `target` — API body field names.
 - After the background/session starts, do not wait on it or poll it. Wall-clock time scales roughly with the number of candidates in the library — ~100 or fewer usually finish in a few minutes, while thousands can take hours (exact time depends on the inputs and overall system load); don't quote a fixed duration. `--poll-interval-seconds 30` is a reasonable default. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. Never run a manual poll loop.
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
-- Cost scales with total complex length (target + candidate). Typically ≈$0.025 per submitted candidate for small complexes, more for larger ones. Quote the exact figure from `estimate-cost`.
+- Cost is tiered by total complex length (target + candidate); the combined length sets the tier. Do not state or estimate a dollar figure yourself — to say anything about cost, run `estimate-cost` and quote only the number it returns.
 
 ## Escape Hatch
 

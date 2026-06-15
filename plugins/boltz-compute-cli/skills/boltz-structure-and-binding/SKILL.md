@@ -83,6 +83,7 @@ boltz-api download-results \
 - Only check progress when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. Do not loop `retrieve` yourself.
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Poll interval: keep `--poll-interval-seconds 10` for SAB — predictions usually finish in under a few minutes.
+- Cost: there is no published per-unit rate to cite for SAB — run `estimate-cost` and state only the figure it returns. Don't estimate or editorialize cost.
 
 ## Escape Hatch
 

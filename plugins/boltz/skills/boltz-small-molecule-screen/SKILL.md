@@ -61,7 +61,7 @@ Payload keys are `molecules`, `target`, `molecule_filters` — the API body fiel
 - After the background/session starts, do not wait on it or poll it. `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - Only check status when the user asks. In Codex, poll the saved session with an empty `write_stdin`, or prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. Never run a manual poll loop.
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
-- Cost is approximately $0.025 per molecule for small targets (may scale with complex size). `estimate-cost` returns the authoritative quote — always use it.
+- Cost is a flat $0.025 per molecule (size-independent). `estimate-cost` returns the authoritative total — always use it.
 - Poll interval: `--poll-interval-seconds 30` is a reasonable default. Wall-clock time scales roughly with the number of molecules — ~100 or fewer usually finish in a few minutes, while thousands can take hours (exact time depends on the inputs and overall system load); don't quote a fixed duration.
 
 ## Escape Hatch

@@ -129,10 +129,11 @@ Pick a small set of framings — not the full grid. Sensible defaults:
 5. **Scan** — only if the target is **> 300 residues** **and** the binding site
    is unknown. See [scan](#scan) below.
 
-Keep the config count modest. Each config is 50 designs; at ≈$0.03–0.05/design
-that is ≈$1.5–2.5 per config, so 4–6 configs is ≈$6–15 of scouting. Always run
-`estimate-cost` on each config, sum the total, and confirm before submitting the
-batch.
+Keep the config count modest. Each config is 50 designs, but cost depends on the
+combined target+binder length and can differ per config as the crop changes
+size, so run `estimate-cost` on each config for the real number, sum the totals
+it returns, and confirm before submitting the batch. Don't estimate the cost
+yourself.
 
 ### scan
 
@@ -209,9 +210,9 @@ config's crop (and site, if it had one) becomes the framing for the full run.
 
 Carry the winning config's `crop_residues`/`epitope_residues` into a full-run
 payload, then size it per the main skill's **Run sizing** section (20k / 50k /
-100k tiers, default 50k). At ≈$0.03–0.05/design a 50k run is on the order of
-thousands of dollars, so always run `estimate-cost`, show the exact
-`estimated_cost_usd`, and get explicit confirmation before `start`. Then submit
+100k tiers, default 50k). A campaign-size run is a large spend, so run
+`estimate-cost`, show the exact `estimated_cost_usd` it returns (don't estimate
+it yourself), and get explicit confirmation before `start`. Then submit
 and download per the main skill.
 
 ## Step 6 — post-run yield readout
