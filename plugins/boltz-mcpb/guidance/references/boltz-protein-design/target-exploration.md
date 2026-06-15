@@ -218,16 +218,26 @@ binding_confidence, and the fraction of designs with bc > 0.01 and > 0.05.
 Compare configs by max bc; report the others as supporting context. The winning
 config's crop (and site, if it had one) becomes the framing for the full run.
 
-Note that max binding_confidence ranks configs by **designability** — the
-framing the model finds easiest to bind — which is not always the
-**biologically useful** site: a non-functional domain or face can out-score the
-known functional epitope. When the top config isn't the functional / known-
-relevant site, don't just crown it — surface the tradeoff and **discuss it with
-the user**, who usually knows their target's biology. Lay the most-designable
-framing and the functional one side by side (max bc, yield, and what each site
-is) and let them steer; the right choice depends on their goal (a tractable
-binder anywhere vs. one that blocks a specific function). Present it as a
-discussion, not a recommendation either way.
+As a rule of thumb, a max binding_confidence **above ~0.55** in a 50-design
+scout is a promising framing worth scaling; configs well below that are weak
+signal for that framing and binder.
+
+Max binding_confidence ranks by **designability** — where the model most easily
+gets a binder to stick — which may not be where the user *wants* one to stick.
+Which site matters depends on **why they want a binder** (to block a specific
+interaction/function, a research or diagnostic tool, or just any tractable
+binder against the target). When configs hit different sites and the most
+designable one isn't clearly the right one, treat the pick as a **discussion**:
+lay out which site each config hits and its yield, confirm what the binder needs
+to do, and let the user's goal drive the choice — they know their biology. Don't
+crown a site on max bc alone.
+
+If **no** config clears ~0.55, say so honestly — but don't unilaterally call the
+target off, and don't switch the binder yourself. **Binder modality** (peptide /
+miniprotein / nanobody / antibody) is the user's call: if another modality might
+suit the target, raise it as an option, don't decide it. Lay out what you found
+and the choices — try a different site or modality, scale anyway, or stop — and
+let the user steer.
 
 ## Step 5 — size and submit the full run
 
