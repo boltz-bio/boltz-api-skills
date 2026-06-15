@@ -22,7 +22,7 @@ should bind. Help me set this up.
 ```
 
 ### Expected behavior
-1. **Offers** the target-exploration pass (new target, nothing pinned).
+1. **Offers** the target-exploration pass (new target, nothing specified yet).
 2. On opt-in, reads `references/target-exploration.md` and follows it.
 3. Trims unresolved N/C termini before any crop.
 4. Recognizes target > 300 aa **and** unknown site → uses the **scan** path:

@@ -27,12 +27,12 @@ what kind of binder you design.
 
 The exploration procedure is best understood as a set of **axes** that frame the
 same target different ways. Each axis changes which target residues the model sees
-and whether the binding site is pinned. Don't take the full Cartesian *product*
+and whether the binding site is specified. Don't take the full Cartesian *product*
 of the axes, and for a **multi-valued** axis like crop radius sample only a
 couple of values (not all five) — that product/radius blow-up is the thing to
 guard against. Every **categorical** axis should be *covered*, not sampled:
-scout **all** the domains (not a favourite few), and both site-pinned and
-unpinned. Trim termini once, scout each framing cheaply at 50 designs, and let
+scout **all** the domains (not a favourite few), and both with and without the
+site specified. Trim termini once, scout each framing cheaply at 50 designs, and let
 the yield pick the winner.
 
 The axes:
@@ -42,7 +42,7 @@ The axes:
 | **Termini** (always) | Drop floppy unmodeled N/C overhang | First/last resolved residue |
 | **Disorder cutout** | Remove internal loopy/disordered stretches | `detect_disorder.py` |
 | **Crop radius** | Keep only residues near the site | `crop_radius.py` (10/15/25/30/35 Å) |
-| **Site specified or not** | Pin the epitope vs let the binder find it | include/omit `epitope_residues` |
+| **Site specified or not** | Specify the epitope, or let the binder find its own site | include/omit `epitope_residues` |
 | **Domain** | Full target vs one domain at a time | fetch CATH/Pfam annotations online |
 | **Scan** (>300 aa **and** unknown site) | Discover where binders actually land | `scan_sites.py` |
 
@@ -63,7 +63,7 @@ python3 -c "import gemmi, numpy" && echo DEPS_OK
 ```
 
 If that prints `DEPS_OK`, run the scripts with `python3` directly. If it errors,
-install the bundled pin into a throwaway venv and use that interpreter:
+install the bundled requirements into a throwaway venv and use that interpreter:
 
 ```bash
 python3 -m venv /tmp/boltz-explore-venv
@@ -126,7 +126,7 @@ fully — e.g. **every** domain, and with/without the site. Sensible defaults:
    ```
    `--site` takes 0-based API indices. For each radius it prints the kept
    `crop_residues`. Run each radius **twice** as separate configs: once **with**
-   the site in `epitope_residues`, once **without** — pinning the site is not
+   the site in `epitope_residues`, once **without** — specifying the site is not
    always better, so let the scout decide.
 4. **Domain** — if there is no known site and the target is multi-domain, scout
    **every annotated domain in parallel**, each isolated as its own target config
@@ -180,7 +180,7 @@ Run both — don't let the scan stand in for the per-domain comparison.
 
 Each chosen config is a normal `protein:design` submission with
 `num_proteins: 50` and that config's `crop_residues` (and `epitope_residues`
-when the config pins the site). Author each payload, `estimate-cost`, confirm
+when the config specifies the site). Author each payload, `estimate-cost`, confirm
 the summed cost, then submit and download per the main skill's **Command
 Pattern**. Give each scout run a descriptive name, e.g.
 `scout-<target>-<axis>-<variant>` (`scout-PD1-r25-site`, `scout-PD1-r25-nosite`,
