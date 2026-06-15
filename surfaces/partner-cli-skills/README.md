@@ -1,6 +1,6 @@
 # partner-cli-skills
 
-A self-contained, agent-agnostic skill bundle for the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) CLI. Six workflow skills cover the Boltz Compute API endpoints; each skill is prose plus per-endpoint schema references.
+A self-contained, agent-agnostic skill bundle for the [`boltz-api`](https://api.boltz.bio/docs/api/cli/) CLI. Six workflow skills cover the Boltz Compute API endpoints; each skill is prose plus per-endpoint schema references.
 
 This bundle is intended for partner companies who want to bring Boltz capabilities to their own agent harness. It makes no assumptions about which harness is hosting the skill — there are no Bash-tool-specific or shell-session-specific instructions.
 
@@ -55,7 +55,7 @@ Every `boltz-api` command resolves this from the environment. If a command fails
 
 ## Output layout
 
-Results land in `$BOLTZ_OUTPUT_DIR/$RUN_NAME/` (or `$PWD/boltz-experiments/$RUN_NAME/` if the env var is unset). `$RUN_NAME` is a short descriptive slug the agent picks at submit time and re-uses on `download-results`. Re-running the same `download-results` command with the same `--name` resumes from the local checkpoint.
+Results land in `<output-root>/$RUN_NAME/`, where `<output-root>` is the absolute path passed to `download-results --root-dir`. If `--root-dir` is omitted, the CLI defaults to `boltz-experiments` under the command's starting directory. `$RUN_NAME` is a short descriptive slug the agent picks at submit time and re-uses on `download-results`. Re-running the same `download-results` command with the same `--name` resumes from the local checkpoint.
 
 ## Lifecycle
 
@@ -71,6 +71,6 @@ Each `start`-family skill follows the same flow:
 
 If an agent encounters a payload field not covered in `references/api.md`, the upstream sources of truth are:
 
-- Payload shapes: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- API guides and payload examples: <https://api.boltz.bio/docs>
+- Python SDK/API reference: <https://api.boltz.bio/docs/api/python/>
 - CLI flags: `boltz-api <resource> start --help` (flag names only — not a schema source)

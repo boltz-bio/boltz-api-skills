@@ -61,13 +61,9 @@ Open placeholders in `plugin.json`:
 
 These don't block local testing but will show up in the Codex plugin picker — fill them before a public listing.
 
-### - [ ] docs.boltz.bio escape-hatch URLs actually resolve
+### - [x] API docs escape-hatch URLs resolve
 
-Every `references/api.md` footer points at:
-- `https://docs.boltz.bio/api-reference/api-input-format.md`
-- `https://docs.boltz.bio/api-reference/openapi.json`
-
-We confirmed the `llms.txt` index lists these paths but didn't personally fetch each target to verify content quality for an agent trying to grok an undocumented field. WebFetch each, confirm the schema content is actually useful.
+Use current `https://api.boltz.bio/docs` guide links and per-resource Python reference links under `https://api.boltz.bio/docs/api/python/`. The legacy Lab-docs API-reference paths are not the public API docs surface.
 
 ### - [ ] Codex trigger smoke test
 
@@ -118,9 +114,9 @@ CLI_USAGE §8.4 warns `--transform '#.{a,b}'` silently returns `{}`. We tell age
 
 CLI_USAGE §8.2 notes `@./model.txt` on a scalar flag includes the trailing newline and fails enum validation (`echo 'boltz-2.1' > model.txt; --model @./model.txt` → rejected). We don't use `@./` anywhere (skills use literals for `--model`), so this is only relevant if an agent invents the pattern. Low priority.
 
-### - [ ] `BOLTZ_COMPUTE_OUTPUT_DIR` env var name
+### - [x] Output root override
 
-We picked `BOLTZ_COMPUTE_OUTPUT_DIR` to match the CLI's `BOLTZ_COMPUTE_*` namespace. The old Python skills used `BOLTZ_OUTPUT_DIR`. If the CLI team has an opinion on the name, align with theirs; this is a one-line grep-and-replace across the plugin.
+The CLI exposes `--root-dir`; the CLI-backed skills should pass that flag explicitly instead of documenting an output-directory env var that the CLI does not read.
 
 ### - [ ] `results/<pres_*>/files/result/` layout is consistent
 

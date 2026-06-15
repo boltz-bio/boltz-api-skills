@@ -1,12 +1,12 @@
 # boltz-compute-cli (Codex plugin)
 
-Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-cli-setup` covers CLI setup.
+Seven Codex skills that drive the [`boltz-api`](https://api.boltz.bio/docs/api/cli/) Go CLI for the Boltz API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-cli-setup` covers CLI setup.
 
 ## Prerequisites
 
 - `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.7.0`)
 - Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY` exported in the environment
-- Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments/` from the command's starting directory.
+- Choose an absolute output root and pass it with `--root-dir`; otherwise the CLI writes under `boltz-experiments` from the command's starting directory.
 
 The skills assume the CLI is already configured. If a command fails because auth is missing or expired, the agent should run `boltz-api auth login --device-code` on the user's behalf before retrying.
 If the host sandbox blocks installer temp files, OAuth browser login, credential storage, or the user-wide install path, request the host sandbox bypass/escalation needed to install and authenticate `boltz-api` in the user's real environment.
@@ -74,7 +74,7 @@ Each `start`-family skill follows the same flow:
 
 Do not use shell `&`, terminal backgrounding, or `nohup` for `download-results` in Codex. Those detach mechanisms can be cleaned up by the tool runner before `.boltz-run.json` is fully written. Use Codex's managed long-running shell session instead.
 
-Results land in `$ROOT/$RUN_NAME/` where `$ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-$PWD/boltz-experiments}` and `$RUN_NAME` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). Keep `$ROOT` absolute and do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` instead. Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
+Results land in `$ROOT/$RUN_NAME/` where `$ROOT` is the absolute path passed with `--root-dir` and `$RUN_NAME` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). If `--root-dir` is omitted, the CLI defaults to `boltz-experiments` under the command's starting directory. Keep `$ROOT` absolute and do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; keep passing `--root-dir "$ROOT"` instead. Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
 
 ## Why use the CLI variant
 
@@ -86,6 +86,6 @@ Results land in `$ROOT/$RUN_NAME/` where `$ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-$P
 
 If an agent hits a schema it doesn't recognize, the canonical upstream refs are:
 
-- Payload shapes: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- API guides and payload examples: <https://api.boltz.bio/docs>
+- Python SDK/API reference: <https://api.boltz.bio/docs/api/python/>
 - CLI flags: `boltz-api <resource> start --help` (flag names only — the help text is not a schema source)

@@ -28,4 +28,4 @@ it is available on `PATH`.
 - `boltz-api` on `PATH`
 - Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY`
   exported in the environment
-- Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land
+- Choose an absolute output root and pass it with `--root-dir` when downloading results

@@ -47,7 +47,7 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 |---|---|---|
 | Workflow | `SKILL.md` (~70 lines) | Every invocation |
 | Schema | `references/api.md` (~200 lines) | When authoring payload |
-| Upstream | `docs.boltz.bio/api-reference/*.md` + `openapi.json` | Fallback for undocumented fields |
+| Upstream | `api.boltz.bio/docs` guides + Python API reference | Fallback for undocumented fields |
 
 `boltz-api <resource> start --help` exists as a fourth fallback but is not a schema source — we verified live that it only lists flag names and types, nothing about the shape of `--input` / `--target` / `--binder-specification` objects.
 
@@ -64,11 +64,11 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 
 Alternative considered: use the server-assigned job ID as `--name`. Rejected because it's opaque, can only be known post-submit, and loses the "pre-submit dir is predictable" property.
 
-### 6. Output dir: `${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}`
+### 6. Output dir: explicit `--root-dir`
 
-**Chose:** project-local default. Matches the CLI's own default.
+**Chose:** each workflow picks an absolute `$ROOT` and passes it through `--root-dir`.
 
-**Trade:** artifacts live under whatever CWD the user is in; a user who runs Codex from many project dirs has results scattered. **Gain:** matches the CLI's native default (surprising users less), keeps results inside project repos by default, easily overridden via env var. The env var is resolved by the skill (CLI doesn't honor it natively) and passed as `--root-dir` explicitly.
+**Trade:** the agent must choose or reuse one path. **Gain:** this uses the CLI-supported override directly, keeps follow-up commands deterministic, and avoids documenting an env var that the CLI does not read.
 
 ### 7. Managed `download-results`, never agent-side polling
 

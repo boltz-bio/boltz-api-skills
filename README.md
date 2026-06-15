@@ -164,7 +164,7 @@ Extensions -> Advanced settings -> Install Extension.
 
 All surfaces need:
 - Authentication via either `boltz-api auth login --device-code` or `BOLTZ_API_KEY` as an API-key fallback.
-- `BOLTZ_COMPUTE_OUTPUT_DIR` optional. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments` from the command's starting directory.
+- Choose an absolute output root and pass it with `--root-dir`; otherwise the CLI writes under `boltz-experiments` from the command's starting directory.
 - `boltz-api` on `PATH`
 
 If an agent sandbox blocks installer temp files, OAuth browser login, credential storage, or the user-wide install path, request the host sandbox bypass/escalation needed to install and authenticate `boltz-api` in the user's real environment.
