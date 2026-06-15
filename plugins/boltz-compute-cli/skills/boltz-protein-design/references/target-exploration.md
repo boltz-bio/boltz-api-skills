@@ -135,8 +135,7 @@ fully — e.g. **every** domain, and with/without the site. Sensible defaults:
    multi-domain crop buries each domain's signal, so domains must be compared
    head-to-head in isolation. Fetch domain boundaries online (CATH / Pfam /
    InterPro / UniProt by id). If none are found, skip this axis unless the user
-   asks; if there are many domains (say >6), state the scout cost and confirm
-   before launching them all.
+   asks.
 5. **Scan** — only if the target is **> 300 residues** **and** the binding site
    is unknown. See [scan](#scan) below.
 
