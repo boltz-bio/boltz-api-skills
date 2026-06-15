@@ -27,9 +27,13 @@ what kind of binder you design.
 
 The exploration procedure is best understood as a set of **axes** that frame the
 same target different ways. Each axis changes which target residues the model sees
-and whether the binding site is pinned. We do **not** run the full Cartesian
-grid — that is wasteful. We trim termini once, then sample a sensible handful of
-framings, scout each cheaply at 50 designs, and let the yield pick the winner.
+and whether the binding site is pinned. Don't take the full Cartesian *product*
+of the axes, and for a **multi-valued** axis like crop radius sample only a
+couple of values (not all five) — that product/radius blow-up is the thing to
+guard against. Every **categorical** axis should be *covered*, not sampled:
+scout **all** the domains (not a favourite few), and both site-pinned and
+unpinned. Trim termini once, scout each framing cheaply at 50 designs, and let
+the yield pick the winner.
 
 The axes:
 
@@ -94,7 +98,10 @@ API index, but reading the CIF directly is fine.
 
 ## Step 2 — choose which axes to scout
 
-Pick a small set of framings — not the full grid. Sensible defaults:
+Cover each axis that applies — don't pre-judge which framing will win. The only
+places to hold back: sample ~2 crop radii rather than all five, and don't
+multiply axes together into the full cross-product. Otherwise explore each axis
+fully — e.g. **every** domain, and with/without the site. Sensible defaults:
 
 1. **Baseline** — full target, termini trimmed, design spec as given.
 2. **Disorder cutout** — if the target has internal disordered/loopy regions,
@@ -121,15 +128,19 @@ Pick a small set of framings — not the full grid. Sensible defaults:
    `crop_residues`. Run each radius **twice** as separate configs: once **with**
    the site in `epitope_residues`, once **without** — pinning the site is not
    always better, so let the scout decide.
-4. **Domain** — if the site sits in one domain, or there is no site and the
-   target is multi-domain, scout individual domains as the target. Try to fetch
-   domain annotations online — look the target up in CATH / Pfam / InterPro (by
-   its UniProt or PDB id) to get domain boundaries. If you cannot find domain
-   annotations, skip domain scouting unless the user explicitly asks for it.
+4. **Domain** — if there is no known site and the target is multi-domain, scout
+   **every annotated domain in parallel**, each isolated as its own target config
+   (50 designs). Do **not** pre-pick the "known functional" domain or scout just a
+   couple, and do **not** let a whole-ectodomain scan stand in for this — a big
+   multi-domain crop buries each domain's signal, so domains must be compared
+   head-to-head in isolation. Fetch domain boundaries online (CATH / Pfam /
+   InterPro / UniProt by id). If none are found, skip this axis unless the user
+   asks; if there are many domains (say >6), state the scout cost and confirm
+   before launching them all.
 5. **Scan** — only if the target is **> 300 residues** **and** the binding site
    is unknown. See [scan](#scan) below.
 
-Keep the config count modest. Each config is 50 designs, but cost depends on the
+Cover each applicable axis, but don't multiply axes into the full cross-product. Each config is 50 designs, but cost depends on the
 combined target+binder length and can differ per config as the crop changes
 size, so run `estimate-cost` on each config for the real number, sum the totals
 it returns, and confirm before submitting the batch. Don't estimate the cost
@@ -139,6 +150,11 @@ yourself.
 
 For a large target (> 300 residues) with an unknown binding site, discover where
 binders naturally dock:
+
+On a multi-domain target the scan is **complementary** to the per-domain sweep,
+not a replacement: it shows where binders dock across the whole ectodomain, but
+designability is still compared by scouting each domain in isolation (axis 4).
+Run both — don't let the scan stand in for the per-domain comparison.
 
 1. Submit **one 100-design run with no `epitope_residues`** (termini trimmed).
    The scan uses 100 (not the 50 of a normal scout) because its job is to find
