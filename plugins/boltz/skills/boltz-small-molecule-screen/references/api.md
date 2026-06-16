@@ -135,6 +135,8 @@ custom_filters:
     allow_single_violation: true   # optional
 ```
 
+All four caps (`max_mw`, `max_logp`, `max_hbd`, `max_hba`) are **required together** — only `allow_single_violation` is optional. For a partial cap (e.g. MW + logP only), use `rdkit_descriptor_filter`, whose descriptor keys are independently optional; a partial `lipinski_filter` is rejected with a confusing union error.
+
 ### `rdkit_descriptor_filter`
 
 ```yaml

@@ -3,3 +3,6 @@ __pycache__/
 *.py[cod]
 .DS_Store
 debugging_log.md
+
+# headless skill-testing artifacts
+.debug-headless/
