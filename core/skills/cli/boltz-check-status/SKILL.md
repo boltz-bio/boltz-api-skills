@@ -64,7 +64,7 @@ boltz-api download-results \
 - Prefer the agent runtime's background/non-blocking command mode for `download-results`. In Codex specifically, keep `download-results` in the foreground and set the shell tool yield to 1000 ms; Codex will return a `session_id` if the command is still running. Do not append `&` or use `nohup` in Codex because the tool runner may clean up shell-backgrounded descendants before `.boltz-run.json` is fully written.
 - After the background/session starts, do not wait on it or poll it. Report the job ID, run name, output directory, and that the runtime should notify when the background command completes.
 - `download-results` now emits machine-readable JSONL progress on stderr by default. Add `--progress-format text --verbose` only when you explicitly want human-readable logs.
-- Only check progress when the user asks. Prefer `download-status` for local checkpoint state or, in Codex, poll the saved session with an empty `write_stdin` to read JSONL stderr if the session is still running. Don't loop `retrieve` unless the user wants fresh remote status.
+- Only check status when the user asks. Prefer `download-status` for local checkpoint state or, in Codex, poll the saved session with an empty `write_stdin` to read JSONL stderr if the session is still running. Don't loop `retrieve` unless the user wants fresh remote status.
 - If `retrieve` surfaces only `{"code":"VALIDATION_ERROR","message":"Request validation failed"}` with no `details`, that's expected for `predictions:structure-and-binding` failures — other endpoints include field paths.
 - Never run `start` again on a failed or interrupted job. Fix the payload and submit with a new `idempotency-key`, or just resume with `download-results`.
 
