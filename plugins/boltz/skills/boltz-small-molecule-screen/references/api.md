@@ -213,7 +213,7 @@ Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadat
 - `metrics.structure_confidence`
 - `metrics.complex_plddt`, `metrics.complex_iplddt`
 - `metrics.iptm`, `metrics.ptm`
-- `adme` — Tier-1 ADME triage, returned **free** with every screen (sibling of `metrics`, not nested in it). Object with `solubility` (categorical: `high-confidence` / `medium-confidence` / `high-risk`), `permeability` (numeric score), and `lipophilicity` (numeric LogD). May be absent on a failed molecule. Summary judgements for triage/ranking, not absolute measurements.
+- `adme` — Tier-1 ADME triage, returned **free** with every screen (sibling of `metrics`, not nested in it). Object with `solubility` (categorical: `high-confidence` / `medium-confidence` / `high-risk`), `permeability` (numeric score), and `lipophilicity` (numeric LogD). May be absent on a failed molecule. Approximate estimates for triage/ranking, not absolute measurements.
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
 - `warnings` — any server warnings for this molecule
 
