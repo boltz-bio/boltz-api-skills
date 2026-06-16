@@ -15,7 +15,7 @@ Use this skill for standalone ADME triage on SMILES the user already has. No pro
 2. **Hard cap: 128 molecules per request.** If the list exceeds 128, split into batches of ≤128 and submit one request per batch (suffix the run name, for example `-b1`, `-b2`), then merge results. Never send more than 128 in one call — the API rejects it with `VALIDATION_ERROR: input.molecules must contain at most 128 items`.
 3. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. ADME is priced at **$0.01 per molecule** (size-independent); `estimate-cost` returns the authoritative total — always quote it.
 4. `run` to submit and wait — ADME finishes in seconds, so it is synchronous and needs no background polling. `run` persists results locally under `--root-dir/<run-name>/`.
-5. Report from `<output-root>/<run-name>/run.json` → `output.molecules[]`. For each molecule show `external_id` (or `smiles`), `solubility`, `permeability`, and `lipophilicity`. Call out any molecule with `status: failed` and its `error` (for example `invalid_smiles`); one bad SMILES fails only that molecule, not the batch. Read [references/api.md](references/api.md) for the payload, output shape, and batching details.
+5. Report from `<output-root>/<run-name>/run.json` → `output.molecules[]`. For each molecule show `external_id` (or `smiles`), `solubility`, `permeability`, and `lipophilicity`. The three values live under each molecule's `adme` object. Call out any molecule with `status: failed` and its `error` (an object `{code, message}`, e.g. code `adme_enumeration_failed`, message `Invalid SMILES`) — `adme` is `null` there; one bad SMILES fails only that molecule, not the batch. Read [references/results.md](references/results.md) for the output layout and [references/api.md](references/api.md) for the payload and batching details.
 
 ADME values are approximate estimates for triage and ranking, not absolute measurements.
 
@@ -66,4 +66,4 @@ Read [references/api.md](references/api.md) for the `molecules` payload shape, t
 
 ## Outputs
 
-Read `<output-root>/<run-name>/run.json` and report `output.molecules[]`. There are no structure files — ADME returns scalar/categorical values only. Use [references/api.md](references/api.md) for the exact output schema.
+Read `<output-root>/<run-name>/run.json` and report `output.molecules[]`. There are no structure files — ADME returns scalar/categorical values only. Read [references/results.md](references/results.md) for the local layout and per-molecule output fields; [references/api.md](references/api.md) has the full request/response schema.
