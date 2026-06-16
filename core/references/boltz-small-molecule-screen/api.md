@@ -188,7 +188,7 @@ Any molecule whose SMILES matches any regex is rejected.
 
 ## Cost
 
-Cost is quoted by `estimate-cost` on the exact payload. For small targets it is typically around $0.025 per submitted molecule, but filters applied pre-scoring can reduce the scored count and pricing can change; always report `estimated_cost_usd` from the response.
+Cost is a flat **$0.025 per scored molecule** (size-independent — the per-molecule rate does not change with target or molecule size). `estimate-cost` returns the authoritative total — always report `estimated_cost_usd`. Note: pre-scoring `molecule_filters` can reduce how many molecules are scored, which lowers the total (fewer units priced), but the per-molecule rate itself is fixed.
 
 ## Outputs (after `download-results`)
 

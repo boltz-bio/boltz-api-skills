@@ -61,7 +61,7 @@ The server rejects `num_molecules < 10` or `> 1000000` with `VALIDATION_ERROR`. 
 
 ## Cost
 
-Cost is quoted by `estimate-cost` on the exact payload. For small targets it is typically around $0.025 per requested molecule, but the API does not document a stable formula and pricing may scale with complex size. Always report `estimated_cost_usd` from the response rather than a hardcoded per-molecule rate.
+Cost is a flat **$0.025 per molecule** (size-independent — verified against `estimate-cost`: the per-unit rate does not change with target or molecule size). `estimate-cost` returns the authoritative total — always report `estimated_cost_usd`.
 
 ## `chemical_space`
 

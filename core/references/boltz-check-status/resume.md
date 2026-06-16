@@ -6,14 +6,14 @@ Read this when the user wants to resume a dropped session, recover results by jo
 
 Use these observed prefixes to route `retrieve` calls. If a prefix is unfamiliar, fall back to probing all six resources.
 
-- `sab_pred_*` -> `prediction` (`predictions:structure-and-binding`); legacy `pred_*` IDs are still supported
+- `sab_pred_*` -> `predictions:structure-and-binding` (legacy `pred_*` IDs are still supported)
 - `adme_pred_*` -> `predictions:adme` (`list` / `retrieve` only — no `download-results`; results in `output.molecules[]`)
-- `prot_des_*` -> `protein_design_ppi`
-- `prot_scr_*` -> `protein_library_screen_ppi`
-- `sm_des_*` -> `boltz_sm_design`
-- `sm_scr_*` -> `boltz_sm_screen`
+- `prot_des_*` -> `protein:design`
+- `prot_scr_*` -> `protein:library-screen`
+- `sm_des_*` -> `small-molecule:design`
+- `sm_scr_*` -> `small-molecule:library-screen`
 
-This mapping is observational, not a guaranteed API contract.
+The right-hand side is the CLI resource you pass to `retrieve` — this table matches the one in `api.md`. Prefixes are verified against the live API but are not a guaranteed contract; if one is unfamiliar, probe all six resources.
 
 ## Local Downloader State
 

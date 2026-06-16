@@ -69,7 +69,7 @@ Server rejects `num_proteins < 10` or `> 1000000` with `VALIDATION_ERROR`. Valid
 
 ## Cost
 
-Cost is tiered by **total complex length** (target crop + binder), not flat per design, and both the target crop and the designed binder count toward the length — so the tier is easy to misjudge. `estimate-cost` returns `breakdown.{application, cost_per_unit_usd, num_units}` — `num_units` equals `num_proteins`, and the complex-length effect rides in `cost_per_unit_usd` (e.g. a small target estimates ~$0.025/design, a large one materially more). It is the **only** source to use: quote `estimated_cost_usd` from it and never compute, estimate, or state a cost yourself.
+Cost is tiered by **total complex length** (target crop + binder), not flat per design, and both the target crop and the designed binder count toward the length — so the tier is easy to misjudge. `estimate-cost` returns `breakdown.{application, cost_per_unit_usd, num_units}` — `num_units` equals `num_proteins`, and the complex-length effect rides in `cost_per_unit_usd` (small targets cost less per design, large ones materially more). It is the **only** source to use: quote `estimated_cost_usd` from it and never compute, estimate, or state a cost yourself.
 
 ## `binder_specification` — variant 1: `boltz_curated`
 

@@ -238,7 +238,7 @@ Token variants: `polymer_contact {chain_id, residue_index}` or `ligand_contact {
 
 ## Cost
 
-Cost scales with total complex length (target + candidate). Typically ≈$0.025 per candidate for small complexes, more for larger ones. `estimate-cost` on the full payload gives the authoritative quote — do not hardcode a flat per-candidate rate.
+Cost is tiered by **total complex length** (target + candidate), so there is no flat per-candidate rate to cite — it changes with size. Run `estimate-cost` on the full payload and quote only the `estimated_cost_usd` it returns; do not state or estimate a dollar figure yourself.
 
 ## Outputs (after `download-results`)
 
