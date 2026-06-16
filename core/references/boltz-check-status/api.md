@@ -37,7 +37,7 @@ Common columns across resources:
 
 - `id` — the job ID
 - ID prefixes identify the resource family:
-  - `sab_pred_*` → `predictions:structure-and-binding`
+  - `sab_pred_*` → `predictions:structure-and-binding` (legacy `pred_*` IDs are still supported)
   - `prot_des_*` → `protein:design`
   - `prot_scr_*` → `protein:library-screen`
   - `sm_des_*` → `small-molecule:design`

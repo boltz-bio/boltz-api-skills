@@ -6,7 +6,7 @@ Read this when the user wants to resume a dropped session, recover results by jo
 
 Use these observed prefixes to route `retrieve` calls. If a prefix is unfamiliar, fall back to probing all five resources.
 
-- `sab_pred_*` -> `prediction` (`predictions:structure-and-binding`)
+- `sab_pred_*` -> `prediction` (`predictions:structure-and-binding`); legacy `pred_*` IDs are still supported
 - `prot_des_*` -> `protein_design_ppi`
 - `prot_scr_*` -> `protein_library_screen_ppi`
 - `sm_des_*` -> `boltz_sm_design`
