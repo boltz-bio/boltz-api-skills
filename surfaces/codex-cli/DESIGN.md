@@ -66,9 +66,9 @@ Alternative considered: use the server-assigned job ID as `--name`. Rejected bec
 
 ### 6. Output dir: CLI default `./boltz-experiments`, override with `--root-dir`
 
-**Chose:** lean on the CLI's own default. No skill-level env var.
+**Chose:** lean on the CLI's own default. Results land in `boltz-experiments/` under the working directory; to write them elsewhere, the agent passes `--root-dir` (e.g. when the user names a fixed location).
 
-**Trade:** artifacts live under whatever CWD the user is in; a user who runs Codex from many project dirs has results scattered. **Gain:** matches the CLI's native default (surprising users less), keeps results inside project repos by default, and a user who wants a fixed location passes `--root-dir` (or asks the agent to). An earlier `BOLTZ_COMPUTE_OUTPUT_DIR` convention was dropped — the CLI doesn't honor it, so resolving it skill-side was an extra moving part with no payoff.
+**Trade:** artifacts live under whatever CWD the user is in, so running Codex from many project dirs scatters results. **Gain:** matches the CLI's native default (fewer surprises) and keeps results inside the project repo by default.
 
 ### 7. Managed `download-results`, never agent-side polling
 
