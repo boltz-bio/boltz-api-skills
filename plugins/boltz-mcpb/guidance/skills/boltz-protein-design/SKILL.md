@@ -11,15 +11,15 @@ If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-
 
 Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
 
-1. **Decide on target exploration first (new targets).** For a new target where the user hasn't already fixed the binding site and crop, your first action — before authoring a payload, normalizing the target, or running `estimate-cost` — is to raise the choice between a target-exploration pass and designing directly, with a **genuine recommendation** for this target:
-   - Unknown site, or a multi-domain / large target → recommend exploration (it cheaply scouts a few framings, ≈50 designs each, and finds the best before a full run).
-   - A well-characterized site → it's fine to recommend going (mostly) direct, perhaps with a quick check of whether pinning the epitope beats letting the binder find its own spot. Say so plainly — don't offer exploration as boilerplate or tell the user you are "required" to.
+1. **Decide on target exploration first (new targets).** For a new target where the user hasn't already fixed the binding site and crop, your first action — before authoring a payload, normalizing the target, or running `estimate-cost` — is to raise the choice between a target-exploration pass and designing directly, with a **recommendation** for this target:
+   - Unknown site, or a multi-domain / large target → recommend exploration (it scouts different input configurations for generation, ≈50 designs each, and finds the best before a full run).
+   - A well-characterized site → it's fine to recommend going (mostly) direct, perhaps with a quick check of whether conditioning on the epitope beats letting the model find its own spot. State this plainly, as part of a conversation with the user about their target and goals, and let them choose.
 
-   Phrase it as a question that works *with* the user (they usually know their target's biology), e.g.:
+   Phrase it as a question that works *with* the user (they may know their target's biology), e.g.:
 
    > "This is a fresh target — I'd suggest a quick exploration pass that scouts a few framings and picks the best before a full run. Or, if you already know the site and crop, we can design directly. Which would you like?"
 
-   **Do not mention a campaign size or tier here** — not even folded into this opening approach question. The full-run size is settled later, after the scouts pick a winner (its yield informs the tier), so don't ask it up front when exploration is on the table. If the user opts into exploration — or has already said they want to explore / let the design find its own epitope — read [references/target-exploration.md](references/target-exploration.md), follow it, then resume at step 8 with the chosen framing and recommended `num_proteins`. If they want to design directly, continue below.
+   **Do not mention a campaign size or tier here** — not even folded into this opening approach question. The full-run size is settled later, after the scouting runs pick a winner (its yield informs the tier), so don't ask it up front when exploration is on the table. If the user opts into exploration — or has already said they want to explore / let the design find its own epitope — read [references/target-exploration.md](references/target-exploration.md), follow it, then resume at step 8 with the chosen framing and recommended `num_proteins`. If they want to design directly, continue below.
 2. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.
 3. Pick the `binder_specification` variant. Supported variants include:
    - `boltz_curated` — recommended default for antibody and nanobody design. Boltz selects from maintained scaffold/template lists (`binder: boltz_antibody` or `boltz_nanobody`).
