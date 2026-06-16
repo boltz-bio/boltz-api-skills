@@ -149,6 +149,11 @@ Returned binding metrics (under `output.binding_metrics`):
 - For `ligand_protein_binding`: `{binding_confidence, optimization_score, type: "ligand_protein_binding_metrics"}`.
 - For `protein_protein_binding`: `{binding_confidence, type: "protein_protein_binding_metrics"}` — **no `optimization_score`**.
 
+What they mean:
+
+- `binding_confidence` (0–1) — confidence that binding occurs; the primary signal for whether this complex binds.
+- `optimization_score` — ranks **binding strength** for lead optimization (higher = stronger predicted binding). Emitted only for `ligand_protein_binding`, not `protein_protein_binding`.
+
 ## `bonds`
 
 ```yaml
