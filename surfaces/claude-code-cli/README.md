@@ -10,6 +10,7 @@ Seven skills for the Boltz API, executed by shelling out to the `boltz-api` Go C
 | `boltz-structure-and-binding` | Predict 3D structure of one defined complex; optionally score binding. |
 | `boltz-small-molecule-screen` | Rank a user-supplied SMILES library against a target. |
 | `boltz-small-molecule-design` | Generate novel small-molecule binders. |
+| `boltz-small-molecule-adme` | Predict Tier-1 ADME (solubility, permeability, logD) from bare SMILES, no target. |
 | `boltz-protein-screen` | Rank user-supplied proteins/peptides/antibodies against a target. |
 | `boltz-protein-design` | Generate novel peptide/antibody/nanobody/custom-protein binders. |
 | `boltz-check-status` | List jobs, inspect one, recover results after a crashed session. |

@@ -257,7 +257,7 @@ Optional fields: `epitope_residues`, `epitope_ligand_chains`, `bonds`, `constrai
 
 ## `bonds` and `constraints` shapes
 
-Same as the structure-and-binding skill — see `references/api.md` of that skill for full detail. Only include when the user explicitly asks for geometric steering.
+Same as the structure-and-binding skill — see `references/api.md` of that skill for full detail. Only include when the user explicitly asks for geometry constraints.
 
 ## Outputs (after `download-results`)
 

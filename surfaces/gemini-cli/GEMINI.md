@@ -10,6 +10,7 @@ Use the bundled `boltz-*` skills for workflow details:
 - `boltz-structure-and-binding`: predict one defined complex or dock one ligand.
 - `boltz-small-molecule-screen`: rank an existing SMILES library against a target.
 - `boltz-small-molecule-design`: generate novel small-molecule binders.
+- `boltz-small-molecule-adme`: predict Tier-1 ADME (solubility, permeability, logD) from bare SMILES, no target.
 - `boltz-protein-screen`: rank an existing protein, peptide, antibody, or nanobody library.
 - `boltz-protein-design`: design novel protein, peptide, antibody, or nanobody binders.
 - `boltz-check-status`: list jobs, inspect progress, resume downloads, or recover results.

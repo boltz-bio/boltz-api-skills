@@ -15,7 +15,7 @@ Use this skill when the user already has candidate proteins / peptides / antibod
 2. Pick the target variant:
    - `structure_template` — user has a CIF/PDB file or URL; select which chains are polymer vs ligand, which residues to keep (`crop_residues`), and optionally `epitope_residues` / `flexible_residues`.
    - `no_template` — user has only sequences; pass them as `target.entities` plus optional `epitope_residues`.
-3. Don't add `bonds` / `constraints` unless the user asks for geometric steering.
+3. Don't add `bonds` / `constraints` unless the user asks for geometry constraints.
 4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
 5. `start` to submit. Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional later polling. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background session unless the user explicitly asks for progress.
@@ -50,7 +50,7 @@ Payload keys are `proteins`, `target` — API body field names.
 
 ## Always Do This
 
-- For `structure_template`, embed CIF/PDB bytes with `@data:///abs/path/target.cif` inside the `structure.data` field. Don't use bare `@path` (the auto-sniff once sent CIF as plain text into a base64 field and broke the server parser).
+- For `structure_template`, embed CIF/PDB bytes with `@data:///abs/path/target.cif` inside the `structure.data` field. Don't use bare `@path` (automatic file-type detection once sent CIF as plain text into a base64 field and broke the server parser).
 - Residue indices are 0-based. `epitope_residues` and `flexible_residues` must be subsets of `crop_residues`.
 - Keep payload field names exactly as the API body names shown in `references/api.md`.
 - Use absolute paths for the output root, payload files, and embedded target files. Do not `cd` into the run directory for follow-up commands; pass the same `--root-dir` and use absolute paths so later relative paths do not drift.

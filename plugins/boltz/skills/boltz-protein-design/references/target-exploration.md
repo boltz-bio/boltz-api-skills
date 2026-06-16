@@ -229,9 +229,18 @@ binding_confidence, and the fraction of designs with bc > 0.01 and > 0.05.
 Compare configs by max bc; report the others as supporting context. The winning
 config's crop (and site, if it had one) becomes the framing for the full run.
 
-As a rule of thumb, a max binding_confidence **above ~0.55** in a 50-design
-scout is a promising framing worth scaling; configs well below that are weak
-signal for that framing and binder.
+`binding_confidence` is a **soft, uncalibrated** signal, not a pass/fail score —
+there is no cutoff to gate on. Read it qualitatively and bring the judgement to
+the user. A near-zero max bc is a genuinely weak framing: strongly steer toward
+stopping, changing the site or modality, exploring further, or pulling in domain
+knowledge the user has. A clearly strong one is a good candidate to scale. In
+between is a real judgement call — often worth a shot, especially if it's the
+best framing you found and the site fits what the user wants — so lay out the
+trade-off rather than deciding for them.
+
+Compare configs **relative** to each other (the best framing vs. the rest), not
+against any fixed mark. Whatever the numbers, scaling is a collaborative call:
+recommend a direction and let the user steer.
 
 Max binding_confidence ranks by **designability** — where the model most easily
 gets a binder to stick — which may not be where the user *wants* one to stick.
@@ -243,7 +252,7 @@ lay out which site each config hits and its yield, confirm what the binder needs
 to do, and let the user's goal drive the choice — they know their biology. Don't
 crown a site on max bc alone.
 
-If **no** config clears ~0.55, say so honestly — but don't unilaterally call the
+If every config lands weak, say so honestly — but don't unilaterally call the
 target off. Like the site choice, **binder modality** (peptide / miniprotein /
 nanobody / antibody) is a discussion the user drives, not a switch you make
 yourself: suggest one if you have a view, but the call is theirs. Lay out what

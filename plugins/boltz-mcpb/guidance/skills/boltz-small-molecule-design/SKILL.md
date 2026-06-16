@@ -11,9 +11,9 @@ If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-
 
 Use this skill when the user wants de novo small-molecule binders (no existing library).
 
-1. Normalize the target: one or more protein sequences into `target.entities`, plus optional `pocket_residues` (0-based) and/or `reference_ligands` (known binders to seed pocket detection).
+1. Normalize the target: one or more protein sequences into `target.entities`, plus optional `pocket_residues` (0-based) and/or `reference_ligands` (known binders to help locate the pocket).
 2. Pick `num_molecules` — minimum **10**, server rejects anything lower. If the user says a smaller number, explain the floor and propose 10.
-3. Only add `chemical_space` (e.g. `"enamine_real"`) if the user explicitly wants synthesis-aware generation within that library.
+3. Only add `chemical_space` (e.g. `"enamine_real"`) if the user explicitly wants generation restricted to synthesizable molecules within that library.
 4. Supported optional features include `chemical_space` and `molecule_filters`; only add them on explicit request. Read [references/api.md](references/api.md) for exact shapes and filter options.
 5. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. Cost is a flat $0.025 per molecule (size-independent); still quote `estimated_cost_usd` from the response as the authoritative total.
 6. `start` to submit (synchronous). Capture the ID.
