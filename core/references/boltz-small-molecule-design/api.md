@@ -197,6 +197,7 @@ Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadat
 - `metrics.iptm`, `metrics.ptm`
 - `adme` — Tier-1 ADME triage returned **free** per generated molecule (sibling of `metrics`, not nested in it). Object with `solubility` (categorical: `high-confidence` / `medium-confidence` / `high-risk`), `permeability` (numeric score), and `lipophilicity` (numeric LogD). Approximate estimates for triage/ranking, not absolute measurements.
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
+- `warnings` — optional array of `{code, message}` quality flags (e.g. `low_confidence`, `unusual_geometry`); empty or absent on clean results. Surface them when presenting top hits.
 
 Rank from `results/index.jsonl` after `download-results`. `binding_confidence` and `optimization_score` are parallel intents (hit discovery vs. lead optimization), not a primary/fallback hierarchy. Sort by whichever matches the user's goal.
 
