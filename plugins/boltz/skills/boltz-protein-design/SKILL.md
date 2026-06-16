@@ -11,15 +11,15 @@ If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-
 
 Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
 
-1. **Decide on target exploration first (new targets).** For a new target where the user hasn't already fixed the binding site and crop, your first action — before authoring a payload, normalizing the target, or running `estimate-cost` — is to raise the choice between a target-exploration pass and designing directly, with a **genuine recommendation** for this target:
-   - Unknown site, or a multi-domain / large target → recommend exploration (it cheaply scouts a few framings, ≈50 designs each, and finds the best before a full run).
-   - A well-characterized site → it's fine to recommend going (mostly) direct, perhaps with a quick check of whether pinning the epitope beats letting the binder find its own spot. Say so plainly — don't offer exploration as boilerplate or tell the user you are "required" to.
+1. **Decide on target exploration first (new targets).** For a new target where the user hasn't already fixed the binding site and crop, your first action — before authoring a payload, normalizing the target, or running `estimate-cost` — is to raise the choice between a target-exploration pass and designing directly, with a **recommendation** for this target:
+   - Unknown site, or a multi-domain / large target → recommend exploration (it scouts different input configurations for generation, ≈50 designs each, and finds the best before a full run).
+   - A well-characterized site → it's fine to recommend going (mostly) direct, perhaps with a quick check of whether conditioning on the epitope beats letting the model find its own spot. State this plainly, as part of a conversation with the user about their target and goals, and let them choose.
 
-   Phrase it as a question that works *with* the user (they usually know their target's biology), e.g.:
+   Phrase it as a question that works *with* the user (they may know their target's biology), e.g.:
 
    > "This is a fresh target — I'd suggest a quick exploration pass that scouts a few framings and picks the best before a full run. Or, if you already know the site and crop, we can design directly. Which would you like?"
 
-   **Do not mention a campaign size or tier here** — not even folded into this opening approach question. The full-run size is settled later, after the scouts pick a winner (its yield informs the tier), so don't ask it up front when exploration is on the table. If the user opts into exploration — or has already said they want to explore / let the design find its own epitope — read [references/target-exploration.md](references/target-exploration.md), follow it, then resume at step 8 with the chosen framing and recommended `num_proteins`. If they want to design directly, continue below.
+   **Do not mention a campaign size or tier here** — not even folded into this opening approach question. The full-run size is settled later, after the scouting runs pick a winner (its yield informs the tier), so don't ask it up front when exploration is on the table. If the user opts into exploration — or has already said they want to explore / let the design find its own epitope — read [references/target-exploration.md](references/target-exploration.md), follow it, then resume at step 8 with the chosen framing and recommended `num_proteins`. If they want to design directly, continue below.
 2. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.
 3. Pick the `binder_specification` variant. Supported variants include:
    - `boltz_curated` — recommended default for antibody and nanobody design. Boltz selects from maintained scaffold/template lists (`binder: boltz_antibody` or `boltz_nanobody`).
@@ -27,7 +27,7 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
 4. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use `type: boltz_curated`; if they want custom scaffold control, use `type: structure_template`.
 5. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein` for `structure_template` and `no_template` (use `custom_protein` for a "miniprotein" or generic "protein binder"). **If the user already named the modality, take it as given — don't ask again.** Do not include `modality` on `boltz_curated`; use `binder` instead.
-6. Pick `num_proteins` — see [Run sizing](#run-sizing). **10** is the hard floor (server rejects lower), but it is a test size, not a campaign. When the user has not given a count, propose a campaign tier (default **50,000**), not the floor.
+6. Pick `num_proteins` — see [Run sizing](#run-sizing). Valid range is **10 to 1,000,000** (server rejects outside it); **10** is the hard floor but it is a test size, not a campaign. When the user has not given a count, propose a campaign tier (default **50,000**), not the floor.
 7. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
 8. Author the payload YAML or JSON, then run `estimate-cost` and apply the **spending gate** (Always Do This) before `start`. (Cost model — tiered by total complex length, `estimate-cost` is the only source: see [`## Cost`](references/api.md) in api.md.)
 9. `start` to submit. Capture the ID.
@@ -75,7 +75,8 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 
 ## Always Do This
 
-- Enforce `num_proteins >= 10` before calling `estimate-cost` (server rejects lower), but 10 is the floor, not a campaign — see [Run sizing](#run-sizing) and propose a tier (default 50,000) when the user gives no count.
+- **For a new target, your first move is the step-1 conversation — never jump straight to a payload.** Establish what the binder is *for* and whether the user has already fixed the binding site/crop, then recommend a target-exploration pass vs. designing directly and let them choose (step 1). Only normalize the target and author a payload after that. If they've already fixed the site/crop or explicitly want to design directly, proceed.
+- Enforce `10 <= num_proteins <= 1,000,000` before calling `estimate-cost` (server rejects outside that range), but 10 is the floor, not a campaign — see [Run sizing](#run-sizing) and propose a tier (default 50,000) when the user gives no count.
 - **Spending gate — explicit go-ahead before every `start`.** `start` spends real money. A plan you already described, an earlier phase's approval, or a cost that looks "trivial" are **not** authorization — even a cheap run needs a fresh yes. Run `estimate-cost`, show the `estimated_cost_usd` it returns (summed for a batch), and wait for the user to say go. This holds **even when tool calls are pre-approved** (accept-edits / auto-accept / bypass modes) — there you are the only cost gate. Never quote or assume a dollar figure you didn't get from `estimate-cost` (cost model: [`## Cost`](references/api.md) in api.md).
 - For antibody or nanobody design, recommend `binder_specification.type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
