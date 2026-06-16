@@ -1,5 +1,5 @@
 {
-  "name": "boltz-compute-cli",
+  "name": "boltz-api-cli",
   "version": "0.1.0",
   "description": "Predict structures, screen molecules and proteins, and design binders.",
   "author": {
@@ -12,7 +12,6 @@
   "license": "MIT",
   "keywords": [
     "boltz",
-    "boltz-compute",
     "boltz-api",
     "go-cli",
     "computational-biology",
