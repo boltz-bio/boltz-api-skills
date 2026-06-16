@@ -118,9 +118,9 @@ CLI_USAGE §8.4 warns `--transform '#.{a,b}'` silently returns `{}`. We tell age
 
 CLI_USAGE §8.2 notes `@./model.txt` on a scalar flag includes the trailing newline and fails enum validation (`echo 'boltz-2.1' > model.txt; --model @./model.txt` → rejected). We don't use `@./` anywhere (skills use literals for `--model`), so this is only relevant if an agent invents the pattern. Low priority.
 
-### - [ ] `BOLTZ_COMPUTE_OUTPUT_DIR` env var name
+### - [x] Output-dir env var — removed
 
-We picked `BOLTZ_COMPUTE_OUTPUT_DIR` to match the CLI's `BOLTZ_COMPUTE_*` namespace. The old Python skills used `BOLTZ_OUTPUT_DIR`. If the CLI team has an opinion on the name, align with theirs; this is a one-line grep-and-replace across the plugin.
+Resolved: there is no skill-level output-dir env var. The CLI doesn't honor one (it takes `--root-dir`/`--run-dir`, defaulting to `boltz-experiments`), so the earlier `BOLTZ_COMPUTE_OUTPUT_DIR` convention was dropped rather than maintained across surfaces and docs.
 
 ### - [ ] `results/<pres_*>/files/result/` layout is consistent
 

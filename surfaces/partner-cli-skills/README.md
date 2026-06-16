@@ -55,7 +55,7 @@ Every `boltz-api` command resolves this from the environment. If a command fails
 
 ## Output layout
 
-Results land in `$BOLTZ_OUTPUT_DIR/$RUN_NAME/` (or `$PWD/boltz-experiments/$RUN_NAME/` if the env var is unset). `$RUN_NAME` is a short descriptive slug the agent picks at submit time and re-uses on `download-results`. Re-running the same `download-results` command with the same `--name` resumes from the local checkpoint.
+Results land in `boltz-experiments/$RUN_NAME/` in the working directory by default (pass `--root-dir` to write them elsewhere). `$RUN_NAME` is a short descriptive slug the agent picks at submit time and re-uses on `download-results`. Re-running the same `download-results` command with the same `--name` resumes from the local checkpoint.
 
 ## Lifecycle
 

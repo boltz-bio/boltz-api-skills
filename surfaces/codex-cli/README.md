@@ -6,7 +6,7 @@ Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-refer
 
 - `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.7.0`)
 - Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY` exported in the environment
-- Optional: `BOLTZ_COMPUTE_OUTPUT_DIR` to override where results land. Prefer an absolute path; otherwise skills default to `$PWD/boltz-experiments/` from the command's starting directory.
+- Results land in a `boltz-experiments/` directory in the working directory (created automatically). Pass `--root-dir` to any command to write them elsewhere.
 
 The skills assume the CLI is already configured. If a command fails because auth is missing or expired, the agent should run `boltz-api auth login --device-code` on the user's behalf before retrying.
 If the host sandbox blocks installer temp files, OAuth browser login, credential storage, or the user-wide install path, request the host sandbox bypass/escalation needed to install and authenticate `boltz-api` in the user's real environment.
@@ -75,7 +75,7 @@ Each `start`-family skill follows the same flow:
 
 Do not use shell `&`, terminal backgrounding, or `nohup` for `download-results` in Codex. Those detach mechanisms can be cleaned up by the tool runner before `.boltz-run.json` is fully written. Use Codex's managed long-running shell session instead.
 
-Results land in `$ROOT/$RUN_NAME/` where `$ROOT = ${BOLTZ_COMPUTE_OUTPUT_DIR:-$PWD/boltz-experiments}` and `$RUN_NAME` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). Keep `$ROOT` absolute and do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` instead. Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
+Results land in `$ROOT/$RUN_NAME/` where `$ROOT` defaults to `boltz-experiments` in the working directory (override with `--root-dir`) and `$RUN_NAME` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). Prefer an absolute `$ROOT` and do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` instead. Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
 
 ## Why use the CLI variant
 

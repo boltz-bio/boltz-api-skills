@@ -64,11 +64,11 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 
 Alternative considered: use the server-assigned job ID as `--name`. Rejected because it's opaque, can only be known post-submit, and loses the "pre-submit dir is predictable" property.
 
-### 6. Output dir: `${BOLTZ_COMPUTE_OUTPUT_DIR:-./boltz-experiments}`
+### 6. Output dir: CLI default `./boltz-experiments`, override with `--root-dir`
 
-**Chose:** project-local default. Matches the CLI's own default.
+**Chose:** lean on the CLI's own default. No skill-level env var.
 
-**Trade:** artifacts live under whatever CWD the user is in; a user who runs Codex from many project dirs has results scattered. **Gain:** matches the CLI's native default (surprising users less), keeps results inside project repos by default, easily overridden via env var. The env var is resolved by the skill (CLI doesn't honor it natively) and passed as `--root-dir` explicitly.
+**Trade:** artifacts live under whatever CWD the user is in; a user who runs Codex from many project dirs has results scattered. **Gain:** matches the CLI's native default (surprising users less), keeps results inside project repos by default, and a user who wants a fixed location passes `--root-dir` (or asks the agent to). An earlier `BOLTZ_COMPUTE_OUTPUT_DIR` convention was dropped — the CLI doesn't honor it, so resolving it skill-side was an extra moving part with no payoff.
 
 ### 7. Managed `download-results`, never agent-side polling
 
