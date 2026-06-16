@@ -10,6 +10,8 @@ This covers the `predictions:structure-and-binding` endpoint. The request body b
 - [`bonds`](#bonds)
 - [`constraints`](#constraints)
 - [`model_options`](#model_options)
+- [`templates`](#templates)
+- [MSA control](#msa-control)
 - [Structure templates in a constraint / binding setup](#structure-templates-in-a-constraint--binding-setup)
 - [Outputs (after `download-results`)](#outputs-after-download-results)
 - [400 validation quirk](#400-validation-quirk)
@@ -44,6 +46,7 @@ Top-level fields:
 - `bonds` (optional) — custom covalent bonds; see below.
 - `constraints` (optional) — pocket / contact constraints; see below.
 - `model_options` (optional) — see below.
+- `templates` (optional) — up to **4** CIF/PDB templates to guide protein-chain geometry (Boltz-2.1); see [`templates`](#templates).
 
 Also passed as separate `start` flags, not inside the body:
 
@@ -63,6 +66,7 @@ All entities take `type`, `chain_ids`, `value`.
   value: MKTAYIAKQRQISFVKSHFSRQ
   cyclic: false              # optional
   modifications: []          # optional; server defaults to [] if omitted
+  # msa: <optional>          # omit = automatic MSA generation; see "MSA control" below
 ```
 
 ### `rna`
@@ -110,11 +114,9 @@ modifications:
   - residue_index: 12           # 0-based
     type: ccd
     value: MSE
-  # or
-  - residue_index: 12
-    type: smiles
-    value: "C1=CC=CC=C1..."
 ```
+
+`type` must be `ccd` — SMILES polymer modifications are **not** supported (the API rejects them with `modifications[].type must be "ccd"`).
 
 ## `binding`
 
@@ -165,7 +167,7 @@ bonds:
 Atom variants:
 
 - `{type: polymer_atom, chain_id, residue_index, atom_name}` — residue_index is 0-based.
-- `{type: ligand_atom, chain_id, atom_name}`.
+- `{type: ligand_atom, chain_id, atom_name}`. **Atom-level ligand references support `ligand_ccd` only** — referencing a `ligand_smiles` chain by atom is rejected (`bad_request: … references SMILES ligand chain … Use ligand_ccd instead`). Use a `ligand_ccd` entity for any atom-level bond/contact.
 
 ## `constraints`
 
@@ -201,7 +203,7 @@ constraints:
 Token variants:
 
 - `{type: polymer_contact, chain_id, residue_index}` — residue_index is 0-based.
-- `{type: ligand_contact, chain_id, atom_name}`.
+- `{type: ligand_contact, chain_id, atom_name}`. As with bonds, atom-level ligand contacts support `ligand_ccd` only — `ligand_smiles` chains cannot be referenced by atom.
 
 ## `model_options`
 
@@ -217,6 +219,32 @@ Hosted API Reference bounds:
 - `recycling_steps >= 1`
 - `sampling_steps >= 1`
 - `1.3 <= step_scale <= 2`
+
+## `templates`
+
+Up to **4** CIF/PDB templates to guide protein-chain geometry (Boltz-2.1). Each template maps request chains to chains in the template file:
+
+```yaml
+templates:
+  - template_structure:
+      type: url                       # or base64 (use @data:/// for a local file)
+      url: "https://files.rcsb.org/download/1ABC.cif"
+    template_chains:
+      - input_chain_id: A             # chain in THIS request
+        template_chain_id: A          # corresponding chain in the template file
+    force_threshold_angstroms: 10.0   # optional; omit to use the template without forcing
+```
+
+`template_chains` entries are **objects** (`{input_chain_id, template_chain_id}`), not bare chain-ID strings. This is distinct from embedding a CIF as raw structure bytes (see the next section).
+
+## MSA control
+
+By default (omit `msa` on every protein entity) Boltz generates an MSA automatically. To override per protein entity:
+
+- `msa: {type: empty}` — single-sequence mode (no MSA).
+- `msa: {type: custom, format: a3m|csv, source: {url: "..."}}` — user-provided MSA. Base64 uploads use media type `text/x-a3m` (A3M) or `text/csv` (CSV).
+
+Custom and automatic MSAs cannot be mixed: if any protein entity uses a custom MSA, every other protein entity must use `custom` or `empty`.
 
 ## Structure templates in a constraint / binding setup
 

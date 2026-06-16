@@ -13,7 +13,7 @@ Use this skill for standalone ADME triage on SMILES the user already has. No pro
 
 1. Normalize the molecules from raw SMILES, a CSV (auto-detect the SMILES column), `.smi`, or `.txt` into the `molecules` list. Each entry is `{smiles, id?}`; the optional `id` is echoed back as `external_id` on each result so you can map results to inputs.
 2. **Hard cap: 128 molecules per request.** If the list exceeds 128, split into batches of ≤128 and submit one request per batch (suffix the run name, for example `-b1`, `-b2`), then merge results. Never send more than 128 in one call — the API rejects it with `VALIDATION_ERROR: input.molecules must contain at most 128 items`.
-3. Author the payload YAML or JSON, run `estimate-cost`, show the user the USD cost, wait for explicit confirmation. ADME is priced at **$0.01 per molecule** (size-independent); `estimate-cost` returns the authoritative total — always quote it.
+3. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation. ADME is priced at **$0.01 per molecule** (size-independent); `estimate-cost` returns the authoritative total — always quote it.
 4. `run` to submit and wait — ADME finishes in seconds, so it is synchronous and needs no background polling. `run` persists results locally under `--root-dir/<run-name>/`.
 5. Report from `<output-root>/<run-name>/run.json` → `output.molecules[]`. For each molecule show `external_id` (or `smiles`), `solubility`, `permeability`, and `lipophilicity`. Call out any molecule with `status: failed` and its `error` (for example `invalid_smiles`); one bad SMILES fails only that molecule, not the batch. Read [references/api.md](references/api.md) for the payload, output shape, and batching details.
 
