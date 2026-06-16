@@ -98,6 +98,17 @@ Read [references/api.md](references/api.md) for entity shapes, binding variants,
 
 Summarize `metrics.json` and point the user at the downloaded CIF path. Read [references/results.md](references/results.md) for the local layout, nested metrics, binding metric variants, and SAB validation quirks.
 
+## Follow-up suggestions
+
+After a successful prediction whose target is a protein (skip RNA/DNA-only folds and ligand-only conformer runs), proactively offer — but never auto-run — the natural next experiment for that target. The offer is strongest when the run docked a ligand or has a defined binding site.
+
+- Design de-novo binders, no library needed: `boltz-small-molecule-design` for novel small molecules, or `boltz-protein-design` for peptide/antibody/nanobody/protein binders. Reuse this target; for small-molecule design, derive the pocket residues from the predicted binding site (or ask the user).
+- Virtual screen an existing library, only if the user has or will supply one: `boltz-small-molecule-screen` for a SMILES library, or `boltz-protein-screen` for a binder library.
+
+Propose only: name the option and wait for explicit confirmation. On acceptance, hand off to that skill, which estimates cost before submitting. Never start a follow-up job on your own — design and screens cost compute and credits.
+
+<!-- Keep in sync with surfaces/mcpb/server/boltz.js (workflowFollowups.boltz_structure_and_binding). -->
+
 ## SAB 400 validation quirk
 
 If the server rejects a payload with only `{"code":"VALIDATION_ERROR","message":"Request validation failed"}`, inspect `entities`, `binding`, and `constraints`; read [references/results.md](references/results.md) for details.
