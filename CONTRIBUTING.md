@@ -78,3 +78,78 @@ Do not edit `plugins/boltz/`, `plugins/boltz-compute-cli/`, or
 `plugins/boltz-mcpb/` directly. CI regenerates them and fails if the committed
 copies are stale. A branch push workflow also regenerates them and commits the
 generated result back to development branches when needed.
+
+## Packaging And Release
+
+Build the distributable artifacts:
+
+```bash
+./scripts/package-plugins.sh   # writes Claude/Codex/Gemini zips and
+                               # boltz-mcpb-<version>.mcpb into dist/
+```
+
+CI (`.github/workflows/release.yml`) runs these on every tagged release and
+attaches the artifacts to the GitHub Release.
+
+For the Claude Desktop MCPB surface, run its tests before packaging:
+
+```bash
+cd surfaces/mcpb
+npm install
+npm test
+cd ../..
+scripts/generate-surfaces.sh
+scripts/package-plugins.sh
+```
+
+## Distribution
+
+### Claude Code
+
+The repo root is also a Claude Code marketplace named `boltz-marketplace`,
+publishing one installable plugin (`boltz`) backed by `plugins/boltz`. Submit
+updates to the Claude Code plugin directory at
+<https://claude.ai/settings/plugins/submit>.
+
+### Codex (`openai/plugins`)
+
+The official Codex plugin copy is generated under `plugins/boltz-compute-cli/`,
+with symlinks dereferenced, matching the layout used by `openai/plugins` entries
+such as Netlify and Cloudflare. To submit, copy `plugins/boltz-compute-cli/`
+into that repo's `plugins/` directory and add the marketplace entry:
+
+```json
+{
+  "name": "boltz-compute-cli",
+  "source": {
+    "source": "local",
+    "path": "./plugins/boltz-compute-cli"
+  },
+  "policy": {
+    "installation": "AVAILABLE",
+    "authentication": "ON_INSTALL"
+  },
+  "category": "Science"
+}
+```
+
+### Gemini CLI
+
+`surfaces/gemini-cli/` is source-only here. For public distribution it is
+mirrored into a dedicated install repo with symlinks dereferenced and
+`gemini-extension.json` at the repo root:
+
+```bash
+RELEASE_REPO=boltz-bio/boltz-gemini-cli scripts/release-gemini-repo.sh
+```
+
+### Pre-submission checklist (per surface)
+
+Privacy policy URL, 512×512 icon, screenshots, support contact, verified
+metadata, and license confirmation for any bundled binaries.
+
+## Legacy
+
+`skills-python/` and `codex-plugin-python/` are legacy Python-SDK-based variants.
+They predate the `core/` restructure and remain as references, not as
+distribution targets.
