@@ -8,7 +8,7 @@ This skill covers all five Boltz resources via `list`, `retrieve`, and `download
 - `protein:library-screen`
 - `protein:design`
 
-This reference tracks the current CLI `main` / v0.7.0 surface: unified `--id`, merged-input design/screen commands, `download-results`, and `download-status`.
+This reference tracks the current CLI surface: unified `--id`, merged-input design/screen commands, `download-results`, and `download-status`. Treat `boltz-api --version` and the CLI's own help as the source of truth for command/flag specifics.
 
 ## Contents
 
@@ -190,7 +190,7 @@ Behavior:
     │   ├── archive.tar.gz
     │   └── files/result/
     │       ├── metrics.json
-    │       ├── predicted_structure.cif
+    │       ├── <pres_*>_predicted.cif
     │       └── pae.npz
     └── pres_...                           # one dir per per-item result, keyed by server ID
 ```

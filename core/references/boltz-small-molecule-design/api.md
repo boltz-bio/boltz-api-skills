@@ -45,7 +45,7 @@ molecule_filters:
 
 Top-level fields:
 
-- `num_molecules` (required) — number to generate. **Minimum 10** (server rejects lower).
+- `num_molecules` (required) — number to generate. **Must be between 10 and 1,000,000** (server rejects outside this range).
 - `target` (required) — protein target object (same shape as the screen endpoint).
 - `chemical_space` (optional) — generation space constraint. Currently `"enamine_real"` is the documented value. Omit for default.
 - `molecule_filters` (optional) — filter candidates before they're scored. Same schema as the screen endpoint.
@@ -57,7 +57,7 @@ Also passed as separate `start` flags:
 
 ## `num_molecules` minimum
 
-The server rejects `num_molecules < 10` with `VALIDATION_ERROR`. Validate client-side before submitting.
+The server rejects `num_molecules < 10` or `> 1000000` with `VALIDATION_ERROR`. Validate client-side before submitting.
 
 ## Cost
 
@@ -105,11 +105,9 @@ modifications:
   - residue_index: 12         # 0-based
     type: ccd
     value: MSE
-  # or
-  - residue_index: 12
-    type: smiles
-    value: "C1=CC=CC=C1..."
 ```
+
+`type` must be `ccd` — SMILES polymer modifications are **not** supported (the API rejects them with `modifications[].type must be "ccd"`).
 
 ## `molecule_filters`
 
@@ -186,7 +184,7 @@ Under `<output-root>/<run-name>/`:
 - `results/index.jsonl` — one generated candidate per line, copied from list-results metadata plus local artifact paths
 - `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
 - `results/<pres_*>/archive.tar.gz` — one dir per generated candidate
-- `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
+- `results/<pres_*>/files/result/{metrics.json, <result-id>_predicted.cif, pae.npz}` (the CIF is named `<pres_*>_predicted.cif` — prefer the `paths.structure` field from `index.jsonl` over hard-coding the filename)
 
 Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadata.json`, and the `list-results` stream):
 
@@ -197,6 +195,7 @@ Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadat
 - `metrics.structure_confidence`
 - `metrics.complex_plddt`, `metrics.complex_iplddt`
 - `metrics.iptm`, `metrics.ptm`
+- `adme` — Tier-1 ADME triage returned **free** per generated molecule (sibling of `metrics`, not nested in it). Object with `solubility` (categorical: `high-confidence` / `medium-confidence` / `high-risk`), `permeability` (numeric score), and `lipophilicity` (numeric LogD). Approximate estimates for triage/ranking, not absolute measurements.
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
 
 Rank from `results/index.jsonl` after `download-results`. `binding_confidence` and `optimization_score` are parallel intents (hit discovery vs. lead optimization), not a primary/fallback hierarchy. Sort by whichever matches the user's goal.
