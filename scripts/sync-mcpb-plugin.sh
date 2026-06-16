@@ -18,6 +18,7 @@ rsync -aL --delete --delete-excluded \
 mkdir -p "$TARGET/guidance/skills" "$TARGET/guidance/references"
 rsync -aL --delete \
   --exclude='.DS_Store' \
+  --exclude='tests' \
   "$REPO_ROOT/core/skills/cli/" "$TARGET/guidance/skills/"
 rsync -aL --delete \
   --exclude='.DS_Store' \

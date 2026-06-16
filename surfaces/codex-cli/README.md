@@ -47,6 +47,7 @@ Important version note:
 | `boltz-structure-and-binding` | fold one defined complex; dock one ligand; get pTM/ipTM/binding_confidence for one system |
 | `boltz-small-molecule-screen` | rank an existing SMILES library against a target |
 | `boltz-small-molecule-design` | generate novel small-molecule binders for a target (no library yet) |
+| `boltz-small-molecule-adme` | predict Tier-1 ADME (solubility, permeability, logD) from bare SMILES, no target |
 | `boltz-protein-screen` | rank an existing protein / peptide / antibody library against a target |
 | `boltz-protein-design` | generate novel protein / peptide / antibody / nanobody binders for a target |
 | `boltz-check-status` | list recent jobs, resume after a crashed session, recover results by ID |
