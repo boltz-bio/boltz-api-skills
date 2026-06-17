@@ -30,7 +30,7 @@ jobs:
       - name: JSON syntax for Codex plugins
         run: |
           jq empty surfaces/codex-cli/.codex-plugin/plugin.json
-          jq empty plugins/boltz-compute-cli/.codex-plugin/plugin.json
+          jq empty plugins/boltz-api-cli/.codex-plugin/plugin.json
       - name: JSON syntax for Gemini extensions
         run: |
           jq empty surfaces/gemini-cli/gemini-extension.json
@@ -133,12 +133,12 @@ jobs:
           test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
           test ! -L "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
           test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/references/api.md"
-          unzip -q "dist/boltz-compute-cli-"*.zip -d "$TMPDIR_CHECK/boltz-compute-cli"
-          test -f "$TMPDIR_CHECK/boltz-compute-cli/.codex-plugin/plugin.json"
-          test -f "$TMPDIR_CHECK/boltz-compute-cli/assets/app-icon.png"
-          test -f "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/SKILL.md"
-          test ! -L "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/SKILL.md"
-          test -f "$TMPDIR_CHECK/boltz-compute-cli/skills/boltz-check-status/references/api.md"
+          unzip -q "dist/boltz-api-cli-"*.zip -d "$TMPDIR_CHECK/boltz-api-cli"
+          test -f "$TMPDIR_CHECK/boltz-api-cli/.codex-plugin/plugin.json"
+          test -f "$TMPDIR_CHECK/boltz-api-cli/assets/app-icon.png"
+          test -f "$TMPDIR_CHECK/boltz-api-cli/skills/boltz-check-status/SKILL.md"
+          test ! -L "$TMPDIR_CHECK/boltz-api-cli/skills/boltz-check-status/SKILL.md"
+          test -f "$TMPDIR_CHECK/boltz-api-cli/skills/boltz-check-status/references/api.md"
           unzip -q "dist/boltz-gemini-cli-"*.zip -d "$TMPDIR_CHECK/boltz-gemini-cli"
           test -f "$TMPDIR_CHECK/boltz-gemini-cli/gemini-extension.json"
           test -f "$TMPDIR_CHECK/boltz-gemini-cli/GEMINI.md"

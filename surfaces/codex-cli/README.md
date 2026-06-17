@@ -1,4 +1,4 @@
-# boltz-compute-cli (Codex plugin)
+# boltz-api-cli (Codex plugin)
 
 Eight Codex skills that drive the [`boltz-api`](https://api.boltz.bio/docs/api/cli/) Go CLI for the Boltz API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-cli-setup` covers CLI setup.
 

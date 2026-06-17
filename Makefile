@@ -8,7 +8,7 @@ verify-generated:
 
 validate-json:
 	jq empty surfaces/codex-cli/.codex-plugin/plugin.json
-	jq empty plugins/boltz-compute-cli/.codex-plugin/plugin.json
+	jq empty plugins/boltz-api-cli/.codex-plugin/plugin.json
 
 validate-claude-plugin:
 	claude plugin validate .
