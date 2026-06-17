@@ -1,6 +1,6 @@
 # partner-cli-skills
 
-A self-contained, agent-agnostic skill bundle for the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) CLI. Six workflow skills cover the Boltz Compute API endpoints; each skill is prose plus per-endpoint schema references.
+A self-contained, agent-agnostic skill bundle for the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) CLI. Six workflow skills cover the Boltz API endpoints; each skill is prose plus per-endpoint schema references.
 
 This bundle is intended for partner companies who want to bring Boltz capabilities to their own agent harness. It makes no assumptions about which harness is hosting the skill — there are no Bash-tool-specific or shell-session-specific instructions.
 

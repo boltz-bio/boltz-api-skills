@@ -1,14 +1,14 @@
-# Design notes — boltz-compute-cli plugin
+# Design notes — boltz-api-cli plugin
 
 What this plugin is, why it's shaped the way it is, and what we're explicitly giving up.
 
 ## One-line summary
 
-A Codex plugin that ships six workflow skills for the Boltz Compute API plus one `boltz-api` setup skill. Each workflow skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
+A Codex plugin that ships six workflow skills for the Boltz API plus one `boltz-api` setup skill. Each workflow skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
 
 ## Context
 
-Two prior plugins exist in this repo: `skills-python/` (Claude Code) and `codex-plugin-python/` (Codex). Both used the `boltz-compute` Python SDK and each shipped a ~350-line `scripts/query.py` wrapper per skill (2,149 LOC across six skills) that handled input parsing, payload assembly, polling, and download.
+Two prior plugins exist in this repo: `skills-python/` (Claude Code) and `codex-plugin-python/` (Codex). Both used the legacy Python SDK and each shipped a ~350-line `scripts/query.py` wrapper per skill (2,149 LOC across six skills) that handled input parsing, payload assembly, polling, and download.
 
 The `boltz-api` Go CLI (v0.7.0, Stainless-generated from the same OpenAPI spec as the Python SDK) now exposes all that machinery natively:
 - unified `--id` across retrieve / list-results / stop / delete-data

@@ -16,7 +16,7 @@ surfaces live under `surfaces/`. Checked-in installable plugin copies live under
 | `surfaces/mcpb/` | Claude Desktop MCPB development surface | Yes |
 | `surfaces/partner-cli-skills/` | Partner self-contained skill bundle | Yes |
 | `plugins/boltz/` | Self-contained Claude Code marketplace plugin | No, generated |
-| `plugins/boltz-compute-cli/` | Self-contained Codex plugin copy | No, generated |
+| `plugins/boltz-api-cli/` | Self-contained Codex plugin copy | No, generated |
 | `plugins/boltz-mcpb/` | Self-contained MCPB plugin copy | No, generated |
 
 ## Surface Composition
@@ -74,7 +74,7 @@ Restart Claude Code after installing.
 
 ## Generated Files
 
-Do not edit `plugins/boltz/`, `plugins/boltz-compute-cli/`, or
+Do not edit `plugins/boltz/`, `plugins/boltz-api-cli/`, or
 `plugins/boltz-mcpb/` directly. CI regenerates them and fails if the committed
 copies are stale. A branch push workflow also regenerates them and commits the
 generated result back to development branches when needed.
@@ -113,17 +113,17 @@ updates to the Claude Code plugin directory at
 
 ### Codex (`openai/plugins`)
 
-The official Codex plugin copy is generated under `plugins/boltz-compute-cli/`,
+The official Codex plugin copy is generated under `plugins/boltz-api-cli/`,
 with symlinks dereferenced, matching the layout used by `openai/plugins` entries
-such as Netlify and Cloudflare. To submit, copy `plugins/boltz-compute-cli/`
+such as Netlify and Cloudflare. To submit, copy `plugins/boltz-api-cli/`
 into that repo's `plugins/` directory and add the marketplace entry:
 
 ```json
 {
-  "name": "boltz-compute-cli",
+  "name": "boltz-api-cli",
   "source": {
     "source": "local",
-    "path": "./plugins/boltz-compute-cli"
+    "path": "./plugins/boltz-api-cli"
   },
   "policy": {
     "installation": "AVAILABLE",
