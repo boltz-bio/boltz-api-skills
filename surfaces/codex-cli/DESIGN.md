@@ -4,7 +4,7 @@ What this plugin is, why it's shaped the way it is, and what we're explicitly gi
 
 ## One-line summary
 
-A Codex plugin that ships six workflow skills for the Boltz Compute API plus one `boltz-api` setup skill. Each workflow skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
+A Codex plugin that ships six workflow skills for the Boltz API plus setup and status-recovery skills. Each workflow skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
 
 ## Context
 
@@ -47,7 +47,7 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 |---|---|---|
 | Workflow | `SKILL.md` (~70 lines) | Every invocation |
 | Schema | `references/api.md` (~200 lines) | When authoring payload |
-| Upstream | `docs.boltz.bio/api-reference/*.md` + `openapi.json` | Fallback for undocumented fields |
+| Upstream | `api.boltz.bio/docs/api/` + workflow guides | Fallback for undocumented fields |
 
 `boltz-api <resource> start --help` exists as a fourth fallback but is not a schema source — we verified live that it only lists flag names and types, nothing about the shape of `--input` / `--target` / `--binder-specification` objects.
 

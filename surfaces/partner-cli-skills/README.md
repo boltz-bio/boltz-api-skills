@@ -1,6 +1,6 @@
 # partner-cli-skills
 
-A self-contained, agent-agnostic skill bundle for the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) CLI. Six workflow skills cover the Boltz Compute API endpoints; each skill is prose plus per-endpoint schema references.
+A self-contained, agent-agnostic skill bundle for the [`boltz-api`](https://api.boltz.bio/docs/api/cli/) CLI. Six workflow skills cover the Boltz API endpoints; each skill is prose plus per-endpoint schema references.
 
 This bundle is intended for partner companies who want to bring Boltz capabilities to their own agent harness. It makes no assumptions about which harness is hosting the skill — there are no Bash-tool-specific or shell-session-specific instructions.
 
@@ -20,6 +20,7 @@ Partners running their own agent harness who need a drop-in description of the B
 | Skill | Use when… |
 |---|---|
 | `boltz-structure-and-binding` | fold one defined complex; dock one ligand; get pTM/ipTM/binding_confidence for one system |
+| `boltz-small-molecule-adme` | predict Tier-1 ADME properties from bare SMILES, no target |
 | `boltz-small-molecule-screen` | rank an existing SMILES library against a target |
 | `boltz-small-molecule-design` | generate novel small-molecule binders for a target (no library yet) |
 | `boltz-protein-screen` | rank an existing protein / peptide / antibody library against a target |
@@ -36,6 +37,7 @@ partner-cli-skills/
     │   └── references/
     │       ├── api.md
     │       └── results.md
+    ├── boltz-small-molecule-adme/
     ├── boltz-small-molecule-screen/
     ├── boltz-small-molecule-design/
     ├── boltz-protein-screen/
@@ -59,7 +61,7 @@ Results land in `boltz-experiments/$RUN_NAME/` in the working directory by defau
 
 ## Lifecycle
 
-Each `start`-family skill follows the same flow:
+Most `start`-family skills follow the same flow. ADME is synchronous and documents its own `run`/retrieve flow in the skill.
 
 1. Agent normalizes the user's inputs and authors a YAML or JSON payload.
 2. Submit with `boltz-api <resource> start --input @yaml:///absolute/path/payload.yaml --idempotency-key <run-name> --raw-output --transform id`. The command prints a job ID.
@@ -71,6 +73,6 @@ Each `start`-family skill follows the same flow:
 
 If an agent encounters a payload field not covered in `references/api.md`, the upstream sources of truth are:
 
-- Payload shapes: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Payload shapes: <https://api.boltz.bio/docs/guides/concepts/>
+- API reference: <https://api.boltz.bio/docs/api/>
 - CLI flags: `boltz-api <resource> start --help` (flag names only — not a schema source)

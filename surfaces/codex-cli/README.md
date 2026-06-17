@@ -1,6 +1,6 @@
 # boltz-compute-cli (Codex plugin)
 
-Seven Codex skills that drive the [`boltz-api`](https://docs.boltz.bio/api-reference/api-cli-reference.md) Go CLI for the Boltz API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-cli-setup` covers CLI setup.
+Eight Codex skills that drive the [`boltz-api`](https://api.boltz.bio/docs/api/cli/) Go CLI for the Boltz API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-cli-setup` covers CLI setup.
 
 ## Prerequisites
 
@@ -60,7 +60,7 @@ From a Codex session:
 /plugins add <path-to-this-directory>
 ```
 
-Or configure in your Codex plugin config. The plugin registers the seven skills; the agent picks the right one based on your request.
+Or configure in your Codex plugin config. The plugin registers the eight skills; the agent picks the right one based on your request.
 
 ## Lifecycle
 
@@ -87,6 +87,6 @@ Results land in `$ROOT/$RUN_NAME/` where `$ROOT` defaults to `boltz-experiments`
 
 If an agent hits a schema it doesn't recognize, the canonical upstream refs are:
 
-- Payload shapes: <https://docs.boltz.bio/api-reference/api-input-format.md>
-- Full spec: <https://docs.boltz.bio/api-reference/openapi.json>
+- Payload shapes: <https://api.boltz.bio/docs/guides/concepts/>
+- API reference: <https://api.boltz.bio/docs/api/>
 - CLI flags: `boltz-api <resource> start --help` (flag names only — the help text is not a schema source)
