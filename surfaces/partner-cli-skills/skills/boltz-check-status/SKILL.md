@@ -63,9 +63,9 @@ boltz-api download-results \
 - On an unfamiliar job ID, run Mode 2 (retrieve) before Mode 3 (download) so you capture `idempotency_key`.
 - Prefer the original run-name slug over the job ID as `--name` — it resumes into the existing dir with cursor.
 - In permission-gated agents, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer running the six `list` / `retrieve` commands explicitly over generating them from a shell loop; a fixed `| head -20` cap is okay when listing to avoid runaway streamed output.
-- Run `download-results` through the host harness's long-running/background command facility. After it starts, do not wait on or poll it. Report the job ID, run name, output directory, and let the harness notify the user when the background command completes.
+- Run `download-results` through the host harness's long-running/background command facility. After it starts, do not manually wait on it or run ad hoc polling loops. Schedule the host's available follow-up/notification mechanism to check `download-status`, notify the user on terminal completion/failure, and stop once terminal.
 - `download-results` now emits machine-readable JSONL progress on stderr by default. Add `--progress-format text --verbose` only when you explicitly want human-readable logs.
-- Only check progress when the user asks. Prefer `download-status` for local checkpoint state. Don't loop `retrieve` unless the user wants fresh remote status.
+- Prefer `download-status` for local checkpoint state. Use the host's managed follow-up mechanism for automatic checks. Don't loop `retrieve` unless the user wants fresh remote status.
 - If `retrieve` surfaces only `{"code":"VALIDATION_ERROR","message":"Request validation failed"}` with no `details`, that's expected for `predictions:structure-and-binding` failures — other endpoints include field paths.
 - Never run `start` again on a failed or interrupted job. Fix the payload and submit with a new `idempotency-key`, or just resume with `download-results`.
 

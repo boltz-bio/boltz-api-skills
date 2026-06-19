@@ -175,7 +175,7 @@ boltz-api download-results \
 
 Behavior:
 
-- `download-results` itself is a blocking poller. Launch it through the agent runtime's background/non-blocking command facility and immediately return to the user; do not wait on or poll the background session unless the user asks. In Claude Code, use Bash with `run_in_background: true`. In Codex, run it as a foreground shell command with `yield_time_ms=1000`; if Codex returns a session id, save it for optional later polling.
+- `download-results` itself is a blocking poller. Launch it through the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run it as a foreground shell command with `yield_time_ms=1000`; if Codex returns a session id, save it for optional same-thread polling, but treat `download-status` plus the run directory as the durable source of truth. In Codex, schedule a same-thread heartbeat automation that checks `download-status` periodically, posts only material status changes or terminal completion/failure, and stops once terminal.
 - It emits machine-readable JSONL progress events on stderr by default. Use `--progress-format text --verbose` only when you explicitly want human-readable logs.
 - Writes `<output-root>/<run-name>/.boltz-run.json` containing the cursor (`cursor_after_id`), status, idempotency key, and timing.
 - On re-run with the same `--root-dir` + `--name`, reuses `.boltz-run.json` and only pulls results past the recorded cursor. Idempotent.

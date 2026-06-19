@@ -16,7 +16,7 @@ Use this skill when the user already has candidate proteins / peptides / antibod
 3. Don't add `bonds` / `constraints` unless the user asks for geometric steering.
 4. Author the payload YAML or JSON.
 5. `start` to submit. Capture the ID.
-6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background job unless the user explicitly asks for progress.
+6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides. After launching it, schedule the host's available follow-up/notification mechanism to check `download-status` periodically and notify the user when the download reaches a terminal state. Report the job ID, run name, output directory, and next check cadence.
 7. Rank hits from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Command Pattern
@@ -50,9 +50,9 @@ Payload keys are `proteins`, `target` — API body field names.
 - Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml` or repeated `--protein @json:///absolute/path/protein-1.json` entries. Piped YAML / JSON on stdin also works, but it must use API body field names. Never use `@file://` or `@./`.
 - Use the same slug as both `--idempotency-key` and `--name`.
 - In permission-gated agents, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines around the `boltz-api` invocation unless the user already allowed that exact command form. Use `--raw-output --transform id`, read the printed ID, then paste that literal ID into the next `download-results` command.
-- Run `download-results` through the host harness's long-running/background command facility. After it starts, do not wait on or poll it. Report the job ID, run name, and output directory and let the harness notify the user when the background command completes. `--poll-interval-seconds 30` is a reasonable default.
+- Run `download-results` through the host harness's long-running/background command facility. After it starts, do not manually wait on it or run ad hoc polling loops. Schedule the host's available follow-up/notification mechanism to check `download-status`, notify the user on terminal completion/failure, and stop once terminal. `--poll-interval-seconds 30` is a reasonable default.
 - `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs.
-- Only check status when the user asks. Prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. Never run a manual poll loop.
+- Prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. Use the host's managed follow-up mechanism for automatic checks. Never run a manual poll loop in the current turn.
 - If a detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 
 ## Escape Hatch
