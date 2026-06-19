@@ -14,7 +14,7 @@ Use this skill when the user already has candidate molecules.
 3. Keep default server-side filtering unless the user asks for custom filters — only add `molecule_filters` on explicit request.
 4. Author the payload YAML or JSON.
 5. `start` to submit (synchronous). Capture the ID.
-6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides — it polls, paginates `list-results`, downloads every per-hit structure, and exits when terminal. After launching it, report the job ID, run name, and output directory, then end the turn immediately. Do not wait on the background job unless the user explicitly asks for progress.
+6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides — it polls, paginates `list-results`, downloads every per-hit structure, and exits when terminal. After launching it, schedule the host's available follow-up/notification mechanism, if one exists, to check `download-status` periodically and notify the user when the download reaches a terminal state. Always report the job ID, run name, and output directory. Include the next check cadence if a follow-up was scheduled; otherwise include the `download-status` command.
 7. When done, rank from `<output-root>/<run-name>/results/index.jsonl`. Sort by `binding_confidence` for hit discovery or `optimization_score` for lead optimization; these are parallel intents, not a fallback hierarchy. Report the top 5-10 hits with `smiles`, the chosen ranking metric, key confidence metrics, and structure path. Read [references/results.md](references/results.md) for output layout, metrics, and filtered-input accounting.
 
 ## Command Pattern
@@ -49,11 +49,11 @@ Payload keys are `molecules`, `target`, `molecule_filters` — the API body fiel
 - Do not invent medicinal-chemistry filters. Only add `molecule_filters` if the user asks; mention the catalog as an option.
 - Use the same slug as both `--idempotency-key` at submit and `--name` on `download-results` so re-runs resume via `.boltz-run.json`.
 - In permission-gated agents, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines around the `boltz-api` invocation unless the user already allowed that exact command form. Use `--raw-output --transform id`, read the printed ID, then paste that literal ID into the next `download-results` command.
-- Run `download-results` through the host harness's long-running/background command facility. After it starts, do not wait on or poll it. Report the job ID, run name, and output directory and let the harness notify the user when the background command completes.
+- Run `download-results` through the host harness's long-running/background command facility. After it starts, do not manually wait on it or run ad hoc polling loops. If the host harness provides a managed follow-up/notification mechanism, schedule it to check `download-status`, notify the user on terminal completion/failure, and stop once terminal. If not, do not claim an automatic next check.
 - `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs.
-- Only check status when the user asks. Prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. Never run a manual poll loop.
+- Prefer `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` for structured local checkpoint state. When the host provides a managed follow-up mechanism, use it for automatic checks with cadence based on molecule count: under 100 -> every 1-2 minutes; 100-1,000 -> every 5 minutes; over 1,000 -> every 15 minutes. Never run a manual poll loop in the current turn.
 - If a detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
-- Poll interval: `--poll-interval-seconds 30` is a reasonable default; libraries can run 10–60 min depending on size.
+- Poll interval: `--poll-interval-seconds 30` is a reasonable downloader default. Wall-clock time scales roughly with library size: under 100 often finishes in a few minutes, 100-1,000 may take several minutes to tens of minutes, and larger screens can take longer or hours depending on inputs and system load. Never tell the user a 10-candidate screen will take 30 minutes or hours.
 
 ## Escape Hatch
 
