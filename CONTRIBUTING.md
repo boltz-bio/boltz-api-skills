@@ -91,6 +91,36 @@ Build the distributable artifacts:
 CI (`.github/workflows/release.yml`) runs these on every tagged release and
 attaches the artifacts to the GitHub Release.
 
+### Monorepo surface releases
+
+Claude Code and Codex use monorepo-native per-surface releases:
+
+1. A source change lands on `main` under shared CLI skill source
+   (`core/skills/cli/`, `core/references/`) or under a Claude/Codex surface.
+2. `.github/workflows/surface-auto-bump.yml` opens a release-bump PR using the
+   existing `boltz-mcpb-publisher` GitHub App token.
+3. The bump PR updates the affected surface manifest version(s), runs
+   `scripts/generate-surfaces.sh`, and commits the generated plugin copies.
+4. When the bump PR merges, `.github/workflows/surface-release.yml` creates one
+   GitHub Release per bumped surface in this repo:
+
+| Surface | Version source | Artifact | Tag format |
+|---|---|---|---|
+| Claude Code plugin | `surfaces/claude-code-cli/.claude-plugin/plugin.json` | `dist/claude-code-cli-<version>.zip` | `claude-code-plugin/v<version>` |
+| Codex plugin | `surfaces/codex-cli/.codex-plugin/plugin.json` | `dist/boltz-api-cli-<version>.zip` | `codex-plugin/v<version>` |
+
+Use workflow dispatch on `surface-auto-bump.yml` for manual patch/minor/major
+bumps, or on `surface-release.yml` to recreate a release for the current
+manifest version when needed. Include `[skip-surface-bump]` in a merge commit
+message to suppress the automatic bump PR for a particular merge.
+
+MCPB and Gemini still have their historical public-repo sync workflows:
+`mcpb-public-sync.yml` mirrors to `boltz-bio/boltz-mcpb`, and
+`gemini-public-sync.yml` mirrors to `boltz-bio/boltz-gemini-cli`. The same
+monorepo pattern can absorb them later by adding their manifest paths and
+artifacts to `surface-auto-bump.yml` and `surface-release.yml`, then retiring
+the public-repo syncs.
+
 For the Claude Desktop MCPB surface, run its tests before packaging:
 
 ```bash
