@@ -16,7 +16,7 @@ Use this skill when the user already has candidate proteins / peptides / antibod
 3. Don't add `bonds` / `constraints` unless the user asks for geometric steering.
 4. Author the payload YAML or JSON.
 5. `start` to submit. Capture the ID.
-6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides. After launching it, schedule the host's available follow-up/notification mechanism, if one exists, to check `download-status` periodically and notify the user when the download reaches a terminal state. Report the job ID, run name, output directory, and next check cadence only if a follow-up was scheduled; otherwise report the `download-status` command instead.
+6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides. After launching it, schedule the host's available follow-up/notification mechanism, if one exists, to check `download-status` periodically and notify the user when the download reaches a terminal state. Always report the job ID, run name, and output directory. Include the next check cadence if a follow-up was scheduled; otherwise include the `download-status` command.
 7. Rank hits from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Command Pattern

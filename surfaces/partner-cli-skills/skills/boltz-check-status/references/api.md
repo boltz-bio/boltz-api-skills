@@ -172,7 +172,7 @@ boltz-api download-results \
 
 Behavior:
 
-- `download-results` itself is a blocking poller. Launch it through the host harness's long-running/background command facility. If the host harness provides a managed follow-up/notification mechanism, schedule it to check `download-status`, notify the user on terminal completion/failure, and stop once terminal. If not, do not claim an automatic next check; report the `download-status` command instead. Do not manually wait on the background job or run ad hoc polling loops in the current turn.
+- `download-results` itself is a blocking poller. Launch it through the host harness's long-running/background command facility. If the host harness provides a managed follow-up/notification mechanism, schedule it to check `download-status`, notify the user on terminal completion/failure, and stop once terminal. If not, do not claim an automatic next check; report the job ID, run name, output directory, and `download-status` command instead. Do not manually wait on the background job or run ad hoc polling loops in the current turn.
 - It emits machine-readable JSONL progress events on stderr by default. Use `--progress-format text --verbose` only when you explicitly want human-readable logs.
 - Writes `<output-root>/<run-name>/.boltz-run.json` containing the cursor (`cursor_after_id`), status, idempotency key, and timing.
 - On re-run with the same `--root-dir` + `--name`, reuses `.boltz-run.json` and only pulls results past the recorded cursor. Idempotent.

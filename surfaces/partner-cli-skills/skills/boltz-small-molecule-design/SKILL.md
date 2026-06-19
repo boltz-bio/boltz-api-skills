@@ -15,7 +15,7 @@ Use this skill when the user wants de novo small-molecule binders (no existing l
 4. Supported optional features include `chemical_space` and `molecule_filters`; only add them on explicit request. Read [references/api.md](references/api.md) for exact shapes and filter options.
 5. Author the payload YAML or JSON.
 6. `start` to submit (synchronous). Capture the ID.
-7. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides; it polls, paginates, downloads per-hit structures, and exits when terminal. After launching it, schedule the host's available follow-up/notification mechanism, if one exists, to check `download-status` periodically and notify the user when the download reaches a terminal state. Report the job ID, run name, output directory, and next check cadence only if a follow-up was scheduled; otherwise report the `download-status` command instead.
+7. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides; it polls, paginates, downloads per-hit structures, and exits when terminal. After launching it, schedule the host's available follow-up/notification mechanism, if one exists, to check `download-status` periodically and notify the user when the download reaches a terminal state. Always report the job ID, run name, and output directory. Include the next check cadence if a follow-up was scheduled; otherwise include the `download-status` command.
 8. Rank hits from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` for hit discovery or `optimization_score` for lead optimization. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Command Pattern

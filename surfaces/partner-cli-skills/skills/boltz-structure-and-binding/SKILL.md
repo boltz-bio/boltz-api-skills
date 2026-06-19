@@ -36,7 +36,7 @@ Use this skill for one defined complex, not a library workflow.
 3. Supported optional features include `constraints`, `bonds`, `modifications`, `model_options`, and binding metrics; only add them if the user asks. Read [references/api.md](references/api.md) for exact shapes and examples.
 4. Author the payload YAML or JSON.
 5. `start` to submit (synchronous). Capture the ID.
-6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides, so polling + download continue without blocking the agent session. After launching it, schedule the host's available follow-up/notification mechanism, if one exists, to check `download-status` periodically and notify the user when the download reaches a terminal state. Report the job ID, run name, output directory, and next check cadence only if a follow-up was scheduled; otherwise report the `download-status` command instead.
+6. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides, so polling + download continue without blocking the agent session. After launching it, schedule the host's available follow-up/notification mechanism, if one exists, to check `download-status` periodically and notify the user when the download reaches a terminal state. Always report the job ID, run name, and output directory. Include the next check cadence if a follow-up was scheduled; otherwise include the `download-status` command.
 
 ## Command Pattern
 
