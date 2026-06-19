@@ -1,0 +1,221 @@
+name: Auto-bump surface versions
+
+# Monorepo release entrypoint for installable surfaces hosted from this repo.
+# When shared CLI skill source or Claude/Codex surface source changes on main,
+# open one version-bump PR for the affected surfaces. Merging that PR triggers
+# surface-release.yml, which creates per-surface GitHub Releases.
+#
+# Authentication uses the existing boltz-mcpb-publisher GitHub App secrets, but
+# the workflow only writes to boltz-api-skills.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/skills/cli/**'
+      - 'core/references/**'
+      - 'surfaces/claude-code-cli/**'
+      - 'surfaces/codex-cli/**'
+      - 'scripts/generate-surfaces.sh'
+      - 'scripts/sync-claude-marketplace-plugin.sh'
+      - 'scripts/sync-codex-openai-plugin.sh'
+  workflow_dispatch:
+    inputs:
+      surfaces:
+        description: 'Comma-separated surfaces, or auto'
+        required: true
+        default: 'auto'
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options: [patch, minor, major]
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (!contains(github.event.head_commit.message, '[skip-surface-bump]') &&
+           !startsWith(github.event.head_commit.message, 'chore(release): bump ')) }}
+    steps:
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.MCPB_PUBLISHER_APP_ID }}
+          private-key: ${{ secrets.MCPB_PUBLISHER_APP_PRIVATE_KEY }}
+          repositories: boltz-api-skills
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Detect affected surfaces
+        id: detect
+        env:
+          REQUESTED_SURFACES: ${{ github.event.inputs.surfaces || 'auto' }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          declare -A selected=()
+          add_surface() {
+            case "$1" in
+              claude|claude-code-cli|claude-code-plugin) selected[claude]=1 ;;
+              codex|codex-cli|codex-plugin|boltz-api-cli) selected[codex]=1 ;;
+              ""|auto) ;;
+              *) echo "Unknown surface: $1" >&2; exit 1 ;;
+            esac
+          }
+
+          if [[ "$REQUESTED_SURFACES" != "auto" ]]; then
+            IFS=',' read -ra requested <<< "$REQUESTED_SURFACES"
+            for raw in "${requested[@]}"; do
+              surface="$(echo "$raw" | xargs)"
+              add_surface "$surface"
+            done
+          else
+            if [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+              git diff-tree --no-commit-id --name-only -r "$AFTER_SHA" > changed.txt
+            else
+              git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" > changed.txt
+            fi
+
+            while IFS= read -r path; do
+              case "$path" in
+                core/skills/cli/*|core/references/*)
+                  add_surface claude
+                  add_surface codex
+                  ;;
+                scripts/generate-surfaces.sh)
+                  add_surface claude
+                  add_surface codex
+                  ;;
+                surfaces/claude-code-cli/*|scripts/sync-claude-marketplace-plugin.sh)
+                  add_surface claude
+                  ;;
+                surfaces/codex-cli/*|scripts/sync-codex-openai-plugin.sh)
+                  add_surface codex
+                  ;;
+              esac
+            done < changed.txt
+          fi
+
+          if [[ "${#selected[@]}" -eq 0 ]]; then
+            echo "No releasable Claude/Codex surface changes detected."
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            echo "surfaces=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          surfaces="$(printf '%s\n' "${!selected[@]}" | sort | paste -sd, -)"
+          echo "Detected surfaces: $surfaces"
+          echo "count=${#selected[@]}" >> "$GITHUB_OUTPUT"
+          echo "surfaces=$surfaces" >> "$GITHUB_OUTPUT"
+
+      - name: Bump manifest versions and regenerate
+        if: steps.detect.outputs.count != '0'
+        id: bump
+        env:
+          SURFACES: ${{ steps.detect.outputs.surfaces }}
+          BUMP_TYPE: ${{ github.event.inputs.bump_type || 'patch' }}
+        run: |
+          set -euo pipefail
+
+          bump_version() {
+            local current="$1" bump="$2"
+            local major minor patch
+            IFS=. read -r major minor patch <<< "$current"
+            case "$bump" in
+              major) major=$((major + 1)); minor=0; patch=0 ;;
+              minor) minor=$((minor + 1)); patch=0 ;;
+              patch) patch=$((patch + 1)) ;;
+              *) echo "Unknown bump type: $bump" >&2; exit 1 ;;
+            esac
+            echo "${major}.${minor}.${patch}"
+          }
+
+          update_manifest() {
+            local surface="$1" manifest="$2"
+            local current next tmp
+            current="$(jq -r .version "$manifest")"
+            next="$(bump_version "$current" "$BUMP_TYPE")"
+            tmp="$(mktemp)"
+            jq --indent 2 --arg v "$next" '.version = $v' "$manifest" > "$tmp"
+            mv "$tmp" "$manifest"
+            echo "- ${surface}: ${current} -> ${next}" >> release-bump.md
+          }
+
+          : > release-bump.md
+          IFS=',' read -ra surfaces <<< "$SURFACES"
+          for surface in "${surfaces[@]}"; do
+            case "$surface" in
+              claude) update_manifest "Claude Code" "surfaces/claude-code-cli/.claude-plugin/plugin.json" ;;
+              codex) update_manifest "Codex" "surfaces/codex-cli/.codex-plugin/plugin.json" ;;
+              *) echo "Unknown surface: $surface" >&2; exit 1 ;;
+            esac
+          done
+
+          scripts/generate-surfaces.sh
+
+          {
+            echo "summary<<EOF"
+            cat release-bump.md
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open bump PR
+        if: steps.detect.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SURFACES: ${{ steps.detect.outputs.surfaces }}
+          SUMMARY: ${{ steps.bump.outputs.summary }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo "No effective version changes; nothing to do."
+            exit 0
+          fi
+
+          short_sha="${GITHUB_SHA:0:12}"
+          branch="auto/surface-release-${short_sha}"
+          title="chore(release): bump ${SURFACES} surface versions"
+
+          git config user.name "boltz-mcpb-publisher[bot]"
+          git config user.email "${{ secrets.MCPB_PUBLISHER_APP_ID }}+boltz-mcpb-publisher[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add surfaces/claude-code-cli/.claude-plugin/plugin.json \
+                  surfaces/codex-cli/.codex-plugin/plugin.json \
+                  plugins/boltz plugins/boltz-api-cli
+
+          commit_msg=$(printf '%s\n\n%s\n\n%s\n' \
+            "$title" \
+            "Auto-bump after source changes landed on main. Merging this PR creates per-surface monorepo releases." \
+            "[skip-surface-bump]")
+          git commit -m "$commit_msg"
+          git push -f origin "$branch"
+
+          pr_body=$(cat <<EOF
+          Auto-bump release versions for affected installable surfaces:
+
+          ${SUMMARY}
+
+          When this PR merges, \`.github/workflows/surface-release.yml\` will create GitHub Releases in this monorepo for each bumped surface.
+
+          Generated plugin copies were refreshed with \`scripts/generate-surfaces.sh\`.
+          EOF
+          )
+
+          if gh pr view "$branch" --json url -q .url 2>/dev/null; then
+            gh pr edit "$branch" --title "$title" --body "$pr_body"
+          else
+            gh pr create --base main --head "$branch" --title "$title" --body "$pr_body"
+          fi

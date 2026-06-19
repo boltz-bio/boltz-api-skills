@@ -1,0 +1,184 @@
+name: Surface releases
+
+# Create per-surface GitHub Releases from this monorepo when surface manifest
+# versions change on main. Initial surfaces are Claude Code and Codex; MCPB and
+# Gemini can be added to the matrix after their external-repo syncs are retired.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'surfaces/claude-code-cli/.claude-plugin/plugin.json'
+      - 'surfaces/codex-cli/.codex-plugin/plugin.json'
+  workflow_dispatch:
+    inputs:
+      surfaces:
+        description: 'Comma-separated surfaces: claude, codex, or all'
+        required: true
+        default: 'all'
+
+permissions:
+  contents: write
+
+jobs:
+  detect:
+    name: Detect surface releases
+    runs-on: ubuntu-latest
+    outputs:
+      count: ${{ steps.detect.outputs.count }}
+      matrix: ${{ steps.detect.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed versions
+        id: detect
+        env:
+          REQUESTED_SURFACES: ${{ github.event.inputs.surfaces || 'changed' }}
+        run: |
+          set -euo pipefail
+
+          declare -a entries=()
+
+          add_release() {
+            local surface="$1" version="$2"
+            local id title artifact tag
+            case "$surface" in
+              claude)
+                id="claude-code-plugin"
+                title="Claude Code plugin v${version}"
+                artifact="dist/claude-code-cli-${version}.zip"
+                tag="claude-code-plugin/v${version}"
+                ;;
+              codex)
+                id="codex-plugin"
+                title="Codex plugin v${version}"
+                artifact="dist/boltz-api-cli-${version}.zip"
+                tag="codex-plugin/v${version}"
+                ;;
+              *) echo "Unknown surface: $surface" >&2; exit 1 ;;
+            esac
+
+            entries+=("$(jq -cn \
+              --arg surface "$surface" \
+              --arg id "$id" \
+              --arg version "$version" \
+              --arg title "$title" \
+              --arg artifact "$artifact" \
+              --arg tag "$tag" \
+              '{surface:$surface,id:$id,version:$version,title:$title,artifact:$artifact,tag:$tag}')")
+          }
+
+          version_for() {
+            case "$1" in
+              claude) jq -r .version surfaces/claude-code-cli/.claude-plugin/plugin.json ;;
+              codex) jq -r .version surfaces/codex-cli/.codex-plugin/plugin.json ;;
+              *) echo "Unknown surface: $1" >&2; exit 1 ;;
+            esac
+          }
+
+          manifest_for() {
+            case "$1" in
+              claude) echo "surfaces/claude-code-cli/.claude-plugin/plugin.json" ;;
+              codex) echo "surfaces/codex-cli/.codex-plugin/plugin.json" ;;
+              *) echo "Unknown surface: $1" >&2; exit 1 ;;
+            esac
+          }
+
+          if [[ "$REQUESTED_SURFACES" != "changed" ]]; then
+            if [[ "$REQUESTED_SURFACES" == "all" ]]; then
+              requested=(claude codex)
+            else
+              IFS=',' read -ra requested <<< "$REQUESTED_SURFACES"
+            fi
+            for raw in "${requested[@]}"; do
+              surface="$(echo "$raw" | xargs)"
+              case "$surface" in
+                claude|claude-code-cli|claude-code-plugin) add_release claude "$(version_for claude)" ;;
+                codex|codex-cli|codex-plugin|boltz-api-cli) add_release codex "$(version_for codex)" ;;
+                "") ;;
+                *) echo "Unknown surface: $surface" >&2; exit 1 ;;
+              esac
+            done
+          else
+            for surface in claude codex; do
+              manifest="$(manifest_for "$surface")"
+              current="$(jq -r .version "$manifest")"
+              previous="$(git show "HEAD~1:${manifest}" 2>/dev/null | jq -r .version || echo "")"
+              if [[ "$current" != "$previous" ]]; then
+                echo "${surface}: ${previous:-<none>} -> ${current}"
+                add_release "$surface" "$current"
+              fi
+            done
+          fi
+
+          if [[ "${#entries[@]}" -eq 0 ]]; then
+            echo "No surface versions changed."
+            echo 'count=0' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          matrix="$(printf '%s\n' "${entries[@]}" | jq -cs '{include:.}')"
+          echo "count=${#entries[@]}" >> "$GITHUB_OUTPUT"
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Release ${{ matrix.id }}
+    needs: detect
+    if: needs.detect.outputs.count != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify generated surfaces
+        run: scripts/verify-generated.sh
+
+      - name: Package surfaces
+        run: scripts/package-plugins.sh
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ matrix.tag }}
+          TITLE: ${{ matrix.title }}
+          ARTIFACT: ${{ matrix.artifact }}
+          SURFACE: ${{ matrix.surface }}
+          VERSION: ${{ matrix.version }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; skipping."
+            exit 0
+          fi
+
+          if [[ ! -f "$ARTIFACT" ]]; then
+            echo "Expected artifact not found: $ARTIFACT" >&2
+            ls -lh dist >&2
+            exit 1
+          fi
+
+          sha256sum "$ARTIFACT" > "${ARTIFACT}.sha256"
+          cat > release-notes.md <<EOF
+          Automated monorepo release for ${SURFACE} v${VERSION}.
+
+          Source commit: ${GITHUB_SHA}
+
+          Artifact:
+          - $(basename "$ARTIFACT")
+          EOF
+
+          gh release create "$TAG" \
+            "$ARTIFACT" "${ARTIFACT}.sha256" \
+            --target "$GITHUB_SHA" \
+            --title "$TITLE" \
+            --notes-file release-notes.md
