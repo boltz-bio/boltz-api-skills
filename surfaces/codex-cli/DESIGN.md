@@ -10,7 +10,7 @@ A Codex plugin that ships six workflow skills for the Boltz API plus one `boltz-
 
 Two prior plugins exist in this repo: `skills-python/` (Claude Code) and `codex-plugin-python/` (Codex). Both used the legacy Python SDK and each shipped a ~350-line `scripts/query.py` wrapper per skill (2,149 LOC across six skills) that handled input parsing, payload assembly, polling, and download.
 
-The `boltz-api` Go CLI (v0.7.0, Stainless-generated from the same OpenAPI spec as the Python SDK) now exposes all that machinery natively:
+The `boltz-api` Go CLI (Stainless-generated from the same OpenAPI spec as the Python SDK) now exposes all that machinery natively:
 - unified `--id` across retrieve / list-results / stop / delete-data
 - merged top-level `--input` payloads for design / screen `estimate-cost` and `start`
 - `download-results` with internal poll loop, artifact download, and `.boltz-run.json`-cursor-based resume

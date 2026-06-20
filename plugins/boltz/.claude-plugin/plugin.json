@@ -1,6 +1,6 @@
 {
   "name": "boltz",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Predict structures, screen molecules and proteins, and design binders with Boltz from Claude Code.",
   "author": {
     "name": "Boltz",
@@ -12,7 +12,7 @@
   "license": "MIT",
   "keywords": [
     "boltz",
-    "boltz-compute",
+    "boltz-api",
     "computational-biology",
     "protein-design",
     "protein-screening",
