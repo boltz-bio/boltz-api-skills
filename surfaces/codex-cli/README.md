@@ -4,7 +4,7 @@ Eight Codex skills that drive the [`boltz-api`](https://api.boltz.bio/docs/api/c
 
 ## Prerequisites
 
-- `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.7.0`)
+- `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.8.0`)
 - Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY` exported in the environment
 - Results land in a `boltz-experiments/` directory in the working directory (created automatically). Pass `--root-dir` to any command to write them elsewhere.
 
