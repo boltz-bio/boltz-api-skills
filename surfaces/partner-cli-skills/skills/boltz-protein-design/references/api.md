@@ -52,7 +52,7 @@ binder_specification:
 
 Top-level fields:
 
-- `num_proteins` (required) — number to generate. **Minimum 10** (server rejects lower).
+- `num_proteins` (required) — number to generate. **Must be between 10 and 1,000,000** (server rejects outside this range).
 - `target` (required) — discriminated union: `structure_template` or `no_template`. Identical shape to protein-screen.
 - `binder_specification` (required) — discriminated union: `boltz_curated`, `structure_template`, or `no_template`. See below.
 
@@ -63,7 +63,7 @@ Also passed as separate `start` flags:
 
 ## `num_proteins` minimum
 
-Server rejects `num_proteins < 10` with `VALIDATION_ERROR`. Validate client-side before submitting.
+Server rejects `num_proteins < 10` or `> 1000000` with `VALIDATION_ERROR`. Validate client-side before submitting.
 
 ## `binder_specification` — variant 1: `boltz_curated`
 
@@ -227,6 +227,7 @@ target:
       crop_residues: all              # or [int, ...]
       epitope_residues: [42, 43, 44]  # optional; subset of crop_residues
       flexible_residues: [40, 41, 42] # optional; subset of crop_residues
+      non_binding_residues: [50, 51]  # optional; subset of crop_residues, must NOT overlap epitope_residues
 ```
 
 Same semantics as protein-screen: `epitope_residues` / `flexible_residues` must be subsets of `crop_residues`, all 0-based.
@@ -242,12 +243,14 @@ target:
       value: "MKTAYIAKQRQISFVKSHFSRQ"
   epitope_residues:
     A: [42, 43, 44]                   # optional; 0-based
+  non_binding_residues:
+    A: [50, 51]                       # optional; 0-based; must NOT overlap epitope_residues
   epitope_ligand_chains: [L]          # optional
   bonds: []                           # optional
   constraints: []                     # optional
 ```
 
-Optional fields: `epitope_residues`, `epitope_ligand_chains`, `bonds`, `constraints`.
+Optional fields: `epitope_residues`, `non_binding_residues` (residues where binder contact is discouraged — 0-based, within `crop_residues`, must not overlap `epitope_residues`), `epitope_ligand_chains`, `bonds`, `constraints`.
 
 ## `bonds` and `constraints` shapes
 
@@ -262,7 +265,7 @@ Under `<output-root>/<run-name>/`:
 - `results/index.jsonl` — one generated design per line, copied from list-results metadata plus local artifact paths
 - `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
 - `results/<pres_*>/archive.tar.gz` — one dir per generated design
-- `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
+- `results/<pres_*>/files/result/{metrics.json, <pres_*>_predicted.cif, pae.npz}` (prefer the `paths.structure` field from `index.jsonl` over hard-coding the filename)
 
 Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadata.json`, and the `list-results` stream):
 
@@ -274,6 +277,7 @@ Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadat
 - `metrics.min_interaction_pae` (lower is better)
 - `metrics.helix_fraction`, `metrics.sheet_fraction`, `metrics.loop_fraction`
 - `artifacts.structure.url`, `artifacts.archive.url` (presigned, short-lived)
+- `warnings` — optional array of `{code, message}` quality flags; empty or absent on clean results. Surface them when presenting top designs.
 
 `optimization_score` is **not emitted** for `protein:design`. Sorting by it yields an empty list.
 

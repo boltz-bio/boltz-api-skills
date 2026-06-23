@@ -191,7 +191,7 @@ Behavior:
     │   ├── archive.tar.gz
     │   └── files/result/
     │       ├── metrics.json
-    │       ├── predicted_structure.cif
+    │       ├── <pres_*>_predicted.cif
     │       └── pae.npz
     └── pres_...                           # one dir per per-item result, keyed by server ID
 ```

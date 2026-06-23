@@ -10,7 +10,7 @@ If `boltz-api` reports missing or expired authentication, surface the error to t
 Use this skill when the user wants de novo small-molecule binders (no existing library).
 
 1. Normalize the target: one or more protein sequences into `target.entities`, plus optional `pocket_residues` (0-based) and/or `reference_ligands` (known binders to seed pocket detection).
-2. Pick `num_molecules` — minimum **10**, server rejects anything lower. If the user says a smaller number, explain the floor and propose 10.
+2. Pick `num_molecules` — valid range **10 to 1,000,000**; the server rejects values outside it. If the user says fewer than 10, explain the floor and propose 10.
 3. Only add `chemical_space` (e.g. `"enamine_real"`) if the user explicitly wants synthesis-aware generation within that library.
 4. Supported optional features include `chemical_space` and `molecule_filters`; only add them on explicit request. Read [references/api.md](references/api.md) for exact shapes and filter options.
 5. Author the payload YAML or JSON.
@@ -42,7 +42,7 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 
 ## Always Do This
 
-- Enforce `num_molecules >= 10` before submitting. The server rejects smaller batches.
+- Enforce `10 <= num_molecules <= 1,000,000` before submitting. The server rejects values outside that range.
 - Treat pocket residue indices as 0-based.
 - Keep payload field names exactly as the API body names shown in `references/api.md`.
 - Use absolute paths for the output root, payload files, and embedded target files. Do not `cd` into the run directory for follow-up commands; pass the same `--root-dir` and use absolute paths so later relative paths do not drift.
