@@ -99,11 +99,9 @@ modifications:
   - residue_index: 12         # 0-based
     type: ccd
     value: MSE
-  # or
-  - residue_index: 12
-    type: smiles
-    value: "C1=CC=CC=C1..."
 ```
+
+`type` must be `ccd` — SMILES polymer modifications are **not** supported.
 
 ## `molecule_filters`
 
