@@ -36,7 +36,11 @@ Use this skill for one defined complex, not a library workflow.
 
    Do not nest the variant name under `binding` (for example, no `binding.ligand_protein_binding` object).
 3. Supported optional features include `constraints`, `bonds`, `modifications`, `model_options`, and binding metrics; only add them if the user asks. Read [references/api.md](references/api.md) for exact shapes and examples.
-4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
+4. Author the payload YAML or JSON and run `estimate-cost`. Show the USD cost for transparency, then:
+   - **One prediction:** submit immediately — **do not wait for confirmation**. A single complex costs only cents, so there is no spending gate.
+   - **Two or more predictions in one go** (you are folding several complexes in the same turn or a loop): run `estimate-cost` for each, **sum the figures, show the combined total, and get one explicit confirmation before submitting any of them**, then submit the whole batch. The per-complex gate stays off — this batch total is the only confirmation structure-and-binding ever asks for.
+
+   (Design and library-screen workflows always confirm, regardless of count.)
 5. `start` to submit (synchronous). Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility so polling + download continue without blocking the agent session. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional same-thread polling, but treat `download-status` plus the run directory as the durable source of truth. In Codex app/desktop runtimes that expose same-thread heartbeat automations, create a heartbeat that checks `download-status` periodically and posts a concise completion or failure update when the download reaches a terminal state. After launching the downloader, always report the job ID, run name, and output directory. Include the next check cadence if the heartbeat was created; otherwise include the `download-status` command.
 
@@ -51,7 +55,8 @@ boltz-api predictions:structure-and-binding estimate-cost \
   --model boltz-2.1 \
   --input @yaml:///absolute/path/payload.yaml
 
-# 2. confirm with user, then submit
+# 2. submit immediately for a single prediction — show the estimate, no confirmation needed.
+#    For a batch of 2+ predictions, confirm the combined estimate-cost total once first.
 boltz-api predictions:structure-and-binding start \
        --model boltz-2.1 \
        --idempotency-key "<run-name>" \
@@ -84,7 +89,7 @@ boltz-api download-results \
 - If the current host has no heartbeat automation support, do not claim an automatic next check. Report the job ID, run name, output directory, and the command needed to check `download-status`.
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Poll interval: keep `--poll-interval-seconds 10` for SAB — predictions usually finish in under a few minutes.
-- Cost: there is no published per-unit rate to cite for SAB — run `estimate-cost` and state only the figure it returns. Don't estimate or comment on cost.
+- Cost: there is no published per-unit rate to cite for SAB — run `estimate-cost` and state only the figure it returns. Don't estimate the figure yourself. A single complex costs cents, so submit right after showing the estimate — **no per-prediction spending confirmation**. The one exception is a **batch of 2+ predictions submitted together**: sum their `estimate-cost` figures, show the combined total, and get a single confirmation before submitting the batch. Beyond that, the confirmation gate exists only for design and library-screen workflows.
 
 ## Escape Hatch
 
