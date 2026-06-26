@@ -239,7 +239,7 @@ Under `<output-root>/<run-name>/`:
 - `results/index.jsonl` — one scored candidate per line, copied from list-results metadata plus local artifact paths
 - `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
 - `results/<pres_*>/archive.tar.gz` — one dir per scored candidate
-- `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
+- `results/<pres_*>/files/result/{metrics.json, <pres_*>_predicted.cif, pae.npz}` (prefer the `paths.structure` field from `index.jsonl` over hard-coding the filename)
 
 Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadata.json`, and the `list-results` stream):
 

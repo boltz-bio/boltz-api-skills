@@ -110,11 +110,9 @@ modifications:
   - residue_index: 12           # 0-based
     type: ccd
     value: MSE
-  # or
-  - residue_index: 12
-    type: smiles
-    value: "C1=CC=CC=C1..."
 ```
+
+`type` must be `ccd` — SMILES polymer modifications are **not** supported.
 
 ## `binding`
 
@@ -215,7 +213,7 @@ model_options:
 Hosted API Reference bounds:
 
 - `recycling_steps >= 1`
-- `sampling_steps >= 1`
+- `sampling_steps >= 50`
 - `1.3 <= step_scale <= 2`
 
 ## Structure templates in a constraint / binding setup

@@ -16,7 +16,7 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
 3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use `type: boltz_curated`; if they want custom scaffold control, use `type: structure_template`.
 4. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein` for `structure_template` and `no_template`. Do not include `modality` on `boltz_curated`; use `binder` instead.
-5. Pick `num_proteins` — minimum **10**, server rejects lower. If the user says a smaller number, explain the floor and propose 10.
+5. Pick `num_proteins` — valid range **10 to 1,000,000**; the server rejects values outside it. If the user says fewer than 10, explain the floor and propose 10.
 6. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
 7. Author the payload YAML or JSON.
 8. `start` to submit. Capture the ID.
@@ -46,7 +46,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 
 ## Always Do This
 
-- Enforce `num_proteins >= 10` before submitting. Server rejects anything lower.
+- Enforce `10 <= num_proteins <= 1,000,000` before submitting. The server rejects values outside that range.
 - For antibody or nanobody design, recommend `binder_specification.type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.

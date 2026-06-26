@@ -1,6 +1,6 @@
 # boltz (Claude Code plugin)
 
-Seven skills for the Boltz API, executed by shelling out to the `boltz-api` Go CLI directly from Claude Code. Six workflow skills run Boltz jobs, and `boltz-cli-setup` covers install/auth guidance.
+Eight skills for the Boltz API, executed by shelling out to the `boltz-api` Go CLI directly from Claude Code. Six workflow skills run Boltz jobs, `boltz-cli-setup` covers install/auth guidance, and `boltz-check-status` covers job recovery.
 
 ## Skills
 
