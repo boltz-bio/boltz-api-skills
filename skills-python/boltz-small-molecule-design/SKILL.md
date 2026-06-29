@@ -93,8 +93,8 @@ Server-side filters applied to each generated molecule before scoring. Generated
 ## Cost confirmation flow
 
 1. Run with `--estimate-only`.
-2. Show `estimated_cost_usd` and confirm with the user.
-3. Re-run without `--estimate-only`.
+2. Show `estimated_cost_usd`.
+3. Re-run without `--estimate-only` without asking only when `estimated_cost_usd` is less than $1.00; confirm with the user at $1.00 or more.
 
 ## How to invoke
 

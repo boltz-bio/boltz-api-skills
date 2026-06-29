@@ -17,7 +17,7 @@ Use the bundled `boltz-*` skills for workflow details:
 
 ## Operating Rules
 
-- Paid workflows must run `estimate-cost` first and wait for explicit user confirmation before `start`.
+- Paid workflows must run `estimate-cost` first. Report `estimated_cost_usd`, then submit without asking only when it is less than $1.00; require explicit user confirmation for $1.00 or more before `start`.
 - Use `boltz-cli-setup` for missing CLI, old CLI, PATH, auth, browser-login, or sandbox failures.
 - Prefer `boltz-api auth login --device-code` for interactive auth; `BOLTZ_API_KEY` is the API-key fallback.
 - Keep payloads, embedded input files, and output roots on absolute paths.

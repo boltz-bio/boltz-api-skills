@@ -195,8 +195,8 @@ Run both — don't let the scan stand in for the per-domain comparison.
 
 Each chosen config is a normal `protein:design` submission with
 `num_proteins: 50` and that config's `crop_residues` (and `epitope_residues`
-when the config specifies the site). Author each payload, `estimate-cost`, confirm
-the summed cost, then submit and download per the main skill's **Command
+when the config specifies the site). Author each payload, `estimate-cost`, apply
+the main skill's spending gate to the summed cost, then submit and download per the main skill's **Command
 Pattern**. Give each scout run a descriptive name, e.g.
 `scout-<target>-<axis>-<variant>` (`scout-PD1-r25-site`, `scout-PD1-r25-nosite`,
 `scout-PD1-disorder`, `scout-PD1-baseline`), so the configs live together and
@@ -205,7 +205,7 @@ are easy to compare.
 Exploration spends in **separate phases** — round-1 scouts, the scan, the
 post-scan scouts, the full run. Apply the main skill's **spending gate per
 phase**: an outlined plan or an earlier phase's approval is not authorization for
-the next.
+the next phase when that phase costs $1.00 or more.
 
 **Launch the scout configs in parallel** — do not finish one before starting the
 next. Submit each (`start`), then immediately background its `download-results`

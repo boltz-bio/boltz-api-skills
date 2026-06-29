@@ -10,14 +10,14 @@ Use this skill when the user wants novel binder generation.
 1. Normalize the target as `structure_template` or `no_template`.
 2. Normalize the binder specification as either `structure_template` redesign or `no_template` sequence-DSL design.
 3. Keep rules and motif constraints at defaults unless the user explicitly asks for them.
-4. Estimate cost first, show the estimate, and ask for confirmation before running the design job.
+4. Estimate cost first, show the estimate, and run without asking only when `estimated_cost_usd` is less than $1.00; ask for confirmation at $1.00 or more.
 5. Let the wrapper poll, paginate designs, rank outputs, and download structures locally.
 
 ## Always Do This
 
 - Use the Python SDK wrapper only: `python scripts/query.py ...`.
 - Expect authentication through `BOLTZ_API_KEY`; `BOLTZ_COMPUTE_API_KEY` also works.
-- Always run `--estimate-only` before submission and ask for explicit cost approval.
+- Always run `--estimate-only` before submission. Submit without asking only when `estimated_cost_usd` is less than $1.00; ask for explicit cost approval at $1.00 or more.
 - Always send `modifications: []` on every protein, RNA, or DNA entity when there are no modifications. The API currently rejects omitted polymer `modifications`.
 - Treat `--num-proteins 10` as the minimum valid request size. Smaller values currently fail server-side.
 - Treat all residue indices as 0-based.
@@ -55,7 +55,7 @@ python scripts/query.py \
   --estimate-only
 ```
 
-Submit after confirmation:
+Submit after confirmation when the estimate is $1.00 or more:
 
 ```bash
 python scripts/query.py \

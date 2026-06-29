@@ -106,8 +106,8 @@ For advanced fields not exposed as flags, pass `--config path.json` containing a
 Every submission must follow this sequence:
 
 1. Run `python scripts/query.py ... --estimate-only` → get `estimated_cost_usd`.
-2. Show the user the dollar amount and ask for explicit confirmation.
-3. Only on confirmation, re-run without `--estimate-only`.
+2. Show the user the dollar amount.
+3. Re-run without `--estimate-only` without asking only when `estimated_cost_usd` is less than $1.00; ask for explicit confirmation at $1.00 or more.
 
 ## How to invoke
 

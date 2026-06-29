@@ -1,4 +1,4 @@
 interface:
   display_name: "Boltz Small Molecule ADME"
   short_description: "Predict ADME (solubility, permeability, logD) from SMILES"
-  default_prompt: "Use $boltz-small-molecule-adme to estimate cost, confirm spend, and predict ADME for these molecules."
+  default_prompt: "Use $boltz-small-molecule-adme to estimate cost, apply the $1 spend gate, and predict ADME for these molecules."

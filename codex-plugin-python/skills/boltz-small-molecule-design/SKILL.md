@@ -9,14 +9,14 @@ Use this skill when the user wants novel ligand generation rather than ranking a
 
 1. Normalize the protein target and any optional pocket-guidance inputs.
 2. Keep default filter behavior unless the user explicitly asks for chemical-space or filter constraints.
-3. Estimate cost first, show the estimate, and ask for confirmation before submission.
+3. Estimate cost first, show the estimate, and submit without asking only when `estimated_cost_usd` is less than $1.00; ask for confirmation before submission at $1.00 or more.
 4. Let the wrapper submit, poll, paginate results, rank outputs, and download structures locally.
 
 ## Always Do This
 
 - Use the Python SDK wrapper only: `python scripts/query.py ...`.
 - Expect authentication through `BOLTZ_API_KEY`; `BOLTZ_COMPUTE_API_KEY` also works.
-- Always run `--estimate-only` before submission and ask for explicit cost approval.
+- Always run `--estimate-only` before submission. Submit without asking only when `estimated_cost_usd` is less than $1.00; ask for explicit cost approval at $1.00 or more.
 - Always send `modifications: []` on every target protein entity when there are no modifications. The API currently rejects omitted polymer `modifications`.
 - Treat `--num-molecules 10` as the minimum valid request size. Smaller values currently fail server-side.
 - Keep the default filtering and unconstrained design setup unless the user asks for constraints such as Enamine REAL or custom filter rules.
@@ -49,7 +49,7 @@ python scripts/query.py \
   --estimate-only
 ```
 
-Submit after confirmation:
+Submit after confirmation when the estimate is $1.00 or more:
 
 ```bash
 python scripts/query.py \

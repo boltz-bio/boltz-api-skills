@@ -19,8 +19,8 @@ confidence, and save the structure.
 1. Agent constructs an entities list: protein (chain A) + ligand_smiles (chain B).
 2. Adds a `binding` block with `type: ligand_protein_binding` and `binder_chain_id: B`.
 3. Calls `estimate-cost` (CLI) or `boltz_estimate_run` (MCP).
-4. Shows the returned cost estimate to user, waits for confirmation.
-5. On confirmation, submits and starts a backgrounded download.
+4. Shows the returned cost estimate to user and applies the $1 spend gate.
+5. Submits after confirmation when the estimate is $1.00 or more, or immediately when it is less than $1.00, then starts a backgrounded download.
 6. Reports job ID, run name, output directory.
 7. Ends the turn.
 
@@ -33,6 +33,6 @@ confidence, and save the structure.
 
 ## What to watch for
 
-- Did the agent ask for cost confirmation before submitting?
+- Did the agent apply the $1 spend gate correctly before submitting?
 - How many Bash / MCP tool approval prompts did the user see?
 - Did the agent wait for the backgrounded download or end the turn promptly?

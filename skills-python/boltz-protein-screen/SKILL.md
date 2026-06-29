@@ -108,8 +108,8 @@ For full control over `target` (e.g. complex chain_selection with epitope/flexib
 ## Cost confirmation flow
 
 1. `--estimate-only` → JSON with `estimated_cost_usd`.
-2. Show user, confirm.
-3. Run without `--estimate-only`.
+2. Show user `estimated_cost_usd`.
+3. Run without `--estimate-only` without asking only when `estimated_cost_usd` is less than $1.00; confirm with the user at $1.00 or more.
 
 ## How to invoke
 
