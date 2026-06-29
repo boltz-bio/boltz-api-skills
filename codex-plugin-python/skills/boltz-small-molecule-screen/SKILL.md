@@ -10,14 +10,14 @@ Use this skill when the user already has candidate molecules.
 1. Normalize the molecule library from raw SMILES, `.csv`, `.smi`, or `.txt`.
 2. Normalize the target from one or more protein sequences, plus optional pocket residues or reference ligands.
 3. Keep default server-side filtering unless the user explicitly asks for custom filters.
-4. Estimate cost first, show the user the estimate, and get confirmation before starting the screen.
+4. Estimate cost first, show the user the estimate, and start without asking only when `estimated_cost_usd` is less than $1.00; get confirmation at $1.00 or more.
 5. Let the wrapper poll, paginate results, rank hits, and download per-hit structures locally.
 
 ## Always Do This
 
 - Use the Python SDK wrapper only: `python scripts/query.py ...`.
 - Expect authentication through `BOLTZ_API_KEY`; `BOLTZ_COMPUTE_API_KEY` also works.
-- Always run `--estimate-only` before submission and ask for explicit spend confirmation.
+- Always run `--estimate-only` before submission. Submit without asking only when `estimated_cost_usd` is less than $1.00; ask for explicit spend confirmation at $1.00 or more.
 - Always send `modifications: []` on every target protein entity when there are no modifications. The API currently rejects omitted polymer `modifications`.
 - Do not invent medicinal chemistry filters. Mention them as options and apply them only on request.
 - Treat residue indices as 0-based when pocket residues are supplied.
@@ -53,7 +53,7 @@ python scripts/query.py \
   --estimate-only
 ```
 
-Submit after confirmation:
+Submit after confirmation when the estimate is $1.00 or more:
 
 ```bash
 python scripts/query.py \

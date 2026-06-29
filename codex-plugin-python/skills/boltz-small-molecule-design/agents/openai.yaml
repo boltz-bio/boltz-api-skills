@@ -1,4 +1,4 @@
 interface:
   display_name: "Boltz Small Molecule Design"
   short_description: "Design novel ligands for a protein target"
-  default_prompt: "Use $boltz-small-molecule-design to estimate cost, confirm spend, and design ligands for this target."
+  default_prompt: "Use $boltz-small-molecule-design to estimate cost, apply the $1 spend gate, and design ligands for this target."

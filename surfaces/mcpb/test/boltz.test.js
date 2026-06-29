@@ -49,7 +49,7 @@ test("guidance docs are exposed for workflow tools", async () => {
   assert.equal(guidancePrompts.some((prompt) => prompt.name === "boltz_protein_design_workflow"), true);
 });
 
-test("workflow tool descriptions point at guidance and cost confirmation", () => {
+test("workflow tool descriptions point at guidance and the spend gate", () => {
   const proteinDesign = toolDefinitions.find((tool) => tool.name === "boltz_protein_design");
   assert.match(proteinDesign.description, /boltz_get_guidance/);
   assert.match(proteinDesign.description, /start=false/);

@@ -1,4 +1,4 @@
 interface:
   display_name: "Boltz Small Molecule Screen"
   short_description: "Screen SMILES libraries against protein targets"
-  default_prompt: "Use $boltz-small-molecule-screen to estimate cost, confirm spend, and rank this compound library."
+  default_prompt: "Use $boltz-small-molecule-screen to estimate cost, apply the $1 spend gate, and rank this compound library."

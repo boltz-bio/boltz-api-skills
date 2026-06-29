@@ -57,14 +57,14 @@ on my crop and want to bind the patch around residues 277-285. Just set up a
 1. **Does not** push the exploration procedure — the user opted out.
 2. Sets up the full run directly: `num_proteins: 50000`,
    `epitope_residues: [277..285]` (0-based) on the chain.
-3. Still gates on `estimate-cost` + explicit confirmation before `start`
-   (a 50k run is costly).
+3. Still gates on `estimate-cost`; because a 50k run is costly, waits for
+   explicit confirmation before `start`.
 
 ### Success criteria (gradeable)
 - [ ] Did not force exploration after the user declined it.
 - [ ] `num_proteins == 50000`.
 - [ ] Binding site set via `epitope_residues`, 0-based, on the correct chain.
-- [ ] Quotes `estimate-cost` and waits for confirmation before submitting.
+- [ ] Quotes `estimate-cost` and waits for confirmation before submitting when the estimate is $1.00 or more.
 
 ## What to watch for
 - Pushing the full procedure on a user who declined (8b) is as much a failure as

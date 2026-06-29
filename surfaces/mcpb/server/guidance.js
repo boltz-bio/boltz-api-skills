@@ -60,7 +60,7 @@ export const workflowGuides = [
     prompt: "boltz_structure_and_binding_workflow",
     summary: "Predict molecular structures and binding interactions.",
     references: ["api", "results"],
-    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_structure_and_binding with start=false", "ask for cost confirmation", "boltz_structure_and_binding with start=true"]
+    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_structure_and_binding with start=false", "confirm only if estimated_cost_usd is $1.00 or more", "boltz_structure_and_binding with start=true"]
   },
   {
     id: "small-molecule-adme",
@@ -71,7 +71,7 @@ export const workflowGuides = [
     prompt: "boltz_small_molecule_adme_workflow",
     summary: "Predict Tier-1 ADME summary properties for small molecules.",
     references: ["api", "results"],
-    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_small_molecule_adme with start=false", "ask for cost confirmation", "boltz_small_molecule_adme with start=true", "boltz_job_status with resource predictions:adme to retrieve inline results"]
+    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_small_molecule_adme with start=false", "confirm only if estimated_cost_usd is $1.00 or more", "boltz_small_molecule_adme with start=true", "boltz_job_status with resource predictions:adme to retrieve inline results"]
   },
   {
     id: "small-molecule-screen",
@@ -82,7 +82,7 @@ export const workflowGuides = [
     prompt: "boltz_small_molecule_screen_workflow",
     summary: "Screen a supplied small-molecule library against a target.",
     references: ["api", "results"],
-    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_small_molecule_screen with start=false", "ask for cost confirmation", "boltz_small_molecule_screen with start=true"]
+    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_small_molecule_screen with start=false", "confirm only if estimated_cost_usd is $1.00 or more", "boltz_small_molecule_screen with start=true"]
   },
   {
     id: "small-molecule-design",
@@ -93,7 +93,7 @@ export const workflowGuides = [
     prompt: "boltz_small_molecule_design_workflow",
     summary: "Generate novel small-molecule binders for a target.",
     references: ["api", "results"],
-    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_small_molecule_design with start=false", "ask for cost confirmation", "boltz_small_molecule_design with start=true"]
+    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_small_molecule_design with start=false", "confirm only if estimated_cost_usd is $1.00 or more", "boltz_small_molecule_design with start=true"]
   },
   {
     id: "protein-screen",
@@ -104,7 +104,7 @@ export const workflowGuides = [
     prompt: "boltz_protein_screen_workflow",
     summary: "Screen a supplied protein-family library against a target.",
     references: ["api", "results"],
-    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_protein_screen with start=false", "ask for cost confirmation", "boltz_protein_screen with start=true"]
+    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_protein_screen with start=false", "confirm only if estimated_cost_usd is $1.00 or more", "boltz_protein_screen with start=true"]
   },
   {
     id: "protein-design",
@@ -115,14 +115,14 @@ export const workflowGuides = [
     prompt: "boltz_protein_design_workflow",
     summary: "Generate novel protein binders, including peptides, antibodies, nanobodies, or custom proteins.",
     references: ["api", "results"],
-    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_protein_design with start=false", "ask for cost confirmation", "boltz_protein_design with start=true"]
+    sequence: ["boltz_check_setup", "boltz_get_guidance", "boltz_protein_design with start=false", "confirm only if estimated_cost_usd is $1.00 or more", "boltz_protein_design with start=true"]
   }
 ];
 
 export const serverInstructions = [
   "Use Boltz tools for molecular structure prediction, binding prediction, ADME property prediction, small-molecule screening/design, and protein screening/design.",
   "Before preparing or calling a paid workflow tool, call boltz_get_guidance for the matching workflow unless equivalent guidance is already visible in the conversation.",
-  "For every workflow, check setup/auth first, build a valid Boltz API JSON payload, estimate with start=false, then ask the user before submitting with start=true.",
+  "For every workflow, check setup/auth first, build a valid Boltz API JSON payload, estimate with start=false, report estimated_cost_usd, submit with start=true without asking only when it is less than $1.00, and ask the user before submitting at $1.00 or more.",
   "Do not invent missing biological inputs, sequences, ligands, libraries, workspace IDs, or payload fields. Ask for the missing information or explain the assumption before estimating.",
   "Use a stable run_name as the idempotency key and result tracking name. Prefer structured payload JSON; use payload_text only when exact raw JSON is required.",
   "After a job starts, use auto_download when appropriate and use boltz_job_status or boltz_download_results to monitor downloaded results or retrieve inline results."

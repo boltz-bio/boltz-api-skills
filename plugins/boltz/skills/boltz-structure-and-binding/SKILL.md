@@ -36,7 +36,7 @@ Use this skill for one defined complex, not a library workflow.
 
    Do not nest the variant name under `binding` (for example, no `binding.ligand_protein_binding` object).
 3. Supported optional features include `constraints`, `bonds`, `modifications`, `model_options`, and binding metrics; only add them if the user asks. Read [references/api.md](references/api.md) for exact shapes and examples.
-4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
+4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, and submit without asking only when `estimated_cost_usd` is less than $1.00; for $1.00 or more, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
 6. Launch `download-results` with the agent runtime's background/non-blocking command facility so polling + download continue without blocking the agent session. In Claude Code, use Bash with `run_in_background: true`. In Codex, run `download-results` as a foreground shell command with `yield_time_ms: 1000`; if Codex returns a `session_id`, keep it for optional same-thread polling, but treat `download-status` plus the run directory as the durable source of truth. In Codex app/desktop runtimes that expose same-thread heartbeat automations, create a heartbeat that checks `download-status` periodically and posts a concise completion or failure update when the download reaches a terminal state. After launching the downloader, always report the job ID, run name, and output directory. Include the next check cadence if the heartbeat was created; otherwise include the `download-status` command.
 
@@ -51,7 +51,7 @@ boltz-api predictions:structure-and-binding estimate-cost \
   --model boltz-2.1 \
   --input @yaml:///absolute/path/payload.yaml
 
-# 2. confirm with user, then submit
+# 2. confirm with user if the estimate is $1.00 or more, then submit
 boltz-api predictions:structure-and-binding start \
        --model boltz-2.1 \
        --idempotency-key "<run-name>" \
@@ -84,7 +84,7 @@ boltz-api download-results \
 - If the current host has no heartbeat automation support, do not claim an automatic next check. Report the job ID, run name, output directory, and the command needed to check `download-status`.
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Poll interval: keep `--poll-interval-seconds 10` for SAB — predictions usually finish in under a few minutes.
-- Cost: there is no published per-unit rate to cite for SAB — run `estimate-cost` and state only the figure it returns. Don't estimate or comment on cost.
+- Cost: there is no published per-unit rate to cite for SAB — run `estimate-cost` and state only the figure it returns. Submit without asking only when `estimated_cost_usd` is less than $1.00; require explicit confirmation for $1.00 or more.
 
 ## Escape Hatch
 

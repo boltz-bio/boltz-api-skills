@@ -10,14 +10,14 @@ Use this skill for one defined complex, not a library workflow.
 1. Normalize the complex inputs into entities: proteins, RNA, DNA, ligand SMILES, or ligand CCD codes.
 2. If the user wants binding metrics, identify the binder chain correctly and include a `binding` block.
 3. If the user asks for advanced geometry control, add only the requested `constraints`, `bonds`, `modifications`, or `model_options`.
-4. Estimate cost first, ask for explicit approval, then run the job.
+4. Estimate cost first, show the estimate, and run without asking only when `estimated_cost_usd` is less than $1.00; ask for explicit approval at $1.00 or more.
 5. Let the wrapper poll to completion and download the returned artifacts locally.
 
 ## Always Do This
 
 - Use the Python SDK wrapper only: `python scripts/query.py ...`.
 - Expect authentication through `BOLTZ_API_KEY`; `BOLTZ_COMPUTE_API_KEY` also works.
-- Always run `--estimate-only` before submission and ask the user to confirm spend.
+- Always run `--estimate-only` before submission. Submit without asking only when `estimated_cost_usd` is less than $1.00; ask the user to approve the cost at $1.00 or more.
 - Always send `modifications: []` on every protein, RNA, or DNA entity when there are no modifications. The API currently rejects omitted polymer `modifications`.
 - Keep defaults unless the user explicitly asks to change sampling behavior or constraints.
 - Remind yourself that residue indices are 0-based anywhere the API asks for residue positions.
@@ -53,7 +53,7 @@ python scripts/query.py \
   --estimate-only
 ```
 
-Submit after confirmation:
+Submit after confirmation when the estimate is $1.00 or more:
 
 ```bash
 python scripts/query.py \

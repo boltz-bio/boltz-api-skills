@@ -107,8 +107,8 @@ Pass `--config path.json` for advanced fields:
 ## Cost confirmation flow
 
 1. `python scripts/query.py … --estimate-only` → prints `{breakdown, estimated_cost_usd, disclaimer}` JSON.
-2. Show user `estimated_cost_usd`; ask for confirmation.
-3. Re-run without `--estimate-only`.
+2. Show user `estimated_cost_usd`.
+3. Re-run without `--estimate-only` without asking only when `estimated_cost_usd` is less than $1.00; ask for confirmation at $1.00 or more.
 
 ## How to invoke
 
