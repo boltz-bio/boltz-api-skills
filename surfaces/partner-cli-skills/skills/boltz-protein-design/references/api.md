@@ -15,7 +15,7 @@ Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear ins
 ## Contents
 
 - [Top-level request](#top-level-request)
-- [`num_proteins` minimum](#num_proteins-minimum)
+- [`num_proteins` range](#num_proteins-range)
 - [`binder_specification` — variant 1: `boltz_curated`](#binder_specification--variant-1-boltz_curated)
 - [`binder_specification` — variant 2: `structure_template`](#binder_specification--variant-2-structure_template)
 - [`binder_specification` — variant 3: `no_template`](#binder_specification--variant-3-no_template)
@@ -61,7 +61,7 @@ Also passed as separate `start` flags:
 - `--idempotency-key <slug>`
 - `--workspace-id <id>` (admin keys only)
 
-## `num_proteins` minimum
+## `num_proteins` range
 
 Server rejects `num_proteins < 10` or `> 1000000` with `VALIDATION_ERROR`. Validate client-side before submitting.
 

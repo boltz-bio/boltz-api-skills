@@ -15,7 +15,7 @@ Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear ins
 ## Contents
 
 - [Top-level request](#top-level-request)
-- [`num_molecules` minimum](#num_molecules-minimum)
+- [`num_molecules` range](#num_molecules-range)
 - [`chemical_space`](#chemical_space)
 - [`target`](#target)
 - [`molecule_filters`](#molecule_filters)
@@ -53,7 +53,7 @@ Also passed as separate `start` flags:
 - `--idempotency-key <slug>`
 - `--workspace-id <id>` (admin keys only)
 
-## `num_molecules` minimum
+## `num_molecules` range
 
 The server rejects `num_molecules < 10` or `> 1000000` with `VALIDATION_ERROR`. Validate client-side before submitting.
 
