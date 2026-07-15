@@ -14,6 +14,7 @@ Use this skill when the user wants de novo protein / peptide / antibody / nanobo
    - `boltz_curated` — recommended default for antibody and nanobody design. Boltz selects from maintained scaffold/template lists (`binder: boltz_antibody` or `boltz_nanobody`).
    - `structure_template` — redesign motifs in an existing binder scaffold (CIF + `design_motifs` with `replacement` / `insertion` segments).
    - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
+   - `uniformly_sampled_specifications` — sample roughly evenly from 1–50 concrete binder specifications in one run. Each entry must be a `boltz_curated`, `structure_template`, or `no_template` specification; do not nest another uniform sampler.
 3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use `type: boltz_curated`; if they want custom scaffold control, use `type: structure_template`.
 4. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein` for `structure_template` and `no_template`. Do not include `modality` on `boltz_curated`; use `binder` instead.
 5. Pick `num_proteins` — valid range **10 to 1,000,000**; the server rejects values outside it. If the user says fewer than 10, explain the floor and propose 10.
@@ -48,6 +49,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 
 - Enforce `10 <= num_proteins <= 1,000,000` before submitting. The server rejects values outside that range.
 - For antibody or nanobody design, recommend `binder_specification.type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
+- When the user wants one campaign to compare multiple concrete binder definitions, use `binder_specification.type: uniformly_sampled_specifications` with 1–50 entries in `binder_specifications`; each entry must be one of the three concrete variants above.
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
