@@ -92,7 +92,7 @@ agy plugin install https://github.com/boltz-bio/boltz-gemini-cli
 ### Claude Desktop
 
 Download the latest `boltz-mcpb-<version>.mcpb` from
-[Releases](https://github.com/boltz-bio/boltz-api-skills/releases) and install it
+[Releases](https://github.com/boltz-bio/boltz-mcpb/releases) and install it
 via **Settings → Extensions → Advanced settings → Install Extension**.
 
 Restart your agent after installing.
