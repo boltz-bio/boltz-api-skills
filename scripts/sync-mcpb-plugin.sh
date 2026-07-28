@@ -9,18 +9,18 @@ SOURCE="$REPO_ROOT/surfaces/mcpb/"
 TARGET="$REPO_ROOT/plugins/boltz-mcpb/"
 
 mkdir -p "$TARGET"
-rsync -aL --delete --delete-excluded \
+rsync -aLI --delete --delete-excluded \
   --exclude='.DS_Store' \
   --exclude='node_modules' \
   --exclude='*.mcpb' \
   "$SOURCE" "$TARGET"
 
 mkdir -p "$TARGET/guidance/skills" "$TARGET/guidance/references"
-rsync -aL --delete \
+rsync -aLI --delete \
   --exclude='.DS_Store' \
   --exclude='tests' \
   "$REPO_ROOT/core/skills/cli/" "$TARGET/guidance/skills/"
-rsync -aL --delete \
+rsync -aLI --delete \
   --exclude='.DS_Store' \
   "$REPO_ROOT/core/references/" "$TARGET/guidance/references/"
 

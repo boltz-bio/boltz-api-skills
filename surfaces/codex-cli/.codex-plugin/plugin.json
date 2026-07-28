@@ -1,5 +1,5 @@
 {
-  "name": "boltz-api-cli",
+  "name": "boltz",
   "version": "0.1.1",
   "description": "Predict structures, screen molecules and proteins, and design binders.",
   "author": {

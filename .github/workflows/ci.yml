@@ -62,37 +62,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Derived from core/, never hand-listed. The previous version enumerated
+      # six skills by name, so boltz-small-molecule-adme was unguarded in every
+      # surface and boltz-cli-setup's own SKILL.md was never checked at all.
       - name: Check every surface's skill symlinks
         run: |
           set -euo pipefail
+          fail=0
           for surface in claude-code-cli codex-cli gemini-cli; do
-            [[ -f "surfaces/$surface/skills/boltz-cli-setup/references/sandbox.md" ]] || {
-              echo "::error::missing or broken symlink: surfaces/$surface/skills/boltz-cli-setup/references/sandbox.md"
-              exit 1
-            }
-            for skill in boltz-structure-and-binding boltz-small-molecule-screen \
-                         boltz-small-molecule-design boltz-protein-screen \
-                         boltz-protein-design boltz-check-status; do
-              [[ -f "surfaces/$surface/skills/$skill/SKILL.md" ]] || {
-                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/SKILL.md"
-                exit 1
-              }
-              [[ -f "surfaces/$surface/skills/$skill/references/api.md" ]] || {
-                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/references/api.md"
-                exit 1
-              }
-              if [[ "$skill" == "boltz-check-status" ]]; then
-                extra_ref="resume.md"
-              else
-                extra_ref="results.md"
-              fi
-              [[ -f "surfaces/$surface/skills/$skill/references/$extra_ref" ]] || {
-                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/references/$extra_ref"
-                exit 1
-              }
+            for skill_dir in core/skills/cli/*/; do
+              skill="$(basename "$skill_dir")"
+              target="surfaces/$surface/skills/$skill/SKILL.md"
+              [[ -f "$target" ]] || { echo "::error::missing or broken symlink: $target"; fail=1; }
+              # Every reference core/ carries for this skill must resolve too.
+              for ref in core/references/"$skill"/*.md; do
+                [[ -e "$ref" ]] || continue
+                target="surfaces/$surface/skills/$skill/references/$(basename "$ref")"
+                [[ -f "$target" ]] || { echo "::error::missing or broken symlink: $target"; fail=1; }
+              done
             done
           done
-          echo "All skill and reference symlinks resolved."
+          [[ $fail -eq 0 ]] || exit 1
+          echo "All skill and reference symlinks resolved ($(ls -d core/skills/cli/*/ | wc -l | tr -d ' ') skills × 3 surfaces)."
 
   verify-claude-plugin-copy:
     name: Verify generated distribution surfaces

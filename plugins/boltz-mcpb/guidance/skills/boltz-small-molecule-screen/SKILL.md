@@ -1,6 +1,6 @@
 ---
 name: boltz-small-molecule-screen
-description: Screen existing small-molecule libraries with Boltz. Use when docking, scoring, or ranking a supplied SMILES or compound library against a target; also returns free Tier-1 ADME/ADMET (solubility, permeability, lipophilicity/logD) per molecule. Not for de novo molecule design, one-off docking, or ADME on bare SMILES with no target (use boltz-small-molecule-adme).
+description: Screen an existing small-molecule library with Boltz. Use when docking, scoring, or ranking two or more supplied SMILES against a target that must be one or more protein sequences; also returns free Tier-1 ADME (solubility, permeability, lipophilicity/logD) per molecule. For a single molecule use boltz-structure-and-binding.
 ---
 
 ## Workflow

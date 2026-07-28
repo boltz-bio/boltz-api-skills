@@ -1,6 +1,6 @@
 ---
 name: boltz-small-molecule-adme
-description: Predict Tier-1 ADME/ADMET for small molecules with Boltz from bare SMILES — no target, no docking. Use when the user wants solubility, permeability, or lipophilicity/logD for a molecule or list of molecules. Not for ranking molecules against a protein target (use boltz-small-molecule-screen, which already returns ADME free).
+description: "Predict Tier-1 ADME for small molecules with Boltz from bare SMILES — no target, no docking. Returns exactly three properties and no others: solubility, permeability, lipophilicity/logD. No other ADME, PK, or tox property is available. Molecules ranked against a protein target go to boltz-small-molecule-screen, which returns the same three free."
 ---
 
 ## Workflow

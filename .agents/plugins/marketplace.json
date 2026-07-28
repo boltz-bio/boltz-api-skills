@@ -1,0 +1,27 @@
+{
+  "name": "boltz-marketplace",
+  "owner": {
+    "name": "Boltz",
+    "email": "support@boltz.bio"
+  },
+  "metadata": {
+    "description": "Codex plugins for Boltz biomolecular modeling workflows.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "boltz",
+      "source": "./plugins/boltz-api-cli",
+      "description": "Predict structures, screen molecules and proteins, and design binders with Boltz.",
+      "category": "Computational Biology",
+      "tags": [
+        "boltz",
+        "boltz-api",
+        "computational-biology",
+        "protein-design",
+        "virtual-screening",
+        "structure-prediction"
+      ]
+    }
+  ]
+}
