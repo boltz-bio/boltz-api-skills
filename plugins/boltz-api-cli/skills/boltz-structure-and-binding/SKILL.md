@@ -1,6 +1,6 @@
 ---
 name: boltz-structure-and-binding
-description: Predict structures and binding for one defined complex with Boltz. Use when folding a protein, RNA, DNA, or ligand complex, docking one ligand, predicting an interface, or scoring binding. Not for screening libraries or design.
+description: Predict structure and binding for one defined complex with Boltz. Use when folding a protein, RNA, DNA, or ligand complex, predicting an interface, or docking, screening, or scoring a single ligand — any one-molecule request, and any docking or binding request whose target is RNA or DNA rather than protein.
 ---
 
 ## Workflow

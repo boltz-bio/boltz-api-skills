@@ -1,6 +1,6 @@
 ---
 name: boltz-protein-screen
-description: Screen existing protein binders with Boltz. Use when ranking a supplied protein, peptide, antibody, nanobody, or binder library against a target. Not for designing new proteins or screening small molecules.
+description: Screen an existing binder library with Boltz. Use when ranking supplied protein, peptide, antibody, nanobody, or aptamer sequences against a target; binder entities may be protein, RNA, or DNA.
 ---
 
 ## Workflow
