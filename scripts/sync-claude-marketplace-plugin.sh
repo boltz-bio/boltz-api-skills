@@ -13,7 +13,7 @@ SOURCE="$REPO_ROOT/surfaces/claude-code-cli/"
 TARGET="$REPO_ROOT/plugins/boltz/"
 
 mkdir -p "$TARGET"
-rsync -aL --delete --delete-excluded \
+rsync -aLI --delete --delete-excluded \
   --exclude='.DS_Store' \
   --exclude='README.md' \
   --exclude='DESIGN.md' \
