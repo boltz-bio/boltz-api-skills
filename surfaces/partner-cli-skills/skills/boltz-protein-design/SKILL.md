@@ -9,14 +9,10 @@ If `boltz-api` reports missing or expired authentication, surface the error to t
 
 Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
 
-1. Normalize the target (same shape as protein-screen): `structure_template` if a CIF/PDB is available, else `no_template`.
-2. Pick the `binder_specification` variant. Supported variants include:
-   - `boltz_curated` — recommended default for antibody and nanobody design. Boltz selects from maintained scaffold/template lists (`binder: boltz_antibody` or `boltz_nanobody`).
-   - `structure_template` — redesign motifs in an existing binder scaffold (CIF + `design_motifs` with `replacement` / `insertion` segments).
-   - `no_template` — generate from the sequence DSL (fixed residues + designed segments like `5..10` or `8`).
-   - `uniformly_sampled_specifications` — sample roughly evenly from 1–50 concrete binder specifications in one run. Each entry must be a `boltz_curated`, `structure_template`, or `no_template` specification; do not nest another uniform sampler.
-3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use `type: boltz_curated`; if they want custom scaffold control, use `type: structure_template`.
-4. Pick `modality`: `peptide`, `antibody`, `nanobody`, or `custom_protein` for `structure_template` and `no_template`. Do not include `modality` on `boltz_curated`; use `binder` instead.
+1. Choose the request mode. New requests use the top-level `type: binder` or `type: generic` discriminator; do not author the deprecated `binder_specification` shape for a new integration. Use `binder` for target-binding designs and `generic` for designs without a binding target.
+2. For `type: binder`, choose the `binder` definition: `single` for one specification, `uniformly_sampled` to sample 1–50 specifications, or a `boltz_curated` family. For `type: generic`, define at least one designed entity and any requested bonds. See [references/api.md](references/api.md) for exact shapes.
+3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use a `binder` definition with `type: boltz_curated`; if they want custom scaffold control, use `type: single` with a custom specification.
+4. In binder mode, normalize the target (`target.entities`) and binder entities (`binder.entities` for `single`) using `from_template` or `no_template` as appropriate. In generic mode, put designed entities in the top-level `entities`; use `templates`, `global_design_filters`, `design_motifs`, and `bonds` only when needed.
 5. Pick `num_proteins` — valid range **10 to 1,000,000**; the server rejects values outside it. If the user says fewer than 10, explain the floor and propose 10.
 6. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
 7. Author the payload YAML or JSON.
@@ -43,20 +39,20 @@ boltz-api download-results \
   --poll-interval-seconds 60
 ```
 
-Payload keys are `num_proteins`, `target`, `binder_specification` — API body field names.
+New payload keys are `type`, `num_proteins`, and `templates`, plus `target` and `binder` for binder mode or `entities` and optional `bonds` for generic mode. These are API body field names. The legacy `target` + `binder_specification` body is still accepted for migration, but new requests must use the type-discriminated shape in [references/api.md](references/api.md).
 
 ## Always Do This
 
 - Enforce `10 <= num_proteins <= 1,000,000` before submitting. The server rejects values outside that range.
-- For antibody or nanobody design, recommend `binder_specification.type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
-- When the user wants one campaign to compare multiple concrete binder definitions, use `binder_specification.type: uniformly_sampled_specifications` with 1–50 entries in `binder_specifications`; each entry must be one of the three concrete variants above.
+- For antibody or nanobody design, recommend a `binder.type: single` specification with `type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
+- When the user wants one campaign to compare multiple concrete binder definitions, use `binder.type: uniformly_sampled` with 1–50 `specifications`; each entry must be a concrete `single` specification or a curated family. Do not use the legacy `uniformly_sampled_specifications` wrapper for new requests.
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
 - Keep payload field names exactly as the API body names shown in `references/api.md`.
 - Use absolute paths for the output root, payload files, and embedded target files. Do not `cd` into the run directory for follow-up commands; pass the same `--root-dir` and use absolute paths so later relative paths do not drift.
 - Prefer one merged top-level payload via `--input @yaml:///absolute/path/payload.yaml` or `@json:///absolute/path/payload.json`. Keep `--idempotency-key` and `--workspace-id` top-level; if they also appear inside `--input`, the top-level flags win.
-- Direct object flags still work as overrides, such as `--target @yaml:///absolute/path/target.yaml` or `--binder-specification @json:///absolute/path/binder.json`. Piped YAML / JSON on stdin also works, but it must use API body field names. Use the same slug for both `--idempotency-key` and `--name`.
+- For a type-discriminated request, keep the complete mode in `--input`; legacy direct object flags such as `--target` and `--binder-specification` remain available for migration. Piped YAML / JSON on stdin also works, but it must use API body field names. Use the same slug for both `--idempotency-key` and `--name`.
 - In permission-gated agents, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines around the `boltz-api` invocation unless the user already allowed that exact command form. Use `--raw-output --transform id`, read the printed ID, then paste that literal ID into the next `download-results` command.
 - Run `download-results` through the host harness's long-running/background command facility. After it starts, do not manually wait on it or run ad hoc polling loops. Wall-clock time scales roughly with `num_proteins`: under 100 often finishes in a few minutes, 100-1,000 may take several minutes to tens of minutes, and larger runs can take longer or hours depending on inputs and system load. `--poll-interval-seconds 60` is a sensible downloader default. If the host harness provides a managed follow-up/notification mechanism, schedule it to check `download-status`, notify the user on terminal completion/failure, and stop once terminal. If not, do not claim an automatic next check.
 - `download-results` emits JSONL progress on stderr by default; add `--progress-format text --verbose` only when you explicitly want human-readable logs.
@@ -69,7 +65,7 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 - Payload reference: <https://api.boltz.bio/docs/api/resources/protein/subresources/design/methods/start/>
 - CLI flag names: `boltz-api protein:design start --help`
 
-Read [references/api.md](references/api.md) for all `binder_specification` variants, motif shapes, sequence DSL, rules, modalities, and `target` variants. Read [references/results.md](references/results.md) after download when ranking designed binders or explaining outputs.
+Read [references/api.md](references/api.md) for the type-discriminated binder/generic request modes, legacy migration variants, motif shapes, sequence DSL, rules, modalities, and target variants. Read [references/results.md](references/results.md) after download when ranking designed binders or explaining outputs.
 
 ## Outputs
 
