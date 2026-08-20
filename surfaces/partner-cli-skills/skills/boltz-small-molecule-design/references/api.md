@@ -45,7 +45,7 @@ Top-level fields:
 
 - `num_molecules` (required) — number to generate. **Must be between 10 and 1,000,000** (server rejects outside this range).
 - `target` (required) — protein target object (same shape as the screen endpoint).
-- `chemical_space` (optional) — generation space constraint. Currently `"enamine_real"` is the documented value. Omit for default.
+- `chemical_space` (optional) — generation space constraint. Use `"enamine_real"` for the Enamine REAL library, `"wuxi_galaxi"` for the WuXi GalaXi space when enabled for your organization, or `"none"` to disable chemical-space filtering. Omit for default.
 - `molecule_filters` (optional) — filter candidates before they're scored. Same schema as the screen endpoint.
 
 Also passed as separate `start` flags:
@@ -59,7 +59,7 @@ The server rejects `num_molecules < 10` or `> 1000000` with `VALIDATION_ERROR`. 
 
 ## `chemical_space`
 
-Optional. Documented value: `"enamine_real"` — restricts generation to synthesis-accessible space from the Enamine REAL library. Omit unless the user explicitly wants this.
+Optional. Supported values are `"enamine_real"` (restricts generation to synthesis-accessible space from the Enamine REAL library), `"wuxi_galaxi"` (uses the WuXi GalaXi space when enabled for your organization), and `"none"` (disables chemical-space filtering). Omit unless the user explicitly wants this.
 
 ## `target`
 
