@@ -1,24 +1,24 @@
 ---
 name: boltz-protein-design
-description: Design new protein binders with Boltz. Use when generating protein, peptide, antibody, nanobody, or custom binder candidates for a target. Not for screening existing proteins or small molecules.
+description: Design new protein binders, generic proteins, or composite proteins with Boltz. Use when generating protein, peptide, antibody, nanobody, or custom candidates. Not for screening existing proteins or small molecules.
 ---
 
 ## Workflow
 
 If `boltz-api` reports missing or expired authentication, surface the error to the user. Do not attempt to re-authenticate; the host environment must provide `BOLTZ_API_KEY`.
 
-Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders.
+Use this skill when the user wants de novo protein / peptide / antibody / nanobody binders, generic proteins, or composite proteins.
 
 1. Choose the request mode. New requests use the top-level `type: binder` or `type: generic` discriminator; do not author the deprecated `binder_specification` shape for a new integration. Use `binder` for target-binding designs and `generic` for designs without a binding target.
-2. For `type: binder`, choose the `binder` definition: `single` for one specification, `uniformly_sampled` to sample 1–50 specifications, or a `boltz_curated` family. For `type: generic`, define at least one designed entity and any requested bonds. See [references/api.md](references/api.md) for exact shapes.
-3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use a `binder` definition with `type: boltz_curated`; if they want custom scaffold control, use `type: single` with a custom specification.
-4. In binder mode, normalize the target (`target.entities`) and binder entities (`binder.entities` for `single`) using `from_template` or `no_template` as appropriate. In generic mode, put designed entities in the top-level `entities`; use `templates`, `global_design_filters`, `design_motifs`, and `bonds` only when needed.
+2. For `type: binder`, choose the `binder` definition: an untagged custom specification for one binder, `uniformly_sampled` to sample 1–50 specifications, or a `boltz_curated` family. For `type: generic`, define at least one designed entity and any requested bonds; use a `fusion_protein` entity when ordered protein segments should become one output chain. See [references/api.md](references/api.md) for exact shapes.
+3. For antibody or nanobody requests, ask before authoring the payload: "I recommend Boltz's curated antibody/nanobody scaffolds for this. Do you want the curated default, or do you have custom scaffold structures/CDR motifs to use?" If the user picks curated, use a `binder` definition with `type: boltz_curated`; if they want custom scaffold control, use an untagged `binder` custom specification.
+4. In binder mode, normalize the target (`target.entities`) and binder entities (`binder.entities`) using `from_template` or `no_template` as appropriate. In generic mode, put designed entities in the top-level `entities`; use `templates`, `global_design_filters`, `design_motifs`, and `bonds` only when needed. A generic `fusion_protein` concatenates at least two non-cyclic protein segments into its `output_chain_id`.
 5. Pick `num_proteins` — valid range **10 to 1,000,000**; the server rejects values outside it. If the user says fewer than 10, explain the floor and propose 10.
 6. Supported optional features include rules such as excluded amino acids, excluded sequence motifs with `X` wildcards, and max hydrophobic fraction. Add `rules` only on request; read [references/api.md](references/api.md) for exact shapes and examples.
 7. Author the payload YAML or JSON.
 8. `start` to submit. Capture the ID.
 9. Launch `download-results` as a long-running/background command in whatever mode the host agent harness provides. After launching it, schedule the host's available follow-up/notification mechanism, if one exists, to check `download-status` periodically and notify the user when the download reaches a terminal state. Always report the job ID, run name, and output directory. Include the next check cadence if a follow-up was scheduled; otherwise include the `download-status` command.
-10. Rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending. Use `iptm` and `min_interaction_pae` as tiebreakers. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
+10. For binder runs, rank from `<output-root>/<run-name>/results/index.jsonl` by `binding_confidence` descending, using `iptm` and `min_interaction_pae` as tiebreakers. Generic runs omit binding-specific metrics; rank them by `structure_confidence` and inspect the secondary-structure fractions. `optimization_score` is not emitted for this endpoint. Read [references/results.md](references/results.md) for output layout and metric details.
 
 ## Command Pattern
 
@@ -44,8 +44,8 @@ New payload keys are `type`, `num_proteins`, and `templates`, plus `target` and 
 ## Always Do This
 
 - Enforce `10 <= num_proteins <= 1,000,000` before submitting. The server rejects values outside that range.
-- For antibody or nanobody design, recommend a `binder.type: single` specification with `type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
-- When the user wants one campaign to compare multiple concrete binder definitions, use `binder.type: uniformly_sampled` with 1–50 `specifications`; each entry must be a concrete `single` specification or a curated family. Do not use the legacy `uniformly_sampled_specifications` wrapper for new requests.
+- For antibody or nanobody design, recommend a `binder` specification with `type: boltz_curated` and ask the user to confirm they do not want custom scaffold/CDR control before building the payload. Use `binder: boltz_antibody` for antibody/Fab requests and `binder: boltz_nanobody` for nanobody/VHH requests.
+- When the user wants one campaign to compare multiple concrete binder definitions, use `binder.type: uniformly_sampled` with 1–50 `specifications`; each entry must be an untagged custom specification or a curated family. Do not use the legacy `uniformly_sampled_specifications` wrapper for new requests.
 - Residue indices are 0-based everywhere (`design_motifs.start_index`/`end_index`, `after_residue_index`, `epitope_residues`, `flexible_residues`, bonds, constraints).
 - For CIF/PDB bytes, use `@data:///abs/path/file.cif` inside `structure.data`. Don't use bare `@path`.
 - Sequence DSL for `designed_protein.value`: uppercase letters = fixed residues; integer `N` = exactly `N` designed residues; `MIN..MAX` = variable-length designed segment. Examples: `"20"`, `"5..10"`, `"ACDE8GHI"`, `"MKTAYI5..10VKSHFSRQ"`.
