@@ -12,7 +12,7 @@ If the agent host sandbox blocks `boltz-api` install/auth/API calls, use `boltz-
 Use this skill when the user already has candidate molecules.
 
 1. Normalize the library from raw SMILES, a CSV (auto-detect the SMILES column), `.smi`, or `.txt` into the `molecules` list. Each entry is `{smiles, id?}`; the optional `id` is echoed back as `external_id` on each result.
-2. Normalize the target: one or more protein sequences into `target.entities`, plus optional `pocket_residues` (0-based) and/or `reference_ligands` (SMILES of known binders to help locate the pocket).
+2. Normalize the target: one or more protein sequence entities, optionally with glycan entities in `target.entities`; at least one protein entity is required. Add optional `pocket_residues` (0-based) and/or `reference_ligands` (SMILES of known binders to help locate the pocket).
 3. Keep default server-side filtering unless the user asks for custom filters — only add `molecule_filters` on explicit request.
 4. Author the payload YAML or JSON, run `estimate-cost`, show the USD cost, wait for explicit confirmation.
 5. `start` to submit (synchronous). Capture the ID.
@@ -62,7 +62,7 @@ Payload keys are `molecules`, `target`, `molecule_filters` — the API body fiel
 - In Codex app/desktop runtimes with same-thread heartbeat automation support, schedule a heartbeat after launching `download-results`. The heartbeat should run `boltz-api --format json download-status --name "<run-name>" --root-dir "/absolute/path/boltz-experiments"` and stop once terminal. Choose cadence by molecule count: under 100 -> every 1-2 minutes; 100-1,000 -> every 5 minutes; over 1,000 -> every 15 minutes. Post only material status changes or terminal completion/failure. Poll the saved `session_id` with an empty `write_stdin` only for interactive, user-requested progress checks. Never run a manual poll loop in the current turn.
 - If the current host has no heartbeat automation support, do not claim an automatic next check. Report the job ID, run name, output directory, and the command needed to check `download-status`.
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
-- Cost is a flat $0.025 per molecule (size-independent). `estimate-cost` returns the authoritative total — always use it.
+- `estimate-cost` returns the authoritative total — always use it. Each scored molecule is one billing display unit, and pre-scoring filters can reduce the number of molecules that are scored.
 - Poll interval: `--poll-interval-seconds 30` is a reasonable downloader default. Wall-clock time scales roughly with the number of molecules: under 100 often finishes in a few minutes, 100-1,000 may take several minutes to tens of minutes, and larger screens can take longer or hours depending on inputs and system load. Don't quote a fixed duration, and never tell the user a 10-candidate screen will take 30 minutes or hours.
 
 ## Escape Hatch

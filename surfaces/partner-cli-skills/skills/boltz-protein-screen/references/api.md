@@ -88,8 +88,9 @@ Supported entity types inside `proteins[].entities`:
 - `dna`
 - `ligand_smiles`
 - `ligand_ccd`
+- `glycan`
 
-Entity fields: `type`, `value`, `chain_ids`, `modifications` (optional), `cyclic` (optional bool).
+Non-glycan entity fields are `type`, `value`, `chain_ids`, `modifications` (optional), and `cyclic` (optional bool). Glycan entities use `type`, `chain_ids`, `residues`, and `bonds` to describe a graph of CCD monosaccharide residues.
 
 Each `proteins[]` entry may also include an optional client-side `id`. The server echoes it as `external_id` on the corresponding result; use it to map ranked hits back to FASTA records, CSV rows, or library IDs.
 
@@ -157,7 +158,7 @@ All residue indices are 0-based.
 
 ## `target` — variant 2: `no_template`
 
-Use when the user has only sequences.
+Use when the user has only sequences or explicit glycan graphs.
 
 ```yaml
 target:
@@ -239,7 +240,7 @@ Under `<output-root>/<run-name>/`:
 - `results/index.jsonl` — one scored candidate per line, copied from list-results metadata plus local artifact paths
 - `results/<pres_*>/metadata.json` — per-result metadata copied from the list-results record
 - `results/<pres_*>/archive.tar.gz` — one dir per scored candidate
-- `results/<pres_*>/files/result/{metrics.json, predicted_structure.cif, pae.npz}`
+- `results/<pres_*>/files/result/{metrics.json, <pres_*>_predicted.cif, pae.npz}` (prefer the `paths.structure` field from `index.jsonl` over hard-coding the filename)
 
 Per-result fields (available in `results/index.jsonl`, `results/<pres_*>/metadata.json`, and the `list-results` stream):
 

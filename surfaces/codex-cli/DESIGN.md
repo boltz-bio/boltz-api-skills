@@ -4,7 +4,7 @@ What this plugin is, why it's shaped the way it is, and what we're explicitly gi
 
 ## One-line summary
 
-A Codex plugin that ships six workflow skills for the Boltz API plus one `boltz-api` setup skill. Each workflow skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
+A Codex plugin that ships six workflow skills for the Boltz API, one `boltz-api` setup skill, and one job-recovery skill. Each workflow skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
 
 ## Context
 
@@ -37,9 +37,9 @@ So we drop the Python wrapper entirely. The agent becomes the input parser; the 
 
 ### 3. Endpoint workflows + CLI setup, not one omnibus
 
-**Chose:** six separate workflow `SKILL.md` files with tight per-endpoint `description` triggers (lifted verbatim from the Python plugin — those triggers are tuned), plus one small `boltz-cli-setup` setup skill for install/auth guidance.
+**Chose:** six separate workflow `SKILL.md` files with tight per-endpoint `description` triggers (lifted verbatim from the Python plugin — those triggers are tuned), plus one small `boltz-cli-setup` setup skill for install/auth guidance and one `boltz-check-status` recovery skill.
 
-**Trade:** small prose duplication of the "estimate → confirm → submit → background download" lifecycle across five skills. **Gain:** precise trigger matching (Codex selects the right skill from "design a nanobody" vs "screen these SMILES" without loose overlap); each SKILL.md stays short enough that agents read past the first 30%.
+**Trade:** small prose duplication of the "estimate → confirm → submit → background download" lifecycle across the start-family skills. **Gain:** precise trigger matching (Codex selects the right skill from "design a nanobody" vs "screen these SMILES" without loose overlap); each SKILL.md stays short enough that agents read past the first 30%.
 
 ### 4. Three-layer doc model
 
