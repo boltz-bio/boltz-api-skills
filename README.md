@@ -127,7 +127,6 @@ detailed workflows and examples.
   host-managed authentication and spending policy.
 - `plugins/` — generated, self-contained marketplace and MCPB copies.
 - `tests/` — distribution checks and protein-design helper tests.
-- `legacy/` — historical Python SDK variants, outside the public skill source.
 
 ## Local development
 

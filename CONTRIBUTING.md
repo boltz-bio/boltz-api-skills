@@ -3,7 +3,7 @@
 ## Source Of Truth
 
 The public skills live in `skills/`. Vercel Skills discovers this directory
-before generated marketplace packages and the legacy variants.
+before generated marketplace packages.
 
 | Path | Role | Edit directly? |
 |---|---|---|
@@ -15,7 +15,6 @@ before generated marketplace packages and the legacy variants.
 | `surfaces/partner-cli-skills/` | Partner bundle with distinct host-managed policies | Yes |
 | `plugins/` | Self-contained marketplace and MCPB copies | No, generated |
 | `tests/` | Distribution and protein-design helper tests | Yes |
-| `legacy/` | Historical Python SDK variants | Reference only |
 
 Keep each public skill self-contained. Put references and executable helpers
 inside its directory. Keep helper tests under `tests/` so Skills does not
@@ -27,8 +26,7 @@ The MCPB generator copies the tree into `guidance/skills/`, including each
 skill's references. The development MCP server reads `skills/` directly.
 
 The partner bundle is separate: its host provides authentication and spending
-policy. Do not substitute it for the public skills. Historical SDK variants
-remain under `legacy/`; they are not distribution targets.
+policy. Do not substitute it for the public skills.
 
 ## Local Workflow
 
@@ -201,8 +199,3 @@ RELEASE_REPO=boltz-bio/boltz-gemini-cli scripts/release-gemini-repo.sh
 
 Privacy policy URL, 512×512 icon, screenshots, support contact, verified
 metadata, and license confirmation for any bundled binaries.
-
-## Legacy
-
-`legacy/skills-python/` and `legacy/codex-plugin-python/` are historical Python
-SDK variants. They remain as references, not as distribution targets.
