@@ -20,6 +20,15 @@ Keep each public skill self-contained. Put references and executable helpers
 inside its directory. Keep helper tests under `tests/` so Skills does not
 install them. Preserve skill names and existing `agents/openai.yaml` metadata.
 
+Follow the [Agent Skills specification](https://agentskills.io/specification).
+This open format is the source contract; Vercel Skills is an installer and
+test dependency. Keep the skill content usable by other compatible clients.
+The frontmatter name must match the directory name. Keep descriptions specific
+about when to use the skill, and keep `SKILL.md` below 500 lines. Put detailed
+schemas and result interpretation in references that the skill links to.
+Document helper dependencies beside the scripts. Keep host-specific plugin
+configuration in `surfaces/`; the portable skills must not require it.
+
 The three CLI wrappers each have one `skills` symlink to the canonical tree.
 `scripts/generate-surfaces.sh` dereferences those links for marketplace caches.
 The MCPB generator copies the tree into `guidance/skills/`, including each
@@ -41,9 +50,10 @@ npm test
 scripts/verify-generated.sh
 ```
 
-`npm test` checks canonical references, marketplace package contents, and
+`npm test` checks required skill metadata, canonical references, marketplace package contents, and
 Skills installation in temporary projects for Claude Code, Codex, and Gemini
-CLI. It checks both copy and symlink installation. It does not require agent
+CLI. It checks preview, selective installation, and both copy and symlink
+installation. It does not require agent
 logins or submit Boltz jobs. Run only installer checks with
 `npm run test:install`. Update the pinned `skills` development dependency and
 lockfile together when adopting a new installer version.

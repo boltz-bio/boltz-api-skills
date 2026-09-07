@@ -5,7 +5,27 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { promisify } from "node:util";
+import { parse } from "yaml";
 import { assertSameSkills, filesIn, repoRoot, skillsRoot } from "./distribution-helpers.mjs";
+
+test("public skill metadata follows the Agent Skills specification", async () => {
+  for (const directory of await readdir(skillsRoot)) {
+    const markdown = await readFile(path.join(skillsRoot, directory, "SKILL.md"), "utf8");
+    const frontmatter = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+    assert.ok(frontmatter, `${directory}: missing YAML frontmatter`);
+    const metadata = parse(frontmatter[1]);
+    assert.equal(metadata.name, directory, `${directory}: name must match its directory`);
+    assert.match(metadata.name, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    assert.ok(metadata.name.length <= 64, `${directory}: name exceeds 64 characters`);
+    assert.equal(typeof metadata.description, "string");
+    assert.ok(metadata.description.trim().length > 0 && metadata.description.length <= 1024,
+      `${directory}: description must contain 1–1024 characters`);
+    assert.notEqual(metadata.metadata?.internal, true, `${directory}: public skills must remain discoverable`);
+    assert.notEqual(metadata.metadata?.internal, "true", `${directory}: public skills must remain discoverable`);
+    assert.ok(markdown.split(/\r?\n/).length < 500,
+      `${directory}: move detailed content to references to stay below 500 lines`);
+  }
+});
 
 test("canonical skills contain their referenced documents and agent metadata", async () => {
   const names = await readdir(skillsRoot);

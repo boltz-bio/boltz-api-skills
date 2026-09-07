@@ -101,6 +101,22 @@ Use one installation method per agent and scope to avoid loading the same
 skills twice. Direct Skills installation is optional for Codex and Claude
 Code; existing marketplace users can keep their plugin installation.
 
+To install selected skills, pass their names to `--skill`. Include
+`boltz-cli-setup` if you need help installing or authenticating the CLI:
+
+```sh
+npx skills add boltz-bio/boltz-api-skills --skill boltz-cli-setup boltz-protein-design --agent gemini-cli
+```
+
+For direct Skills installations, keep the generated `skills-lock.json` with
+your project. Updates are explicit; review the resulting file changes:
+
+```sh
+npx skills update boltz-cli-setup boltz-protein-design --project
+```
+
+Use your agent's plugin manager to update marketplace installations.
+
 ### Gemini extension
 
 Gemini CLI users can also use the
