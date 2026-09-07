@@ -1,93 +1,25 @@
-# boltz-api-cli (Codex plugin)
+# Boltz Codex plugin
 
-Eight Codex skills that drive the [`boltz-api`](https://api.boltz.bio/docs/api/cli/) Go CLI for the Boltz API. No Python runtime, no SDK install, no wrapper scripts — workflow skills are prose plus per-endpoint schema references, and `boltz-cli-setup` covers CLI setup.
-
-## Prerequisites
-
-- `boltz-api` on `PATH` (the Stainless-generated Go CLI; `boltz-api --version` should report ≥ `0.8.0`)
-- Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY` exported in the environment
-- Results land in a `boltz-experiments/` directory in the working directory (created automatically). Pass `--root-dir` to any command to write them elsewhere.
-
-The skills assume the CLI is already configured. If a command fails because auth is missing or expired, the agent should run `boltz-api auth login --device-code` on the user's behalf before retrying.
-If the host sandbox blocks installer temp files, OAuth browser login, credential storage, or the user-wide install path, request the host sandbox bypass/escalation needed to install and authenticate `boltz-api` in the user's real environment.
-
-Verify the CLI is installed:
+This official marketplace wrapper ships the canonical [Boltz skills](../../skills/)
+and Codex plugin assets. For the primary installation path, use
+[Vercel Skills](../../README.md#install):
 
 ```sh
-boltz-api --version
+npx skills add boltz-bio/boltz-api-skills --agent codex
 ```
 
-If `boltz-api` is not installed, install or update it from the official CLI repo:
+Install and authenticate `boltz-api` as described in the
+[prerequisites](../../README.md#prerequisites).
 
-macOS and Linux:
+## Marketplace distribution
 
-```sh
-curl -fsSL https://install.boltz.bio/boltz-api/install.sh | sh
-```
+`plugins/boltz-api-cli/` is the generated, self-contained plugin for Codex
+marketplace distribution. It retains the plugin manifest and assets. The
+canonical skill directories contain the existing `agents/openai.yaml`
+metadata, so direct Skills installations receive it too.
 
-Windows PowerShell:
+## Development
 
-```powershell
-irm https://install.boltz.bio/boltz-api/install.ps1 | iex
-```
-
-The installer updates an existing `boltz-api` on `PATH`. If no binary is found, it installs to a user-local bin directory. Add the installed binary to `PATH` if `boltz-api --version` is still not found after install.
-
-Important version note:
-
-- This plugin assumes the newer Boltz CLI surface documented by the repo, including commands like `predictions:structure-and-binding estimate-cost`, merged `--input` payloads, top-level `download-results`, and `download-status`.
-- If `boltz-api` reports errors like `No such command 'predictions:structure-and-binding'`, your local CLI is too old or is a different binary.
-- OAuth/device-code login requires a newer `boltz-api` with the `auth` command family.
-
-## Skills
-
-| Skill | Use when… |
-|---|---|
-| `boltz-cli-setup` | install, update, verify, or authenticate the `boltz-api` CLI |
-| `boltz-structure-and-binding` | fold one defined complex; dock one ligand; get pTM/ipTM/binding_confidence for one system |
-| `boltz-small-molecule-screen` | rank an existing SMILES library against a target |
-| `boltz-small-molecule-design` | generate novel small-molecule binders for a target (no library yet) |
-| `boltz-small-molecule-adme` | predict Tier-1 ADME (solubility, permeability, logD) from bare SMILES, no target |
-| `boltz-protein-screen` | rank an existing protein / peptide / antibody library against a target |
-| `boltz-protein-design` | generate novel protein / peptide / antibody / nanobody binders for a target |
-| `boltz-check-status` | list recent jobs, resume after a crashed session, recover results by ID |
-
-## Installation
-
-From a Codex session:
-
-```
-/plugins add <path-to-this-directory>
-```
-
-Or configure in your Codex plugin config. The plugin registers the eight skills; the agent picks the right one based on your request.
-
-## Lifecycle
-
-Each `start`-family skill follows the same flow:
-
-1. Agent normalizes your inputs and authors a YAML or JSON payload.
-2. `boltz-api <resource> estimate-cost` — shows you the USD cost.
-3. You confirm.
-4. Submit with `boltz-api <resource> start --input @yaml:///absolute/path/payload.yaml ...`. For the four design/screen endpoints, prefer one merged `--input` payload and keep `--idempotency-key` / `--workspace-id` top-level. Piping YAML / JSON on stdin still works, but the body must use API field names such as `molecules`, `proteins`, `target`, or `binder_specification`.
-5. `boltz-api download-results --id $ID --name $RUN_NAME --root-dir $ROOT ...` — run as a foreground Codex shell command with `yield_time_ms=1000`. If Codex returns a session id, keep it for optional interactive polling; the CLI keeps polling + downloading in that managed session. It emits machine-readable JSONL progress events on stderr by default and checkpoints local state in `.boltz-run.json`.
-6. In Codex app/desktop runtimes that expose same-thread heartbeat automations, schedule a heartbeat after launching the downloader. The heartbeat should call `boltz-api --format json download-status --name $RUN_NAME --root-dir $ROOT` on the cadence specified by the skill, post only material status changes or terminal completion/failure, and stop once terminal.
-7. Agent answers explicit "how's it going?" requests either by polling the saved Codex session for JSONL output or by calling `download-status` for a local-only checkpoint snapshot. If the Codex host has no heartbeat automation support, report the job ID, run name, output directory, and `download-status` command, then wait for the user to ask for progress.
-
-Do not use shell `&`, terminal backgrounding, or `nohup` for `download-results` in Codex. Those detach mechanisms can be cleaned up by the tool runner before `.boltz-run.json` is fully written. Use Codex's managed long-running shell session instead.
-
-Results land in `$ROOT/$RUN_NAME/` where `$ROOT` defaults to `boltz-experiments` in the working directory (override with `--root-dir`) and `$RUN_NAME` is a short descriptive slug the agent picks (e.g. `kras-g12d-enamine-v1`). Prefer an absolute `$ROOT` and do not `cd "$ROOT/$RUN_NAME"` for follow-up commands; pass `--root-dir "$ROOT"` instead. Re-running the same `download-results` command with the same `--name` resumes from where it left off — this is the crash-recovery path for dropped sessions. `boltz-check-status` wraps the recovery flow when you only have the job ID.
-
-## Why use the CLI variant
-
-- The user can inspect and rerun every command the agent used.
-- No local server has to be built, launched, or debugged.
-- The CLI owns the long-running poll/download behavior, local `.boltz-run.json` checkpoint, JSONL progress stream, and `download-status` view.
-
-## Escape hatch
-
-If an agent hits a schema it doesn't recognize, the canonical upstream refs are:
-
-- Payload shapes: <https://api.boltz.bio/docs/guides/concepts/>
-- API reference: <https://api.boltz.bio/docs/api/>
-- CLI flags: `boltz-api <resource> start --help` (flag names only — the help text is not a schema source)
+`skills` links to the repository's canonical tree. Edit shared content there.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for generation, tests, and the
+marketplace submission procedure.

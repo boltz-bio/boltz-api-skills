@@ -32,6 +32,8 @@ copy_surface_tree() {
   local surface="$1" stage_dir="$2"
   rsync -aL \
     --exclude='.DS_Store' \
+    --exclude='__pycache__' \
+    --exclude='*.py[cod]' \
     --exclude='.gitkeep' \
     --exclude='README.md' \
     --exclude='DESIGN.md' \
@@ -72,6 +74,8 @@ pack_gemini_extension() {
   mkdir -p "$stage_dir"
   rsync -aL \
     --exclude='.DS_Store' \
+    --exclude='__pycache__' \
+    --exclude='*.py[cod]' \
     "$source/" "$stage_dir/"
   zip_stage_dir "$stage_dir" "$out"
   echo "  → $out"

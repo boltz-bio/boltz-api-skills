@@ -1,0 +1,16 @@
+{
+  "name": "boltz-api-skills",
+  "private": true,
+  "description": "Boltz skill distribution checks",
+  "engines": {
+    "node": ">=22.20.0"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:install": "node --test tests/skills-install.test.mjs",
+    "test:packages": "node tests/verify-packages.mjs"
+  },
+  "devDependencies": {
+    "skills": "1.5.24"
+  }
+}

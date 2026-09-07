@@ -57,42 +57,23 @@ jobs:
         run: npx --yes @anthropic-ai/mcpb@2.1.2 validate manifest.json
         working-directory: surfaces/mcpb
 
-  verify-symlinks:
-    name: Verify skill symlinks resolve
-    runs-on: ubuntu-latest
+  test-skills:
+    name: Test Skills distribution (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-      - name: Check every surface's skill symlinks
-        run: |
-          set -euo pipefail
-          for surface in claude-code-cli codex-cli gemini-cli; do
-            [[ -f "surfaces/$surface/skills/boltz-cli-setup/references/sandbox.md" ]] || {
-              echo "::error::missing or broken symlink: surfaces/$surface/skills/boltz-cli-setup/references/sandbox.md"
-              exit 1
-            }
-            for skill in boltz-structure-and-binding boltz-small-molecule-screen \
-                         boltz-small-molecule-design boltz-protein-screen \
-                         boltz-protein-design boltz-check-status; do
-              [[ -f "surfaces/$surface/skills/$skill/SKILL.md" ]] || {
-                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/SKILL.md"
-                exit 1
-              }
-              [[ -f "surfaces/$surface/skills/$skill/references/api.md" ]] || {
-                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/references/api.md"
-                exit 1
-              }
-              if [[ "$skill" == "boltz-check-status" ]]; then
-                extra_ref="resume.md"
-              else
-                extra_ref="results.md"
-              fi
-              [[ -f "surfaces/$surface/skills/$skill/references/$extra_ref" ]] || {
-                echo "::error::missing or broken symlink: surfaces/$surface/skills/$skill/references/$extra_ref"
-                exit 1
-              }
-            done
-          done
-          echo "All skill and reference symlinks resolved."
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install pinned Skills CLI
+        run: npm ci
+      - name: Test source layout and agent installations
+        run: npm test
 
   verify-claude-plugin-copy:
     name: Verify generated distribution surfaces
@@ -111,9 +92,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install script dependencies
-        run: pip install -r core/skills/cli/boltz-protein-design/scripts/requirements.txt
+        run: pip install -r skills/boltz-protein-design/scripts/requirements.txt
       - name: Run unit tests
-        run: python3 -m unittest discover -s core/skills/cli/boltz-protein-design/tests -v
+        run: python3 -m unittest discover -s tests/protein-design -v
 
   package-plugins:
     name: Package plugin artifacts
@@ -125,28 +106,5 @@ jobs:
           node-version: "20"
       - name: Package plugin artifacts
         run: scripts/package-plugins.sh
-      - name: Verify packaged skills are self-contained
-        run: |
-          set -euo pipefail
-          TMPDIR_CHECK="$(mktemp -d)"
-          unzip -q "dist/claude-code-cli-"*.zip -d "$TMPDIR_CHECK/claude-code-cli"
-          test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
-          test ! -L "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/SKILL.md"
-          test -f "$TMPDIR_CHECK/claude-code-cli/skills/boltz-check-status/references/api.md"
-          unzip -q "dist/boltz-api-cli-"*.zip -d "$TMPDIR_CHECK/boltz-api-cli"
-          test -f "$TMPDIR_CHECK/boltz-api-cli/.codex-plugin/plugin.json"
-          test -f "$TMPDIR_CHECK/boltz-api-cli/assets/app-icon.png"
-          test -f "$TMPDIR_CHECK/boltz-api-cli/skills/boltz-check-status/SKILL.md"
-          test ! -L "$TMPDIR_CHECK/boltz-api-cli/skills/boltz-check-status/SKILL.md"
-          test -f "$TMPDIR_CHECK/boltz-api-cli/skills/boltz-check-status/references/api.md"
-          unzip -q "dist/boltz-gemini-cli-"*.zip -d "$TMPDIR_CHECK/boltz-gemini-cli"
-          test -f "$TMPDIR_CHECK/boltz-gemini-cli/gemini-extension.json"
-          test -f "$TMPDIR_CHECK/boltz-gemini-cli/GEMINI.md"
-          test -f "$TMPDIR_CHECK/boltz-gemini-cli/skills/boltz-check-status/SKILL.md"
-          test ! -L "$TMPDIR_CHECK/boltz-gemini-cli/skills/boltz-check-status/SKILL.md"
-          test -f "$TMPDIR_CHECK/boltz-gemini-cli/skills/boltz-check-status/references/api.md"
-      - name: Verify MCPB artifact
-        run: |
-          set -euo pipefail
-          test -f dist/boltz-mcpb-*.mcpb
-          npx --yes @anthropic-ai/mcpb@2.1.2 info dist/boltz-mcpb-*.mcpb
+      - name: Verify packaged skills and MCPB guidance
+        run: node tests/verify-packages.mjs

@@ -1,1 +1,0 @@
-../../../../core/skills/cli/boltz-small-molecule-adme/SKILL.md

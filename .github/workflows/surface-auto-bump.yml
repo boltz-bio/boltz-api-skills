@@ -12,8 +12,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'core/skills/cli/**'
-      - 'core/references/**'
+      - 'skills/**'
       - 'surfaces/claude-code-cli/**'
       - 'surfaces/codex-cli/**'
       - 'scripts/generate-surfaces.sh'
@@ -90,7 +89,7 @@ jobs:
 
             while IFS= read -r path; do
               case "$path" in
-                core/skills/cli/*|core/references/*)
+                skills/*)
                   add_surface claude
                   add_surface codex
                   ;;

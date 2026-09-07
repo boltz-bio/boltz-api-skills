@@ -1,11 +1,11 @@
 ## Checklist
 
-- [ ] I edited source files under `core/` or `surfaces/`, not generated files under `plugins/boltz/` directly.
-- [ ] If Claude Code plugin behavior changed, I ran `scripts/generate-surfaces.sh`.
+- [ ] I edited canonical `skills/` or `surfaces/` source and regenerated `plugins/` where needed.
+- [ ] I ran `npm test` for skill or distribution changes.
 - [ ] I ran `scripts/verify-generated.sh`.
+- [ ] I ran the relevant MCP or protein-design helper tests for runtime changes.
 
 ## Notes
 
-`plugins/boltz/` is generated from `surfaces/claude-code-cli/`. If a PR changes
-only `plugins/boltz/`, move the change to the source surface or shared `core/`
-files instead.
+Public skills are installed directly from `skills/` with Vercel Skills.
+Marketplace and MCPB copies under `plugins/` are generated distribution packages.

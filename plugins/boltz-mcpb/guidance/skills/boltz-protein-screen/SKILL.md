@@ -65,6 +65,8 @@ Payload keys are `proteins`, `target` — API body field names.
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Cost is tiered by total complex length (target + candidate); the combined length sets the tier. Do not state or estimate a dollar figure yourself — to say anything about cost, run `estimate-cost` and quote only the number it returns.
 
+For Gemini CLI downloads, call `run_shell_command` with `&` at the end of the command. Gemini CLI does not accept an `is_background` argument.
+
 ## Escape Hatch
 
 - Payload reference: <https://api.boltz.bio/docs/api/python/resources/protein/subresources/library_screen/methods/start>

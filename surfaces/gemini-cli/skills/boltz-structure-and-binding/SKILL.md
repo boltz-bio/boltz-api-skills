@@ -1,1 +1,0 @@
-../../../../core/skills/cli/boltz-structure-and-binding/SKILL.md

@@ -86,6 +86,8 @@ boltz-api download-results \
 - Poll interval: keep `--poll-interval-seconds 10` for SAB — predictions usually finish in under a few minutes.
 - Cost: there is no published per-unit rate to cite for SAB — run `estimate-cost` and state only the figure it returns. Don't estimate or comment on cost.
 
+For Gemini CLI downloads, call `run_shell_command` with `&` at the end of the command. Gemini CLI does not accept an `is_background` argument.
+
 ## Escape Hatch
 
 For anything not covered in `references/api.md`:

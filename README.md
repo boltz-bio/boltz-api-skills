@@ -9,14 +9,10 @@ create inputs, estimate cost, submit jobs, and download results.
 
 ## Supported agents
 
-| Agent | How it's delivered |
-|---|---|
-| **Claude Code** | Plugin (`boltz`) installed from a marketplace |
-| **Codex** | Plugin (`boltz`) installed from a marketplace |
-| **Gemini CLI / Antigravity** | CLI extension |
-| **Claude Desktop** | Local MCP server (`.mcpb` bundle) |
-
-Every surface runs the same workflows through the `boltz-api` CLI.
+Install the same skills in Claude Code, Codex, Gemini CLI, Antigravity, and
+other agents supported by [Vercel Skills](https://github.com/vercel-labs/skills).
+Claude Desktop uses the separate MCPB server. The official Claude Code and Codex marketplace distributions remain supported
+alongside Skills. The Gemini extension also remains available.
 
 ## Skills
 
@@ -67,27 +63,38 @@ Results download to a `boltz-experiments/` directory in your working directory
 
 ## Install
 
-### Claude Code
+### Coding agents (recommended)
 
-```bash
-claude plugin marketplace add boltz-bio/boltz-api-skills
-claude plugin install boltz@boltz-marketplace --scope user
+Use [Vercel Skills](https://github.com/vercel-labs/skills) with Node.js 22.20 or
+newer. Select your agents and skills interactively:
+
+```sh
+npx skills add boltz-bio/boltz-api-skills
 ```
 
-### Codex
+Or install all eight skills for selected agents in the current project:
 
-```bash
-codex plugin marketplace add boltz-bio/boltz-api-skills
-codex plugin add boltz@boltz-marketplace
+```sh
+npx skills add boltz-bio/boltz-api-skills --skill '*' --agent claude-code codex gemini-cli
 ```
 
-### Gemini CLI / Antigravity
+Add `--global` to make the skills available across projects. Use `--list` to
+preview the available skills without installing. Use `--copy` if your host
+cannot use symlinks. Skills installation does not install or authenticate the
+`boltz-api` CLI; complete the prerequisites above or ask for `boltz-cli-setup`.
 
-```bash
-gemini extensions install https://github.com/boltz-bio/boltz-gemini-cli
-# Antigravity:
-agy plugin install https://github.com/boltz-bio/boltz-gemini-cli
-```
+### Official marketplaces and the Gemini extension
+
+Use one installation method per agent and scope to avoid loading the same
+skills twice. When switching, remove the previous Boltz plugin or extension
+through that agent's manager, then install with Skills. Keep your `boltz-api`
+credentials and experiment directories.
+
+The official marketplace distributions and Gemini extension remain available:
+
+- [Claude Code marketplace plugin](surfaces/claude-code-cli/README.md)
+- [Codex plugin](surfaces/codex-cli/README.md)
+- [Gemini CLI extension](surfaces/gemini-cli/README.md)
 
 ### Claude Desktop
 
@@ -111,33 +118,34 @@ example:
 See the [full guide](https://api.boltz.bio/docs/guides/agent-integrations/) for
 detailed workflows and examples.
 
+## Repository layout
+
+- `skills/<name>/` — canonical public skills with instructions, references,
+  optional helper scripts, and agent metadata.
+- `surfaces/` — marketplace and extension wrappers and the Claude Desktop MCPB runtime.
+  CLI wrappers link to `skills/`; the partner bundle retains its distinct
+  host-managed authentication and spending policy.
+- `plugins/` — generated, self-contained marketplace and MCPB copies.
+- `tests/` — distribution checks and protein-design helper tests.
+- `legacy/` — historical Python SDK variants, outside the public skill source.
+
 ## Local development
 
-Contributions are welcome — outside PRs included. Clone the repo and try the
-plugin without a persistent install:
+Edit `skills/` for shared workflow changes. Then regenerate and verify the
+marketplace and MCPB packages:
 
-```bash
-claude --plugin-dir ./surfaces/claude-code-cli
-```
-
-The repo is organized as shared source plus per-agent surfaces:
-
-- `core/` — shared skill workflows (`core/skills/cli/`) and API reference docs
-  (`core/references/`), symlinked into each surface. **Edit here** for changes
-  that apply to every agent.
-- `surfaces/<agent>/` — per-agent packaging and host-specific files
-  (`claude-code-cli`, `codex-cli`, `gemini-cli`, `mcpb`). **Edit here** for
-  changes specific to one host.
-- `plugins/` — self-contained, installable copies. **Generated — do not edit.**
-
-After editing `core/` or a surface, regenerate the installable copies:
-
-```bash
+```sh
+npm ci
 scripts/generate-surfaces.sh
+npm test
+scripts/verify-generated.sh
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full development, testing, and
-release workflow.
+The install tests use the pinned Skills CLI to install into temporary projects
+for Claude Code, Codex, and Gemini CLI. They do not install into your agents or
+submit Boltz jobs.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for runtime tests and release workflows.
 
 ## License
 

@@ -66,6 +66,8 @@ Payload keys are `num_molecules`, `target`, `chemical_space`, `molecule_filters`
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Do not invent filters; only add `molecule_filters` on user request.
 
+For Gemini CLI downloads, call `run_shell_command` with `&` at the end of the command. Gemini CLI does not accept an `is_background` argument.
+
 ## Escape Hatch
 
 - Payload reference: <https://api.boltz.bio/docs/api/python/resources/small_molecule/subresources/design/methods/start>

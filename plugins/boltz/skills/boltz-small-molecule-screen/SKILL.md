@@ -65,6 +65,8 @@ Payload keys are `molecules`, `target`, `molecule_filters` — the API body fiel
 - Cost is a flat $0.025 per molecule (size-independent). `estimate-cost` returns the authoritative total — always use it.
 - Poll interval: `--poll-interval-seconds 30` is a reasonable downloader default. Wall-clock time scales roughly with the number of molecules: under 100 often finishes in a few minutes, 100-1,000 may take several minutes to tens of minutes, and larger screens can take longer or hours depending on inputs and system load. Don't quote a fixed duration, and never tell the user a 10-candidate screen will take 30 minutes or hours.
 
+For Gemini CLI downloads, call `run_shell_command` with `&` at the end of the command. Gemini CLI does not accept an `is_background` argument.
+
 ## Escape Hatch
 
 - Payload reference: <https://api.boltz.bio/docs/api/python/resources/small_molecule/subresources/library_screen/methods/start>

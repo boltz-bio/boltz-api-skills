@@ -72,6 +72,8 @@ boltz-api download-results \
 - If `retrieve` surfaces only `{"code":"VALIDATION_ERROR","message":"Request validation failed"}` with no `details`, that's expected for `predictions:structure-and-binding` failures — other endpoints include field paths.
 - Never run `start` again on a failed or interrupted job. Fix the payload and submit with a new `idempotency-key`, or just resume with `download-results`.
 
+For Gemini CLI downloads, call `run_shell_command` with `&` at the end of the command. Gemini CLI does not accept an `is_background` argument.
+
 ## Escape Hatch
 
 - Python SDK reference (per-resource `list` / `retrieve` methods): <https://api.boltz.bio/docs/api/python>

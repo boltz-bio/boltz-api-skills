@@ -94,6 +94,8 @@ Payload keys are `num_proteins`, `target`, `binder_specification` — API body f
 - If detached download needs to be restarted, re-run `boltz-api download-results` with the same `--name "<run-name>"` and the same `--root-dir`.
 - Only add `rules` on explicit user request.
 
+For Gemini CLI downloads, call `run_shell_command` with `&` at the end of the command. Gemini CLI does not accept an `is_background` argument.
+
 ## Escape Hatch
 
 - Payload reference: <https://api.boltz.bio/docs/api/resources/protein/subresources/design/methods/start/>
