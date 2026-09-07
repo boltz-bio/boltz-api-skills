@@ -1,7 +1,9 @@
 # Boltz Claude Code plugin
 
 This official marketplace wrapper ships the canonical [Boltz skills](../../skills/).
-For the primary installation path, use [Vercel Skills](../../README.md#install).
+Use the marketplace installation below for Claude Code.
+[Vercel Skills](../../README.md#other-agents-and-direct-skill-installation)
+is also available for direct skill installation.
 
 ## Marketplace installation
 

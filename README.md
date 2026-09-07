@@ -9,10 +9,11 @@ create inputs, estimate cost, submit jobs, and download results.
 
 ## Supported agents
 
-Install the same skills in Claude Code, Codex, Gemini CLI, Antigravity, and
-other agents supported by [Vercel Skills](https://github.com/vercel-labs/skills).
-Claude Desktop uses the separate MCPB server. The official Claude Code and Codex marketplace distributions remain supported
-alongside Skills. The Gemini extension also remains available.
+For Codex and Claude Code, use the official marketplace plugins. Gemini CLI
+has a native extension, and Claude Desktop uses the MCPB server.
+[Vercel Skills](https://github.com/vercel-labs/skills) provides an additional
+way to install the shared skills in Antigravity and other supported agents,
+or in environments where you prefer a direct skill installation.
 
 ## Skills
 
@@ -63,7 +64,20 @@ Results download to a `boltz-experiments/` directory in your working directory
 
 ## Install
 
-### Coding agents (recommended)
+### Codex and Claude Code (recommended: official plugins)
+
+For Codex, open the plugin directory, search for **Boltz**, and install the
+official plugin. In Codex CLI, enter `/plugins` to open the plugin browser.
+Start a new session after installing. See the
+[Codex installation guide](surfaces/codex-cli/README.md) for details.
+
+For Claude Code, follow the
+[marketplace installation guide](surfaces/claude-code-cli/README.md).
+
+Both plugins use `boltz-api`; complete the prerequisites above or ask for
+`boltz-cli-setup`.
+
+### Other agents and direct skill installation
 
 Use [Vercel Skills](https://github.com/vercel-labs/skills) with Node.js 22.20 or
 newer. Select your agents and skills interactively:
@@ -72,10 +86,10 @@ newer. Select your agents and skills interactively:
 npx skills add boltz-bio/boltz-api-skills
 ```
 
-Or install all eight skills for selected agents in the current project:
+For example, install all eight skills for Gemini CLI in the current project:
 
 ```sh
-npx skills add boltz-bio/boltz-api-skills --skill '*' --agent claude-code codex gemini-cli
+npx skills add boltz-bio/boltz-api-skills --skill '*' --agent gemini-cli
 ```
 
 Add `--global` to make the skills available across projects. Use `--list` to
@@ -83,18 +97,14 @@ preview the available skills without installing. Use `--copy` if your host
 cannot use symlinks. Skills installation does not install or authenticate the
 `boltz-api` CLI; complete the prerequisites above or ask for `boltz-cli-setup`.
 
-### Official marketplaces and the Gemini extension
-
 Use one installation method per agent and scope to avoid loading the same
-skills twice. When switching, remove the previous Boltz plugin or extension
-through that agent's manager, then install with Skills. Keep your `boltz-api`
-credentials and experiment directories.
+skills twice. Direct Skills installation is optional for Codex and Claude
+Code; existing marketplace users can keep their plugin installation.
 
-The official marketplace distributions and Gemini extension remain available:
+### Gemini extension
 
-- [Claude Code marketplace plugin](surfaces/claude-code-cli/README.md)
-- [Codex plugin](surfaces/codex-cli/README.md)
-- [Gemini CLI extension](surfaces/gemini-cli/README.md)
+Gemini CLI users can also use the
+[native extension](surfaces/gemini-cli/README.md).
 
 ### Claude Desktop
 

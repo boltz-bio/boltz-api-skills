@@ -145,16 +145,22 @@ scripts/package-plugins.sh
 
 ## Distribution
 
-### Vercel Skills (primary)
+### Channel priorities
+
+Recommend the official OpenAI marketplace plugin for Codex and the Claude
+Code marketplace plugin for Claude Code. Boltz maintains these partner
+distribution channels alongside the shared skill source. Keep their
+manifests, generated packages, validation, and release workflows working.
+The Gemini extension and Claude Desktop MCPB remain separate packages.
+
+### Vercel Skills (additional distribution)
 
 Users install directly from this repository with
 `npx skills add boltz-bio/boltz-api-skills`. Shared changes are available from
 `main` after merge; they do not wait for a marketplace version-bump PR. The
-installer's version is separate from the skill source revision. The existing
-Claude Code and Codex marketplaces remain first-class distribution channels.
-Keep their manifests, generated packages, validation, and release workflows
-working when changing the canonical skills. The Gemini extension also remains
-supported.
+installer's version is separate from the skill source revision. Use this
+route for other supported agents or optional direct skill installations.
+Do not direct existing Codex or Claude Code marketplace users to switch.
 
 ### Claude Code
 
@@ -165,25 +171,33 @@ updates to the Claude Code plugin directory at
 
 ### Codex (`openai/plugins`)
 
-The official Codex plugin copy is generated under `plugins/boltz-api-cli/`,
-with symlinks dereferenced, matching the layout used by `openai/plugins` entries
-such as Netlify and Cloudflare. To submit, copy `plugins/boltz-api-cli/`
-into that repo's `plugins/` directory and add the marketplace entry:
+Boltz already has a published plugin at
+[`openai/plugins/plugins/boltz-api-cli`](https://github.com/openai/plugins/tree/main/plugins/boltz-api-cli)
+and an entry in that repository's
+[marketplace catalog](https://github.com/openai/plugins/blob/main/.agents/plugins/marketplace.json).
+The display name is **Boltz**. Preserve the plugin ID `boltz-api-cli`.
 
-```json
-{
-  "name": "boltz-api-cli",
-  "source": {
-    "source": "local",
-    "path": "./plugins/boltz-api-cli"
-  },
-  "policy": {
-    "installation": "AVAILABLE",
-    "authentication": "ON_INSTALL"
-  },
-  "category": "Science"
-}
-```
+The source wrapper is `surfaces/codex-cli/`. The generated, self-contained
+copy is `plugins/boltz-api-cli/`, with symlinks dereferenced. It contains
+CLI-backed skills and assets; it does not configure an MCP server.
+
+To publish an update:
+
+1. Merge the source changes and the Codex version-bump PR described above.
+2. Confirm the `codex-plugin/v<version>` GitHub Release contains
+   `boltz-api-cli-<version>.zip` and its checksum.
+3. Use `plugins/boltz-api-cli/` from that release revision to prepare an
+   update to the existing `plugins/boltz-api-cli/` directory in `openai/plugins`.
+   Review differences against the published copy, including any
+   marketplace-specific metadata and assets.
+4. Preserve the existing catalog entry, installation and authentication
+   policies, and reviewed category. Do not create a second Boltz entry.
+5. Submit the update through the OpenAI partner publishing process. Verify
+   the published version and installation after the update is accepted.
+
+This repository automates generation and GitHub Releases. It does not
+automatically submit or publish updates to `openai/plugins`. A merge here
+can update direct Skills installs before the marketplace update is accepted.
 
 ### Gemini CLI
 
