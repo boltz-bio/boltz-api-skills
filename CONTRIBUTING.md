@@ -29,6 +29,15 @@ schemas and result interpretation in references that the skill links to.
 Document helper dependencies beside the scripts. Keep host-specific plugin
 configuration in `surfaces/`; the portable skills must not require it.
 
+Write skill prose by runtime capability, not by host name: a long-running or
+non-blocking command, a session handle, a scheduled follow-up, a permission
+gate. Do not name Claude Code, Codex, or Gemini CLI in a workflow skill. Host
+notes live in one place, `skills/boltz-cli-setup/references/runtimes.md`, and
+the workflow skills route there with "consult `boltz-cli-setup`". Surface
+context files such as `surfaces/gemini-cli/GEMINI.md` and the MCPB server
+instructions may add host detail for their own package. Before merging a change
+to that guidance, run the affected runtimes through `benchmarks/`.
+
 The three CLI wrappers each have one `skills` symlink to the canonical tree.
 `scripts/generate-surfaces.sh` dereferences those links for marketplace caches.
 The MCPB generator copies the tree into `guidance/skills/`, including each

@@ -28,9 +28,9 @@ ADME values are approximate estimates for triage and ranking, not absolute measu
 boltz-api predictions:adme estimate-cost \
   --model adme-v1 --input @yaml:///absolute/path/payload.yaml
 
-# `run` is synchronous (submit + wait + persist) and finishes in seconds — no background mode needed.
-# Claude Code: run as a normal Bash command. Codex: run as a foreground shell command; if Codex
-# returns a session_id because it is still running, poll it. Do not append "&" or use nohup in Codex.
+# `run` is synchronous (submit + wait + persist) and finishes in seconds — run it as a
+# normal foreground command. If the runtime returns a session handle because the
+# command is still running, poll that handle. Do not detach it with "&" or nohup.
 boltz-api predictions:adme run \
   --model adme-v1 \
   --idempotency-key "<run-name>" \
@@ -52,8 +52,8 @@ Payload is just a `molecules` list — the API body field name, not the direct C
 - Prefer one merged top-level payload via `--input @yaml:///absolute/path/payload.yaml` or `@json:///absolute/path/payload.json`. Keep `--model`, `--idempotency-key`, and `--workspace-id` top-level. Never use `@file://` or `@./`.
 - Run `estimate-cost` and show the USD total before submitting. ADME is $0.01/molecule (size-independent); `estimate-cost` returns the authoritative total — always use it.
 - Use the same slug as both `--idempotency-key` and `--name` so re-runs resume via `.boltz-run.json`.
-- In permission-gated agents such as Claude Code, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines unless the user already allowed that exact command form.
-- ADME `run` is synchronous and finishes in seconds, so unlike the screen/design endpoints it needs no background/non-blocking mode. In Claude Code, run it as a normal Bash call. In Codex, run it as a foreground shell command; if Codex returns a `session_id` because the command is still running, poll it. Do not append `&` or use `nohup` in Codex.
+- In permission-gated runtimes, keep each Boltz call as a top-level command that starts with `boltz-api`. Prefer concrete arguments over `sh -c`, inline environment assignments, aliases, wrapper scripts, loops, or pipelines unless the user already allowed that exact command form.
+- ADME `run` is synchronous and finishes in seconds, so unlike the screen/design endpoints it needs no long-running or non-blocking mode. Run it as a normal foreground command. If the runtime returns a session handle because the command is still running, poll that handle. Do not detach it with `&` or `nohup`.
 - Do not require or accept a protein target — ADME is structure-free. If the user wants ADME *and* binding against a target, redirect to `boltz-small-molecule-screen`.
 
 ## Escape Hatch

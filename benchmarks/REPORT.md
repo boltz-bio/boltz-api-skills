@@ -1,45 +1,68 @@
-# Benchmark Report: claude-code-cli vs. claude-code-mcp
+# Benchmark Report: skill behavior across agent runtimes
 
-**Status**: Not yet run. Populate after the benchmark matrix completes.
+**Status**: Not yet run against the capability-based skill prose. Populate
+after the matrix in `README.md` completes.
 
 ## Setup
 
-- **Date range**: TBD
-- **Claude Code version**: TBD
-- **Host OS**: TBD
-- **Plugin versions**: cli v0.1.0, mcp v0.1.0
-- **Boltz CLI version**: TBD
-- **MCP server commit**: TBD
+| Field | Value |
+|---|---|
+| Date range | TBD |
+| Skills revision (`git rev-parse HEAD`) | TBD |
+| `boltz-api` version | TBD |
+| Claude Code version / install method | TBD |
+| Codex version / install method | TBD |
+| Gemini CLI version / install method | TBD |
+| Claude Desktop / MCPB version | TBD |
+| Other runtimes tested | TBD |
+| Host OS | TBD |
 
 ## Aggregate results
 
-| Metric | claude-code-cli | claude-code-mcp | Δ |
-|---|---|---|---|
-| Avg approvals per scenario | TBD | TBD | TBD |
-| Avg wall-clock (s) | TBD | TBD | TBD |
-| Avg input tokens | TBD | TBD | TBD |
-| Avg output tokens | TBD | TBD | TBD |
-| Success rate | TBD | TBD | TBD |
-| Recovery success (scenario 7) | TBD | TBD | TBD |
+| Metric | Claude Code | Codex | Gemini CLI | Claude Desktop | Other | Baseline (no skill) |
+|---|---|---|---|---|---|---|
+| Success rate | TBD | TBD | TBD | TBD | TBD | TBD |
+| Cost gate respected | TBD | TBD | TBD | TBD | TBD | TBD |
+| Launch mode matched runtime notes | TBD | TBD | TBD | n/a | TBD | n/a |
+| Invented tool arguments | TBD | TBD | TBD | n/a | TBD | TBD |
+| Checkpoint survived turn end | TBD | TBD | TBD | TBD | TBD | TBD |
+| Follow-up claims honest | TBD | TBD | TBD | TBD | TBD | TBD |
+| Avg approvals per scenario | TBD | TBD | TBD | TBD | TBD | TBD |
+| Avg time to verified artifacts (s) | TBD | TBD | TBD | TBD | TBD | TBD |
+| Avg input / output tokens | TBD | TBD | TBD | TBD | TBD | TBD |
+| Recovery success (scenario 7) | TBD | TBD | TBD | TBD | TBD | TBD |
 
 ## Scenario-by-scenario
 
 ### Scenario 1 — Fold a protein+ligand complex
 
-- CLI: _observation_
-- MCP: _observation_
+- Claude Code: _observation_
+- Codex: _observation_
+- Gemini CLI: _observation_
+- Claude Desktop: _observation_
 - Divergences: _notes_
 
-(repeat for scenarios 2–7)
+(repeat for scenarios 2 through 9)
+
+## Launch mode and follow-up findings
+
+_For each runtime, record the mechanism the agent chose for `download-results`,
+whether it matched `skills/boltz-cli-setup/references/runtimes.md`, and whether
+the agent consulted `boltz-cli-setup` when unsure. Note any invented tool
+arguments, shell `&` on a reaping runtime, or claimed follow-ups that do not
+exist._
 
 ## Recovery behavior (scenario 7)
 
-_This is expected to be the most important section. Note which variant preserves run state across session death more gracefully._
+_Which runtimes preserved `.boltz-run.json` across session death, and whether
+the resume reused the original run directory._
 
-## Recommendation
+## Regression verdict
 
-_Ship `claude-code-<winner>`. Retire `claude-code-<loser>`. OR: ship both with clear positioning (e.g., "cli for power users who want shell flexibility, mcp for default UX")._
+_Compare against the previous report. State per runtime whether success, cost
+gate, launch mode, checkpoint survival, and follow-up honesty held._
 
 ## Surprises / follow-ups
 
-_Things we didn't expect. Bugs found. Features we should ask for._
+_Things we did not expect. Bugs found. Runtime behaviors that should be added to
+`runtimes.md`. Features to ask the runtime vendors or the CLI for._

@@ -18,9 +18,10 @@ confidence, and save the structure.
 
 1. Agent constructs an entities list: protein (chain A) + ligand_smiles (chain B).
 2. Adds a `binding` block with `type: ligand_protein_binding` and `binder_chain_id: B`.
-3. Calls `estimate-cost` (CLI) or `boltz_estimate_run` (MCP).
+3. Runs `estimate-cost` (or the MCP server's estimate tool on Claude Desktop).
 4. Shows the returned cost estimate to user, waits for confirmation.
-5. On confirmation, submits and starts a backgrounded download.
+5. On confirmation, submits and launches `download-results` through the
+   runtime's long-running facility.
 6. Reports job ID, run name, output directory.
 7. Ends the turn.
 
@@ -34,5 +35,8 @@ confidence, and save the structure.
 ## What to watch for
 
 - Did the agent ask for cost confirmation before submitting?
-- How many Bash / MCP tool approval prompts did the user see?
+- How many shell / tool approval prompts did the user see?
+- Did the launch mechanism match the runtime notes in
+  `skills/boltz-cli-setup/references/runtimes.md`, with no invented tool
+  arguments?
 - Did the agent wait for the backgrounded download or end the turn promptly?

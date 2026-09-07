@@ -163,10 +163,9 @@ Structured fields include:
 ## `download-results` resume semantics
 
 ```bash
-# Launch this command in the agent runtime's background/non-blocking mode.
-# Claude Code: Bash with run_in_background=true.
-# Codex: foreground shell command with yield_time_ms=1000; keep the returned session_id if one is provided.
-# Do not append "&" or use nohup in Codex.
+# Launch this command through the runtime's long-running/non-blocking command
+# facility (consult boltz-cli-setup if unsure). Do not detach it with shell "&"
+# or nohup unless the runtime documents shell backgrounding as its supported mode.
 boltz-api download-results \
   --id "<job-id>" --name "<run-name>" \
   --root-dir "<output-root>" \
@@ -175,13 +174,13 @@ boltz-api download-results \
 
 Behavior:
 
-- `download-results` itself is a blocking poller. Launch it through the agent runtime's background/non-blocking command facility. In Claude Code, use Bash with `run_in_background: true`. In Codex, run it as a foreground shell command with `yield_time_ms=1000`; if Codex returns a session id, save it for optional same-thread polling, but treat `download-status` plus the run directory as the durable source of truth. In Codex app/desktop runtimes with same-thread heartbeat automation support, schedule a heartbeat that checks `download-status` periodically, posts only material status changes or terminal completion/failure, and stops once terminal. If the current host has no heartbeat automation support, do not claim an automatic next check; report the job ID, run name, output directory, and `download-status` command instead.
+- `download-results` itself is a blocking poller. Launch it through the runtime's long-running or non-blocking command facility, using the mechanism the runtime documents. Treat the run directory plus `download-status` as the durable source of truth. If the runtime can schedule follow-up checks, schedule one that runs `download-status`, posts only material status changes or terminal completion/failure, and stops once terminal. If it cannot, do not claim an automatic next check; report the job ID, run name, output directory, and the `download-status` command instead. Runtime-specific notes live in `boltz-cli-setup`.
 - It emits machine-readable JSONL progress events on stderr by default. Use `--progress-format text --verbose` only when you explicitly want human-readable logs.
 - Writes `<output-root>/<run-name>/.boltz-run.json` containing the cursor (`cursor_after_id`), status, idempotency key, and timing.
 - On re-run with the same `--root-dir` + `--name`, reuses `.boltz-run.json` and only pulls results past the recorded cursor. Idempotent.
 - If the run dir exists and `.boltz-run.json` has the ID, `--id` can be omitted.
 - If `--name` is not passed, the CLI generates a randomly named dir — use `--name` for cross-session resume.
-- Do not use shell `&`, terminal backgrounding, or `nohup` as the Codex detach mechanism. Codex may clean up shell-backgrounded descendants when the tool command exits, before `.boltz-run.json` is fully written. Prefer the managed foreground session with a short yield, or recover later by re-running `download-results` with the same ID/name/root.
+- Do not detach with shell `&`, terminal backgrounding, or `nohup` unless the runtime documents shell backgrounding as its supported mode. Some tool runners reap shell-backgrounded descendants when the tool call exits, before `.boltz-run.json` is fully written. Prefer the runtime's managed facility, or recover later by re-running `download-results` with the same ID/name/root.
 
 ### Directory layout
 
