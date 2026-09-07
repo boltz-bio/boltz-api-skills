@@ -1,6 +1,6 @@
 name: Auto-bump mcpb version
 
-# When surfaces/mcpb/ changes on main, open a PR that bumps the mcpb version
+# When surfaces/mcpb/ or skills/ changes on main, open a PR that bumps the mcpb version
 # (patch by default) and resyncs plugins/boltz-mcpb/. Merging that PR triggers
 # the public-sync workflow.
 #
@@ -16,6 +16,8 @@ on:
     branches: [main]
     paths:
       - 'surfaces/mcpb/**'
+      - 'skills/**'
+      - 'scripts/sync-mcpb-plugin.sh'
   workflow_dispatch:
     inputs:
       bump_type:
@@ -67,9 +69,11 @@ jobs:
             *) echo "Unknown bump_type: $BUMP" >&2; exit 1 ;;
           esac
           next="${major}.${minor}.${patch}"
-          echo "current=$current" >> "$GITHUB_OUTPUT"
-          echo "next=$next" >> "$GITHUB_OUTPUT"
-          echo "branch=auto/mcpb-bump-v${next}" >> "$GITHUB_OUTPUT"
+          {
+            echo "current=$current"
+            echo "next=$next"
+            echo "branch=auto/mcpb-bump-v${next}"
+          } >> "$GITHUB_OUTPUT"
           echo "Bumping $current -> $next ($BUMP)"
 
       - name: Apply version bump

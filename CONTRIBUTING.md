@@ -2,81 +2,110 @@
 
 ## Source Of Truth
 
-Shared workflow prose and API references live under `core/`. Development plugin
-surfaces live under `surfaces/`. Checked-in installable plugin copies live under
-`plugins/` and are generated.
+The public skills live in `skills/`. Vercel Skills discovers this directory
+before generated marketplace packages.
 
 | Path | Role | Edit directly? |
 |---|---|---|
-| `core/skills/cli/` | Shared CLI-backed skill workflows | Yes |
-| `core/references/` | Shared API reference docs | Yes |
-| `surfaces/claude-code-cli/` | Claude Code CLI development surface and Claude-specific wrapper files | Yes |
-| `surfaces/codex-cli/` | Codex plugin development surface and Codex-specific metadata | Yes |
-| `surfaces/gemini-cli/` | Gemini CLI development extension and Gemini-specific context | Yes |
-| `surfaces/mcpb/` | Claude Desktop MCPB development surface | Yes |
-| `surfaces/partner-cli-skills/` | Partner self-contained skill bundle | Yes |
-| `plugins/boltz/` | Self-contained Claude Code marketplace plugin | No, generated |
-| `plugins/boltz-api-cli/` | Self-contained Codex plugin copy | No, generated |
-| `plugins/boltz-mcpb/` | Self-contained MCPB plugin copy | No, generated |
+| `skills/<name>/` | Public skill, references, scripts, and `agents/openai.yaml` | Yes |
+| `surfaces/claude-code-cli/` | Claude marketplace wrapper | Yes, except its `skills` link |
+| `surfaces/codex-cli/` | Codex marketplace wrapper and plugin assets | Yes, except its `skills` link |
+| `surfaces/gemini-cli/` | Gemini extension and context | Yes, except its `skills` link |
+| `surfaces/mcpb/` | Claude Desktop MCP server | Yes |
+| `surfaces/partner-cli-skills/` | Partner bundle with distinct host-managed policies | Yes |
+| `plugins/` | Self-contained marketplace and MCPB copies | No, generated |
+| `tests/` | Distribution and protein-design helper tests | Yes |
 
-## Surface Composition
+Keep each public skill self-contained. Put references and executable helpers
+inside its directory. Keep helper tests under `tests/` so Skills does not
+install them. Preserve skill names and existing `agents/openai.yaml` metadata.
 
-The installable Claude Code plugin is assembled from two layers:
+Follow the [Agent Skills specification](https://agentskills.io/specification).
+This open format is the source contract; Vercel Skills is an installer and
+test dependency. Keep the skill content usable by other compatible clients.
+The frontmatter name must match the directory name. Keep descriptions specific
+about when to use the skill, and keep `SKILL.md` below 500 lines. Put detailed
+schemas and result interpretation in references that the skill links to.
+Document helper dependencies beside the scripts. Keep host-specific plugin
+configuration in `surfaces/`; the portable skills must not require it.
 
-1. Shared core content, exposed through the symlinked development surface at
-   `surfaces/claude-code-cli/skills/`.
-2. Claude-specific files in `surfaces/claude-code-cli/`, such as
-   `.claude-plugin/plugin.json`, README content, and any future Claude-only
-   commands, agents, hooks, scripts, settings, or assets.
+Write skill prose by runtime capability, not by host name: a long-running or
+non-blocking command, a session handle, a scheduled follow-up, a permission
+gate. Do not name Claude Code, Codex, or Gemini CLI in a workflow skill. Host
+notes live in one place, `skills/boltz-cli-setup/references/runtimes.md`, and
+the workflow skills route there with "consult `boltz-cli-setup`". Surface
+context files such as `surfaces/gemini-cli/GEMINI.md` and the MCPB server
+instructions may add host detail for their own package. Before merging a change
+to that guidance, run the affected runtimes through `benchmarks/`.
 
-Run `scripts/generate-surfaces.sh` to copy that complete Claude development
-surface into `plugins/boltz/` with symlinks dereferenced. That generated copy is
-what local marketplace installs consume.
+The three CLI wrappers each have one `skills` symlink to the canonical tree.
+`scripts/generate-surfaces.sh` dereferences those links for marketplace caches.
+The MCPB generator copies the tree into `guidance/skills/`, including each
+skill's references. The development MCP server reads `skills/` directly.
 
-If a change is useful to every CLI-backed agent, put it in `core/skills/cli/` or
-`core/references/`. If a change is only about one host's packaging,
-configuration, UX, or host-specific components, put it in that host's
-`surfaces/<surface>/` directory.
-
-The Gemini CLI extension is source-only in this repo: `surfaces/gemini-cli/`
-contains `gemini-extension.json`, `GEMINI.md`, README content, and symlinked
-skills. Packaging and public-repo mirroring dereference that surface directly
-into a temporary stage or release repo.
-
-The MCPB surface has both a development tree under `surfaces/mcpb/` and a
-generated copy under `plugins/boltz-mcpb/` because the MCPB packer consumes a
-self-contained runtime tree.
+The partner bundle is separate: its host provides authentication and spending
+policy. Do not substitute it for the public skills.
 
 ## Local Workflow
 
-After changing shared skill content or surface-specific files:
+Use Node.js 22.20 or newer for the pinned Skills CLI and distribution tests.
+The distribution checks also use Bash, rsync, and jq.
+Run from the repository root:
 
-```bash
+```sh
+npm ci
 scripts/generate-surfaces.sh
+npm test
 scripts/verify-generated.sh
-claude plugin validate .
-claude plugin validate plugins/boltz
 ```
 
-For Gemini local-link testing:
+`npm test` checks required skill metadata, canonical references, marketplace package contents, and
+Skills installation in temporary projects for Claude Code, Codex, and Gemini
+CLI. It checks preview, selective installation, and both copy and symlink
+installation. It does not require agent
+logins or submit Boltz jobs. Run only installer checks with
+`npm run test:install`. Update the pinned `skills` development dependency and
+lockfile together when adopting a new installer version.
 
-```bash
+For MCP runtime changes:
+
+```sh
+npm ci --prefix surfaces/mcpb
+npm test --prefix surfaces/mcpb
+```
+
+For protein-design helper changes, use a local virtual environment:
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r skills/boltz-protein-design/scripts/requirements.txt
+.venv/bin/python -m unittest discover -s tests/protein-design -v
+```
+
+To preview the public skill catalog:
+
+```sh
+npx skills add . --list
+```
+
+For Claude plugin development without persistent installation:
+
+```sh
+claude --plugin-dir ./surfaces/claude-code-cli
+```
+
+For Gemini extension development:
+
+```sh
 gemini extensions link ./surfaces/gemini-cli
 ```
-
-For persistent local install testing:
-
-```bash
-BOLTZ_CLAUDE_MARKETPLACE="$PWD" scripts/install-claude-code-plugin.sh
-```
-
-Restart Claude Code after installing.
 
 ## Generated Files
 
 Do not edit `plugins/boltz/`, `plugins/boltz-api-cli/`, or
-`plugins/boltz-mcpb/` directly. CI regenerates them and fails if the committed
-copies are stale. A branch push workflow also regenerates them and commits the
+`plugins/boltz-mcpb/` directly. CI generates temporary copies and fails if their
+contents differ from the committed copies. Verification does not modify the
+working tree. A branch push workflow also regenerates them and commits the
 generated result back to development branches when needed.
 
 ## Packaging And Release
@@ -86,6 +115,7 @@ Build the distributable artifacts:
 ```bash
 ./scripts/package-plugins.sh   # writes Claude/Codex/Gemini zips and
                                # boltz-mcpb-<version>.mcpb into dist/
+npm run test:packages          # checks every skill and loads packaged MCP guidance
 ```
 
 CI (`.github/workflows/release.yml`) runs these on every tagged release and
@@ -96,7 +126,7 @@ attaches the artifacts to the GitHub Release.
 Claude Code and Codex use monorepo-native per-surface releases:
 
 1. A source change lands on `main` under shared CLI skill source
-   (`core/skills/cli/`, `core/references/`) or under a Claude/Codex surface.
+   (`skills/`) or under a Claude/Codex surface.
 2. `.github/workflows/surface-auto-bump.yml` opens a release-bump PR using the
    existing `boltz-mcpb-publisher` GitHub App token.
 3. The bump PR updates the affected surface manifest version(s), runs
@@ -134,6 +164,23 @@ scripts/package-plugins.sh
 
 ## Distribution
 
+### Channel priorities
+
+Recommend the official OpenAI marketplace plugin for Codex and the Claude
+Code marketplace plugin for Claude Code. Boltz maintains these partner
+distribution channels alongside the shared skill source. Keep their
+manifests, generated packages, validation, and release workflows working.
+The Gemini extension and Claude Desktop MCPB remain separate packages.
+
+### Vercel Skills (additional distribution)
+
+Users install directly from this repository with
+`npx skills add boltz-bio/boltz-api-skills`. Shared changes are available from
+`main` after merge; they do not wait for a marketplace version-bump PR. The
+installer's version is separate from the skill source revision. Use this
+route for other supported agents or optional direct skill installations.
+Do not direct existing Codex or Claude Code marketplace users to switch.
+
 ### Claude Code
 
 The repo root is also a Claude Code marketplace named `boltz-marketplace`,
@@ -143,25 +190,33 @@ updates to the Claude Code plugin directory at
 
 ### Codex (`openai/plugins`)
 
-The official Codex plugin copy is generated under `plugins/boltz-api-cli/`,
-with symlinks dereferenced, matching the layout used by `openai/plugins` entries
-such as Netlify and Cloudflare. To submit, copy `plugins/boltz-api-cli/`
-into that repo's `plugins/` directory and add the marketplace entry:
+Boltz already has a published plugin at
+[`openai/plugins/plugins/boltz-api-cli`](https://github.com/openai/plugins/tree/main/plugins/boltz-api-cli)
+and an entry in that repository's
+[marketplace catalog](https://github.com/openai/plugins/blob/main/.agents/plugins/marketplace.json).
+The display name is **Boltz**. Preserve the plugin ID `boltz-api-cli`.
 
-```json
-{
-  "name": "boltz-api-cli",
-  "source": {
-    "source": "local",
-    "path": "./plugins/boltz-api-cli"
-  },
-  "policy": {
-    "installation": "AVAILABLE",
-    "authentication": "ON_INSTALL"
-  },
-  "category": "Science"
-}
-```
+The source wrapper is `surfaces/codex-cli/`. The generated, self-contained
+copy is `plugins/boltz-api-cli/`, with symlinks dereferenced. It contains
+CLI-backed skills and assets; it does not configure an MCP server.
+
+To publish an update:
+
+1. Merge the source changes and the Codex version-bump PR described above.
+2. Confirm the `codex-plugin/v<version>` GitHub Release contains
+   `boltz-api-cli-<version>.zip` and its checksum.
+3. Use `plugins/boltz-api-cli/` from that release revision to prepare an
+   update to the existing `plugins/boltz-api-cli/` directory in `openai/plugins`.
+   Review differences against the published copy, including any
+   marketplace-specific metadata and assets.
+4. Preserve the existing catalog entry, installation and authentication
+   policies, and reviewed category. Do not create a second Boltz entry.
+5. Submit the update through the OpenAI partner publishing process. Verify
+   the published version and installation after the update is accepted.
+
+This repository automates generation and GitHub Releases. It does not
+automatically submit or publish updates to `openai/plugins`. A merge here
+can update direct Skills installs before the marketplace update is accepted.
 
 ### Gemini CLI
 
@@ -177,9 +232,3 @@ RELEASE_REPO=boltz-bio/boltz-gemini-cli scripts/release-gemini-repo.sh
 
 Privacy policy URL, 512×512 icon, screenshots, support contact, verified
 metadata, and license confirmation for any bundled binaries.
-
-## Legacy
-
-`skills-python/` and `codex-plugin-python/` are legacy Python-SDK-based variants.
-They predate the `core/` restructure and remain as references, not as
-distribution targets.

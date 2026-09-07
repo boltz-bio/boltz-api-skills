@@ -6,3 +6,5 @@ debugging_log.md
 
 # headless skill-testing artifacts
 .debug-headless/
+node_modules/
+.venv/

@@ -2,13 +2,15 @@
 
 What this plugin is, why it's shaped the way it is, and what we're explicitly giving up.
 
+These notes describe the original CLI migration. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the current distribution layout.
+
 ## One-line summary
 
 A Codex plugin that ships six workflow skills for the Boltz API plus one `boltz-api` setup skill. Each workflow skill is prose + schema reference. The agent authors a YAML or JSON payload and invokes the `boltz-api` Go CLI directly. No Python, no SDK, no wrapper scripts.
 
 ## Context
 
-Two prior plugins exist in this repo: `skills-python/` (Claude Code) and `codex-plugin-python/` (Codex). Both used the legacy Python SDK and each shipped a ~350-line `scripts/query.py` wrapper per skill (2,149 LOC across six skills) that handled input parsing, payload assembly, polling, and download.
+Two prior Python SDK plugins supported Claude Code and Codex. They are available in Git history. Each shipped a ~350-line `scripts/query.py` wrapper per skill (2,149 LOC across six skills) that handled input parsing, payload assembly, polling, and download.
 
 The `boltz-api` Go CLI (Stainless-generated from the same OpenAPI spec as the Python SDK) now exposes all that machinery natively:
 - unified `--id` across retrieve / list-results / stop / delete-data
@@ -86,11 +88,11 @@ In Codex app/desktop runtimes that expose same-thread heartbeat automations, the
 
 **Trade:** the first real command may still be the thing that discovers missing install/auth state. **Gain:** zero ceremony per invocation while keeping auth recovery actionable; errors from the CLI are readable enough for the agent to route to install guidance or device-code login.
 
-### 9. New `surfaces/codex-cli/` plugin surface, not an in-place rewrite
+### 9. Separate CLI plugin during the original migration
 
-**Chose:** sibling of `codex-plugin-python/`; Python version untouched.
+**Chose:** introduce the CLI plugin alongside the Python plugin during the original migration.
 
-**Trade:** another maintained plugin surface alongside the legacy Python reference. **Gain:** the Python plugin stays as a reference for anyone wanting the SDK path, and there's zero migration risk for existing installs. If the CLI plugin ships well, deprecating the Python one is a separate commit.
+The Python variants were later removed when the public skills were consolidated into `skills/`. Git history preserves the old implementation. The CLI marketplace manifests and packages remain active distribution targets.
 
 ## What survives from the Python plugin
 

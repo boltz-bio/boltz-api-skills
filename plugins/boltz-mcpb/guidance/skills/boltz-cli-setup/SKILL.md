@@ -1,11 +1,11 @@
 ---
 name: boltz-cli-setup
-description: Boltz CLI setup and auth. Use when installing, updating, verifying, or authenticating `boltz-api`, or fixing missing CLI, PATH, sandbox, browser login, or auth errors.
+description: Boltz CLI setup, auth, and runtime notes. Use when installing, updating, verifying, or authenticating `boltz-api`, fixing missing CLI, PATH, sandbox, browser login, or auth errors, or when unsure how the current agent runtime runs a long-running `boltz-api` command such as `download-results`.
 ---
 
 # Boltz CLI Setup
 
-Use this skill for `boltz-api` installation, version, PATH, and authentication issues. The workflow skills assume `boltz-api` is already installed.
+Use this skill for `boltz-api` installation, version, PATH, and authentication issues, and for runtime-specific notes on running long-running `boltz-api` commands. The workflow skills assume `boltz-api` is already installed.
 
 ## Verify Installation
 
@@ -71,3 +71,7 @@ If a user asks why the CLI thinks it is stale, explain the split:
 - The Boltz version endpoint defines API compatibility, including the minimum supported CLI version.
 
 Respect user or CI opt-outs such as `BOLTZ_API_NO_UPDATE_CHECK=1`; do not force update checks when the environment disables them.
+
+## Long-Running Commands
+
+The workflow skills launch `boltz-api download-results` through the runtime's long-running or non-blocking command facility and describe follow-up checks by capability, not by host. Read [references/runtimes.md](references/runtimes.md) when you are unsure how the current runtime provides a non-blocking command, a session handle, or scheduled follow-up checks, or when a workflow skill routes here for that reason.

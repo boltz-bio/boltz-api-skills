@@ -36,12 +36,7 @@ boltz-api download-results \
   --poll-interval-seconds 30
 ```
 
-Run this through the agent runtime's managed long-running command mode:
-
-- Claude Code: Bash with `run_in_background=true`
-- Codex: foreground shell command with `yield_time_ms=1000`; keep the returned `session_id` if one is provided
-
-Do not append `&` or use `nohup` in Codex.
+Run this through the runtime's long-running or non-blocking command facility, using the mechanism the runtime documents (consult `boltz-cli-setup` if unsure). Do not detach it with shell `&` or `nohup` unless the runtime documents shell backgrounding as its supported mode.
 
 If the run directory exists, `--id` can be omitted because the CLI can read the ID from metadata.
 

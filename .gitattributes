@@ -1,1 +1,3 @@
 plugins/boltz/** linguist-generated=true
+plugins/boltz-api-cli/** linguist-generated=true
+plugins/boltz-mcpb/** linguist-generated=true

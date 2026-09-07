@@ -95,7 +95,7 @@ PR_BODY="Automated sync from \`boltz-bio/boltz-api-skills@${SOURCE_SHA}\`.
 
 This PR mirrors the Gemini CLI extension surface with symlinks dereferenced. The release repo keeps
 \`.github/\` and LICENSE managed directly, while extension runtime files are
-generated upstream from \`surfaces/gemini-cli/\` and shared \`core/\` skills."
+generated upstream from \`surfaces/gemini-cli/\` and shared \`skills/\` skills."
 
 if [[ "$DRY_RUN" == "1" ]]; then
   echo

@@ -1,4 +1,7 @@
-.PHONY: generate-surfaces verify-generated validate-claude-plugin validate-json
+.PHONY: generate-surfaces verify-generated validate-claude-plugin validate-json test-skills
+
+test-skills:
+	npm test
 
 generate-surfaces:
 	scripts/generate-surfaces.sh

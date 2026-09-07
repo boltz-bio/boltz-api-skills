@@ -1,13 +1,40 @@
 {
-  "variant": "claude-code-cli | claude-code-mcp",
+  "runtime": "claude-code | codex | gemini-cli | claude-desktop | <other>",
+  "runtime_version": "",
+  "install_method": "marketplace | skills | extension | mcpb | plugin-dir",
+  "skills_revision": "",
+  "boltz_api_version": "",
   "scenario_id": 1,
   "run_number": 1,
-  "timestamp_iso": "2026-04-22T14:30:00Z",
+  "baseline_no_skill": false,
+  "timestamp_iso": "2026-09-07T14:30:00Z",
   "approvals": {
-    "bash": 0,
-    "mcp_tool": 0,
+    "shell": 0,
+    "tool": 0,
     "file_write": 0,
     "total": 0
+  },
+  "cost_gate": {
+    "estimate_cost_run": null,
+    "quoted_returned_figure": null,
+    "waited_for_explicit_yes": null
+  },
+  "launch": {
+    "mechanism_used": "",
+    "non_blocking": null,
+    "matched_runtime_notes": null,
+    "invented_tool_arguments": [],
+    "shell_background_used": null,
+    "consulted_cli_setup": null
+  },
+  "checkpoint": {
+    "boltz_run_json_present_after_turn": null,
+    "cursor_advanced_after_turn": null
+  },
+  "follow_up": {
+    "claimed_scheduled_check": null,
+    "mechanism_exists_on_runtime": null,
+    "download_status_command_reported": null
   },
   "wall_clock_seconds": 0,
   "timing": {

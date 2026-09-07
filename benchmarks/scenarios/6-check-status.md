@@ -8,7 +8,7 @@
 
 Run scenario 1 first (or any scenario that submits a job) and let it finish
 server-side. Keep the job ID handy. Then run this scenario in a **fresh
-Claude Code session** (to exercise the cross-session recovery path).
+agent session** (to exercise the cross-session recovery path).
 
 ## User prompt
 
@@ -19,15 +19,17 @@ most recent one is done, please download the results.
 
 ## Expected behavior
 
-1. Agent calls list across all five resources, merges, sorts by created_at.
+1. Agent calls list across all six resources, merges, sorts by created_at.
 2. Presents a table of recent jobs with status, resource, timestamps.
 3. Identifies the most recent terminal-status job.
-4. If done, initiates `download-results` (CLI) or `boltz_resume_download` (MCP)
-   in the background and ends the turn.
+4. If done, launches `download-results` (or the MCP server's download tool on
+   Claude Desktop) through the runtime's long-running facility and ends the
+   turn. ADME jobs have no download step; their results come from `retrieve`.
 
 ## Success criteria
 
-- Agent correctly enumerates all five resource types.
+- Agent correctly enumerates all six resource types, including
+  `predictions:adme`.
 - Identifies the right "most recent" job, not a stale one.
 - Successfully kicks off a resume-style download (not a fresh submit).
 

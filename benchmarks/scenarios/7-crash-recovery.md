@@ -6,23 +6,28 @@
 
 ## Why this matters
 
-This is the scenario most likely to distinguish the two variants. The CLI
-variant relies on the agent's background shell persistence, which dies with the
-session. The MCP variant has a dedicated server that detaches `download-results`
-as its own process and persists `.boltz-run.json`.
+This is the scenario most likely to separate runtimes. Each runtime provides a
+different long-running-command facility, and some reap shell-backgrounded
+children when a tool call returns. The skills describe the launch by capability
+and route to `skills/boltz-cli-setup/references/runtimes.md` for host notes. If
+that routing fails, `.boltz-run.json` may never be written, and recovery falls
+back to a fresh download.
 
 ## Setup
 
 1. Run scenario 2 (library screen; medium-length, ~15 min) to submit a real job.
-2. After the job is submitted and the agent returns, **kill the Claude Code
-   session** (Ctrl+C, close terminal, force-quit — whatever simulates a crash).
-   Note the run_name / slug and job ID first.
-3. Start a fresh Claude Code session with the same plugin variant.
+2. Before killing anything, record the mechanism the agent used to launch
+   `download-results` and whether `.boltz-run.json` exists in the run
+   directory.
+3. After the job is submitted and the agent returns, **kill the agent session**
+   (Ctrl+C, close the terminal or app, force-quit). Note the run name / slug and
+   job ID first.
+4. Start a fresh session on the same runtime with the same install method.
 
 ## User prompt (in the fresh session)
 
 ```
-My last Claude Code session died. I had a Boltz job running — here's the ID: <ID>
+My last agent session died. I had a Boltz job running — here's the ID: <ID>
 (and the slug was <SLUG>). Please pick up the download and give me the results
 when they're ready.
 ```
@@ -30,24 +35,27 @@ when they're ready.
 ## Expected behavior
 
 1. Agent recognizes this as a recovery request.
-2. Calls retrieve / `boltz_get_job` to inspect the job by ID.
-3. Captures `idempotency_key` from the response (or uses the supplied slug).
-4. Initiates `download-results` / `boltz_resume_download` with the original
-   slug as `--name` / `run_name`.
-5. Reports success and ends the turn.
+2. Runs `retrieve` (or the MCP server's job lookup on Claude Desktop) to inspect
+   the job by ID.
+3. Captures `idempotency_key` from the response, or uses the supplied slug.
+4. Re-launches `download-results` with the original slug as `--name` and the
+   same `--root-dir`, through the runtime's long-running facility.
+5. Reports the job ID, run name, and output directory, and ends the turn.
 
 ## Success criteria
 
-- The previous session's artifacts are reused (check `.boltz-run.json` cursor
-  advances, not restarts from scratch).
+- The previous session's artifacts are reused: the `.boltz-run.json` cursor
+  advances rather than restarting from scratch.
 - Final results end up in the same directory the original run targeted.
 - Agent does NOT call `start` again to "resume."
+- The relaunch used the runtime's documented mechanism, not an invented tool
+  argument or a shell `&` on a runtime that reaps children.
 
 ## What to watch for
 
+- Did `.boltz-run.json` survive the original session's death? If not, record
+  the launch mechanism the first session used; that is a runtime-notes bug.
 - Does the agent preserve the existing output directory or create a new one?
-- If the job is already terminal, does the agent skip polling and just pull the
+- If the job is already terminal, does the agent skip polling and pull the
   final artifacts?
-- Which variant handles recovery more smoothly — the CLI re-running
-  `download-results` with the same ID/name/root, or the MCP server's detached
-  spawn?
+- Did the agent consult `boltz-cli-setup` when unsure how to relaunch, or guess?

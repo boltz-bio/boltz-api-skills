@@ -6,7 +6,13 @@ Gemini-specific context for background shell downloads.
 
 ## Installation
 
-Install the extension from the public distribution repo:
+For the primary installation path, use [Vercel Skills](https://github.com/boltz-bio/boltz-api-skills#install):
+
+```sh
+npx skills add boltz-bio/boltz-api-skills --agent gemini-cli
+```
+
+The extension remains available from the public distribution repo:
 
 ```sh
 gemini extensions install https://github.com/boltz-bio/boltz-gemini-cli
@@ -29,3 +35,8 @@ it is available on `PATH`.
 - Authentication via `boltz-api auth login --device-code`, or `BOLTZ_API_KEY`
   exported in the environment
 - Results land in a `boltz-experiments/` directory in the working directory (created automatically); pass `--root-dir` to any command to change that
+
+## Development
+
+`skills` links to the canonical tree at the repository root. Shared workflow
+changes belong there. Keep extension-specific context in `GEMINI.md`.

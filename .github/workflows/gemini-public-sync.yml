@@ -11,8 +11,7 @@ on:
     branches: [main]
     paths:
       - 'surfaces/gemini-cli/**'
-      - 'core/skills/cli/**'
-      - 'core/references/**'
+      - 'skills/**'
       - 'scripts/release-gemini-repo.sh'
       - '.github/workflows/gemini-public-sync.yml'
   workflow_dispatch:

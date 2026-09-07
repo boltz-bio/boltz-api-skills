@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const packagedGuidanceRoot = path.resolve(__dirname, "..", "guidance");
-const coreGuidanceRoot = path.resolve(__dirname, "..", "..", "..", "core");
+const packagedGuidanceRoot = path.resolve(__dirname, "..", "guidance", "skills");
+const sourceGuidanceRoot = path.resolve(__dirname, "..", "..", "..", "skills");
 
 export const workflowGuideIds = [
   "cli-setup",
@@ -317,23 +317,23 @@ function resourceUrisForGuide(guide) {
 }
 
 async function readSkillText(guide) {
-  return readGuidanceFile(["skills", guide.skillDir, "SKILL.md"], ["skills", "cli", guide.skillDir, "SKILL.md"]);
+  return readGuidanceFile(guide.skillDir, "SKILL.md");
 }
 
 async function readReferenceText(guide, reference) {
-  return readGuidanceFile(["references", guide.skillDir, `${reference}.md`], ["references", guide.skillDir, `${reference}.md`]);
+  return readGuidanceFile(guide.skillDir, "references", `${reference}.md`);
 }
 
-async function readGuidanceFile(packagedParts, coreParts) {
-  const packagedPath = path.join(packagedGuidanceRoot, ...packagedParts);
+async function readGuidanceFile(...parts) {
+  const packagedPath = path.join(packagedGuidanceRoot, ...parts);
   if (existsSync(packagedPath)) {
     return readFile(packagedPath, "utf8");
   }
 
-  const corePath = path.join(coreGuidanceRoot, ...coreParts);
-  if (existsSync(corePath)) {
-    return readFile(corePath, "utf8");
+  const sourcePath = path.join(sourceGuidanceRoot, ...parts);
+  if (existsSync(sourcePath)) {
+    return readFile(sourcePath, "utf8");
   }
 
-  throw new Error(`Bundled Boltz guidance file is missing: ${packagedParts.join("/")}`);
+  throw new Error(`Bundled Boltz guidance file is missing: ${parts.join("/")}`);
 }
