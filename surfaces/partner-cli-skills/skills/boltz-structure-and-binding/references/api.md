@@ -215,7 +215,7 @@ model_options:
 Hosted API Reference bounds:
 
 - `recycling_steps >= 1`
-- `sampling_steps >= 1`
+- `sampling_steps >= 50`
 - `1.3 <= step_scale <= 2`
 
 ## Structure templates in a constraint / binding setup
