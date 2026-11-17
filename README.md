@@ -50,13 +50,9 @@ Verify it:
 boltz-api --version
 ```
 
-Then authenticate, using either device-code login or an API key:
-
-```sh
-boltz-api auth login --device-code
-# or
-export BOLTZ_API_KEY="your-api-key"
-```
+For interactive use, sign in with `boltz-api auth login --device-code`.
+For unattended runs, inject a workspace key as `BOLTZ_API_KEY` in the runner's
+environment and follow the [authentication checks](skills/boltz-cli-setup/SKILL.md#unattended-jobs-and-result-collection).
 
 Results download to a `boltz-experiments/` directory in your working directory
 (created automatically). Point any command at a different location with
