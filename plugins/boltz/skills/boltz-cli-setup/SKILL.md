@@ -45,7 +45,7 @@ boltz-api auth status
 
 ### Unattended jobs and result collection
 
-Inject a workspace API key from the runner's secret store as `BOLTZ_API_KEY` in the process that launches `boltz-api`. A nonempty key takes precedence over a saved OAuth session. Some older instructions use `BOLTZ_COMPUTE_API_KEY`. Check `boltz-api --help` for the variable supported by the installed release.
+Inject a workspace API key from the runner's secret store as `BOLTZ_API_KEY` in the process that launches `boltz-api`. A nonempty key takes precedence over a saved OAuth session.
 
 Before leaving a downloader unattended:
 
