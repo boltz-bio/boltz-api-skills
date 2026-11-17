@@ -37,27 +37,33 @@ Read [references/sandbox.md](references/sandbox.md) when an agent sandbox blocks
 
 ## Authenticate
 
-Check the current auth state with:
+Use the same executable, environment, and tenant options as the failing command when checking authentication.
 
 ```sh
 boltz-api auth status
 ```
 
-If `auth status` reports unauthenticated, or any Boltz command fails because authentication is missing or expired, start device-code login on the user's behalf before retrying:
+### Unattended jobs and result collection
+
+Inject a workspace API key from the runner's secret store as `BOLTZ_API_KEY` in the process that launches `boltz-api`. A nonempty key takes precedence over a saved OAuth session.
+
+Before leaving a downloader unattended:
+
+1. Run `boltz-api auth status` in the downloader's environment and check that `effective_mode` is `api_key`. This checks local credential selection. If OAuth is selected, check the variable name and whether the runner passes it to the CLI process.
+2. Run `boltz-api auth me` with the same tenant options. Confirm the server reports `principal_type: api_key` and the intended organization. For a dedicated tenant, pass its API endpoint with `--base-url`. If the server rejects the key, check the endpoint, key status, and workspace scope.
+For interrupted result collection, use a key scoped to the workspace that owns
+the job. Follow `boltz-check-status` to resume with the original job ID and run
+directory.
+
+### Interactive OAuth
+
+When the workflow uses OAuth and the CLI needs a session or reports that reauthentication is required, start device-code login on the user's behalf:
 
 ```sh
 boltz-api auth login --device-code
 ```
 
-Do not ask the user for permission before starting device-code login; relaying the login URL/code and waiting for the CLI to complete is part of auth recovery. When sharing the authentication login URL/code, tell the user to use exactly `boltz-api auth login --device-code`.
-
-For auth recovery, assume the CLI can auto-open the browser and run the exact command above. In sandboxed environments, request the host sandbox bypass/escalation needed for browser auto-open, OAuth callbacks, credential storage, or temp files.
-
-For automation where a key is already available, an API key is still supported:
-
-```sh
-export BOLTZ_API_KEY=<api-key>
-```
+Keep the workflow's tenant options. Share the verification URL and code if the browser flow needs user input, then wait for login to finish before retrying. Follow [references/sandbox.md](references/sandbox.md) if the runtime blocks browser launch, callbacks, or credential storage.
 
 ## Version Checks
 
